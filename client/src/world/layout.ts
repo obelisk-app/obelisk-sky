@@ -365,6 +365,15 @@ export function inWater(plan: IslandPlan, p: Vec2): boolean {
   return distToPolyline(p, plan.river) < plan.riverWidth * 0.75 + 0.15 || dist(p, plan.pond.c) < plan.pond.r + 0.25;
 }
 
+/** Where the plaza's lanterns stand: a ring just outside its paving (world.ts buildPlaza skips those on a landmark's lawn). */
+export function plazaLanterns(plan: Pick<IslandPlan, 'plaza'>, n = 8): Vec2[] {
+  const { c, r } = plan.plaza;
+  return Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * Math.PI * 2 + 0.2;
+    return { x: c.x + Math.cos(a) * (r + 0.25), z: c.z + Math.sin(a) * (r + 0.25) };
+  });
+}
+
 /** Build the walk grid for a plan: island top minus water, mountains and
  *  building footprints; plaza and paths cheaper; bridges walkable. */
 export function buildNavGrid(plan: IslandPlan, usedSlots: Slot[], bridges: Vec2[] = []): NavGrid {

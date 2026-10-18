@@ -21,10 +21,24 @@ const btn = (text: string, cls: string, on: () => void, title = ''): HTMLButtonE
   return b;
 };
 
+/** A page in an <iframe>, to be looked at, not used: its scripts and its own storage, no popups, no navigating the village away;
+ *  no pointer and no focus (Esc stays with the village; a page's QR is the way in). The totem's monitor and Watch mode's page. */
+export function lookOnlyFrame(src: string, title: string): HTMLIFrameElement {
+  const f = h('iframe');
+  f.src = src;
+  f.title = title;
+  f.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+  f.allow = 'autoplay';
+  f.tabIndex = -1;
+  f.style.pointerEvents = 'none';
+  return f;
+}
+
 /**
  * Watch mode: the film fills the page under the chat and the call bar; the 3D village isn't drawn (main.ts skips the frame) until
  * you come back. `show` swaps the stream (or a card's words when nothing
- * plays).
+ * plays). Given a `page` instead (the totem monitor, world/totemMonitor.ts),
+ * it holds that page in an iframe, made here and gone on `close`.
  */
 export class WatchView {
   readonly el: HTMLElement;
@@ -34,15 +48,17 @@ export class WatchView {
   private key = (e: KeyboardEvent) => { if (e.key === 'Escape') this.onClose(); };
 
   /** `parent` is the village's own layer (#app), so the chat and the call bar stay over the film. */
-  constructor(private onClose: () => void, parent: HTMLElement = document.body) {
-    this.el = h('div', 'theater-watch');
+  constructor(private onClose: () => void, parent: HTMLElement = document.body, page?: string) {
+    this.el = h('div', page ? 'theater-watch theater-watch-page' : 'theater-watch');
     this.video = h('video');
     this.video.muted = true; // the sound plays through the call
     this.video.autoplay = true;
     this.video.playsInline = true;
     this.card = h('div', 'theater-watch-card');
     const back = btn(vw.backToVillage, 'theater-watch-back', () => this.onClose(), 'Esc');
-    this.el.append(this.video, this.card, back);
+    if (page) {
+      this.el.append(lookOnlyFrame(page, 'Totem LABITCONF'), back);
+    } else this.el.append(this.video, this.card, back);
     parent.prepend(this.el);
     document.body.classList.add('watching');
     window.addEventListener('keydown', this.key);

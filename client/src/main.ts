@@ -31,6 +31,7 @@ import { MotionBeacon, MotionStore, motionTemplate } from './nostr/motion';
 import { closeCreator, openCreator } from './ui/creator';
 import { CallRoom, RECONNECT_DELAYS, awayCountdown } from './voice/callRoom';
 import { WatchView, isVoiceKind } from './ui/theaterPanel';
+import { TOTEM, TOTEM_URL, inTotemZone } from './world/totemMonitor';
 import { LiveCalls, liveForTheater } from './nostr/liveCalls';
 import { openControlsGuide, maybeShowControlsGuide, isTouch } from './ui/controlsGuide';
 import { obeliskNoteUrl, obeliskProfileUrl } from './ui/obeliskLinks';
@@ -1072,7 +1073,15 @@ function toggleSeat(): void {
   if (world.isSeated(world.playerPk)) { standPlayer(); return; }
   const seat = world.nearestFreeSeat(controller.pos, 1.8);
   if (seat) sitOn(seat);
+  else if (atTotem()) enterTotem();
   else toast(vw.noSeat);
+}
+
+/** On foot in front of the totem monitor (E watches it, after training and seats). */
+function atTotem(): boolean {
+  const pk = world.playerPk;
+  const l = controller && pk && world.ridingOf(pk) === null ? world.totemLocal(controller.pos) : null;
+  return !!l && inTotemZone(l);
 }
 
 /** "Press E to sit" (or a Sit / Stand up button on touch) near a free seat. */
@@ -1113,6 +1122,11 @@ function seatHintCompute(hint: { hidden: boolean; textContent: string }): void {
   }
   const seated = world.isSeated(pk);
   const seat = seated ? null : world.nearestFreeSeat(controller.pos, 1.8);
+  if (!seated && !seat && atTotem()) {
+    hint.hidden = false;
+    hint.textContent = vw.watchTotem(touch);
+    return;
+  }
   if (!seated && !seat) {
     // Someone online is using it.
     const who = world.claimedNear(controller.pos, 1.8);
@@ -2438,6 +2452,28 @@ function exitWatch(): void {
   renderCall();
 }
 world.hooks.onTheaterScreenClick = () => enterWatch();
+
+/** The totem monitor's focus (world/totemMonitor.ts): totemcillo fills the page in Watch mode's
+ *  view, for you alone, and the village isn't drawn until Esc or "Back to the village". E in front
+ *  of the screen (the seat prompt offers it, tap on touch screens) opens it; a click on the screen
+ *  from near it, as on the theater's, too. */
+let totemView: WatchView | null = null;
+function enterTotem(): void {
+  if (totemView || watchView) return;
+  world.setTotemFocused(true);
+  totemView = new WatchView(() => exitTotem(), $('app'), TOTEM_URL);
+}
+function exitTotem(): void {
+  if (!totemView) return;
+  totemView.close();
+  totemView = null;
+  world.setTotemFocused(false);
+  lastFrame = performance.now();
+}
+world.hooks.onTotemScreenClick = () => {
+  const l = controller ? world.totemLocal(controller.pos) : null;
+  if (l && inTotemZone(l, TOTEM.ZONE.pad)) enterTotem();
+};
 // Registered last: onChange calls back at once, and syncTheater reads the theater's state declared above.
 liveCalls.onChange(() => { if (inTheaterHall) syncTheater(); });
 
@@ -2504,6 +2540,11 @@ function frame(): void {
     tickTheater(dt);
     tickActivity();
     if (!inTheaterHall) exitWatch();
+    return;
+  }
+  // The totem's focus, the same way: only the heartbeats go on.
+  if (totemView) {
+    tickActivity();
     return;
   }
   stepPlayer(dt);

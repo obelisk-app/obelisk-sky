@@ -14,6 +14,7 @@ import { buildNostrWotHq } from './nostrwot';
 import { buildLibertureHouse } from './liberture';
 import { buildTheater, type TheaterHall } from './theater';
 import { buildLabitconf } from './labitconf';
+import { TOTEM } from '../totemMonitor';
 
 export type LandmarkId = 'lacrypta' | 'nostrwot' | 'coffee' | 'parrilla' | 'liberture' | 'theater' | 'labitconf';
 
@@ -87,8 +88,22 @@ export const LANDMARKS: LandmarkDef[] = [
   { id: 'parrilla', want: { x: -7, z: 5.5 }, minSize: 2, forward: 0.1, footprint: { minX: -1.0, maxX: 1.0, minZ: -1.55, maxZ: -0.95 }, lawn: { along: 2.2, across: 1.6 }, build: buildParrilla },
   { id: 'liberture', want: { x: 11.5, z: -0.5 }, minSize: 2, forward: 0.25, footprint: { minX: -1.35, maxX: 1.35, minZ: -1.85, maxZ: 0.1 }, lawn: { along: 2.4, across: 1.6 }, build: buildLibertureHouse },
   { id: 'theater', want: { x: -4, z: -4.5 }, minSize: 3, forward: 1.15, footprint: { minX: -1.42, maxX: 1.42, minZ: -2.62, maxZ: 0.12 }, lawn: { along: 2.0, across: 1.6 }, build: buildTheater },
-  { id: 'labitconf', want: { x: 2, z: -5.5 }, minSize: 3, forward: 1.5, footprint: { minX: -2.12, maxX: 2.12, minZ: -3.92, maxZ: 0.12 }, lawn: { along: 2.0, across: 2.2 }, build: buildLabitconf },
+  // Its lawn reaches past the totem monitor's watch zone (world/totemMonitor.ts): no lantern between the plaza and the screen.
+  { id: 'labitconf', want: { x: 2, z: -5.5 }, minSize: 3, forward: 1.5, footprint: { minX: -2.12, maxX: 2.12, minZ: -3.92, maxZ: 0.12 }, lawn: { along: 1.5 + TOTEM.Z + TOTEM.ZONE.depth, across: 2.2 }, build: buildLabitconf },
 ];
+
+/** Is p on a landmark's front lawn (where its stairs or terrace come down, kept free of plaza lanterns)? */
+export function onLandmarkLawn(p: Vec2, slots: ReadonlyMap<LandmarkId, { pos: Vec2; rot: number }>, defs: LandmarkDef[] = LANDMARKS): boolean {
+  for (const d of defs) {
+    const s = slots.get(d.id);
+    if (!s || !d.lawn) continue;
+    const dx = p.x - s.pos.x, dz = p.z - s.pos.z;
+    const along = dx * Math.sin(s.rot) + dz * Math.cos(s.rot);
+    const across = dx * Math.cos(s.rot) - dz * Math.sin(s.rot);
+    if (along > 0 && along < d.lawn.along && Math.abs(across) < d.lawn.across) return true;
+  }
+  return false;
+}
 
 /** Pick each landmark's slot: nearest to what it wants, never shared. */
 export function reserveLandmarkSlots<S extends { index: number; pos: Vec2; w: number }>(

@@ -47,7 +47,8 @@ const MIME: Record<string, string> = {
 // compiling wasm, not eval of script). The client connects to relays (wss:) and loads profile pictures from
 // anywhere (img-src https:). Scripts and styles are first-party only, plus
 // Google Fonts for the bubble typefaces. LABITCONF's stage plays a YouTube
-// embed (frame-src, world/youtubeStage.ts).
+// embed and the totem monitor on its lawn shows totemcillo (frame-src,
+// world/youtubeStage.ts, world/totemMonitor.ts TOTEM_ORIGIN).
 export const SECURITY_HEADERS = {
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'no-referrer',
@@ -56,7 +57,7 @@ export const SECURITY_HEADERS = {
     "default-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob:; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; " +
     "connect-src 'self' wss: https: blob: data:; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; " +
-    "frame-src https://www.youtube-nocookie.com https://www.youtube.com; frame-ancestors 'self'",
+    "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://totemcillo.vercel.app; frame-ancestors 'self'",
 };
 
 export function resolveStatic(pathname: string): { file: string; rel: string } | null {

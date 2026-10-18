@@ -56,6 +56,8 @@ const en = {
   getOffFirst: (touch: boolean): string => (touch ? 'Get off first.' : 'Get off first (F).'),
   getOff: (touch: boolean): string => (touch ? 'Get off' : 'Press F to get off'),
   ride: (touch: boolean): string => (touch ? '🐦 Ride' : 'Press F to ride the nostrich'),
+  // The totem monitor on LABITCONF's lawn (world/totemMonitor.ts): E in front of it opens its focus
+  watchTotem: (touch: boolean): string => (touch ? '📺 Watch the totemcillo' : 'Press E to watch the totemcillo'),
   gotThere: (name: string) => `${name} got there first.`,
   chatHint: (name: string, touch: boolean): string => (touch ? `💬 Open the ${name} chat` : `💬 Press C to open the ${name} chat`),
   tiltOn: 'Toy-town view on: the edges blur so the island looks like a tiny model',
@@ -402,6 +404,7 @@ const es: VillageWords = {
   getOffFirst: (touch) => (touch ? 'Primero bajate.' : 'Primero bajate (F).'),
   getOff: (touch) => (touch ? 'Bajarte' : 'Apretá F para bajarte'),
   ride: (touch) => (touch ? '🐦 Montar' : 'Apretá F para montar el nostrich'),
+  watchTotem: (touch) => (touch ? '📺 Mirar el totemcillo' : 'Apretá E para mirar el totemcillo'),
   gotThere: (name) => `${name} llegó primero.`,
   chatHint: (name, touch) => (touch ? `💬 Abrir el chat de ${name}` : `💬 Apretá C para abrir el chat de ${name}`),
   tiltOn: 'Vista maqueta activada: los bordes se desenfocan y la isla parece una miniatura',

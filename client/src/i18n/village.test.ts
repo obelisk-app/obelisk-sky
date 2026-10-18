@@ -56,6 +56,20 @@ describe('the village’s words in each language', () => {
     expect(es.reps('dominadas', 3, true)).toBe('Dominadas · 3 repeticiones · tocá para parar');
   });
 
+  it('never names a key to a touch screen: a prompt that says E, F or C on a keyboard says something else when its last argument (touch) is true', () => {
+    const key = /\b(Press|Apretá)\b|\b[EFC]\b/;
+    let prompts = 0;
+    for (const lang of [en, es]) for (const [name, v] of Object.entries(lang)) {
+      if (typeof v !== 'function' || v.length === 0) continue;
+      const args = (touch: boolean) => Array.from({ length: v.length }, (_, i) => (i === v.length - 1 ? touch : i === 0 ? 'Ana' : 2));
+      const call = (touch: boolean) => String((v as (...a: unknown[]) => unknown)(...args(touch)));
+      if (!key.test(call(false))) continue;
+      prompts++;
+      expect(call(true), name).not.toMatch(key);
+    }
+    expect(prompts).toBeGreaterThan(10);
+  });
+
   it('labels channel kinds', () => {
     expect(kindLabel('voice-sfu', es)).toBe('Canal de voz');
     expect(kindLabel('forum', es)).toBe('Publicación');

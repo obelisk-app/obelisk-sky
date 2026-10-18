@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { TOTEM_ORIGIN } from '../client/src/world/totemMonitor';
 process.env.NODE_ENV = 'test';
 const { resolveStatic, redirectFor, SECURITY_HEADERS } = await import('./index');
 
@@ -32,6 +33,10 @@ describe('static host', () => {
     expect(SECURITY_HEADERS['content-security-policy']).not.toMatch(/'unsafe-eval'/);
     // LABITCONF's stage: a YouTube embed, and no other frames.
     expect(SECURITY_HEADERS['content-security-policy']).toMatch(/frame-src https:\/\/www.youtube-nocookie.com/);
+  });
+  it('frames totemcillo for the monitor on LABITCONF\'s lawn, and nothing else new', () => {
+    const frames = SECURITY_HEADERS['content-security-policy'].match(/frame-src ([^;]*)/)![1].split(' ');
+    expect(frames.sort()).toEqual([TOTEM_ORIGIN, 'https://www.youtube-nocookie.com', 'https://www.youtube.com'].sort());
   });
   it('lets the page use the mic, the camera and screen sharing (calls), nothing else of the kind', () => {
     const p = SECURITY_HEADERS['permissions-policy'];
