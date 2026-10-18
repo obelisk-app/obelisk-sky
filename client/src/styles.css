@@ -1114,6 +1114,36 @@ body.menu-open .controls button[hidden] { display: none; }
 .sp-primary { background: var(--green); border-color: transparent; padding: 10px 24px; box-shadow: 0 6px 18px rgba(120, 190, 40, 0.3); }
 .sp-primary:hover { background: #c6ff6b; }
 .sp-primary:disabled { opacity: 0.6; cursor: default; }
+/* ── the look editor (ui/creator.ts): the profile editor's cloud card, so the account menu's two sheets match ── */
+.creator { background: linear-gradient(180deg, #ffffff 0%, #f3f9ff 100%); color: var(--ink); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 22px; box-shadow: 0 24px 64px rgba(15, 42, 68, 0.3), 0 0 0 1px rgba(143, 211, 255, 0.35); }
+.creator .themes-head { border-bottom: 1px solid #e1eef9; }
+.creator .themes-title { color: var(--ink); }
+.creator .themes-sub, .creator .creator-hint, .creator .themes-status { color: var(--ink-muted); }
+.creator .themes-section { color: #1e6fb8; }
+.creator .creator-sub { color: var(--ink-muted); }
+.creator .themes-row { color: var(--ink); }
+.creator-close { background: rgba(255, 255, 255, 0.9); color: var(--ink); box-shadow: 0 4px 12px rgba(15, 42, 68, 0.2); }
+.creator-close:hover { background: #fff; color: var(--ink); }
+.creator .look-preview { background: radial-gradient(ellipse at 50% 88%, rgba(120, 190, 40, 0.22), transparent 58%), linear-gradient(180deg, var(--sky-top), var(--sky) 75%, #eef8ff); border-bottom: 1px solid #e1eef9; }
+@media (min-width: 641px) and (max-height: 760px) { .creator > .look-preview { border-right: 1px solid #e1eef9; } }
+.creator .creator-chip { border: 1px solid #d3e6f6; background: #fff; color: var(--ink); }
+.creator .creator-pick { border: 1px solid #d3e6f6; background: #fff; color: var(--ink); }
+.creator .creator-pick:hover, .creator .creator-chip:hover { border-color: #8fd3ff; background: #eef7ff; }
+.creator .creator-pick.on, .creator .creator-chip.on { border-color: #1e6fb8; background: #e3f2ff; color: #1e6fb8; box-shadow: 0 0 0 3px rgba(143, 211, 255, 0.45); }
+.creator .creator-chip:disabled { opacity: 0.45; background: #f3f7fb; }
+.creator .creator-swatch { border: 2px solid #fff; box-shadow: 0 0 0 1px #d3e6f6; }
+.creator .creator-swatch.on { border-color: #fff; box-shadow: 0 0 0 3px #1e6fb8; }
+.creator input, .creator select, .creator .themes-select { background: #fff; color: var(--ink); border: 1px solid #d3e6f6; border-radius: 12px; }
+.creator input:focus, .creator select:focus { outline: none; border-color: #8fd3ff; box-shadow: 0 0 0 3px rgba(143, 211, 255, 0.35); }
+.creator input::placeholder { color: #9bb3c9; }
+.creator input:disabled { background: #f3f7fb; color: var(--ink-muted); }
+.creator .themes-foot { border-top: 1px solid #e1eef9; background: linear-gradient(180deg, rgba(243, 249, 255, 0), #f3f9ff 35%); }
+.creator .account-btn { border: 1px solid #d3e6f6; background: #fff; color: var(--ink); border-radius: 999px; font-weight: 700; }
+.creator .account-btn:hover { background: #eef7ff; border-color: #d3e6f6; color: var(--ink); }
+.creator .account-btn.primary { background: var(--green); border-color: transparent; color: var(--ink); box-shadow: 0 6px 18px rgba(120, 190, 40, 0.3); }
+.creator .account-btn.primary:hover { background: #c6ff6b; }
+.creator .account-btn:disabled { opacity: 0.6; cursor: default; }
+
 /* Phones sideways (and short windows): edge to edge, a shorter banner. */
 @media (max-height: 540px) {
   .profile-overlay { padding: 8px; }
