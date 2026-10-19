@@ -22,7 +22,7 @@ import * as THREE from 'three';
 import type { Vec2 } from './layout';
 import { canvasTexture } from './landmarks/signs';
 import { DomScreen } from './domScreen';
-import { lookOnlyFrame } from '../ui/theaterPanel';
+import { lookOnlyFrame, PAGE_VIEWPORT } from '../ui/theaterPanel';
 
 /** The page focus mode shows; its origin is in the server's CSP frame-src. */
 export const TOTEM_URL = 'https://totemcillo.vercel.app/';
@@ -45,10 +45,6 @@ export const TOTEM = {
   /** Seconds between occlusion probes. */
   PROBE_S: 0.2,
 } as const;
-
-/** The page's size in CSS pixels, the screen's 16:9: its layout viewport is a desktop's (totemcillo draws its phone view at 700 px wide
- *  and below), and DomScreen scales the box down onto the 1.6 × 0.9 screen. */
-export const TOTEM_PAGE = { W: 1600, H: 900 } as const;
 
 /** Is `l` (monitor-local: x across the screen, z out of its face) on the ground in front of the screen? */
 export function inTotemZone(l: Vec2, pad = 0): boolean {
@@ -95,7 +91,7 @@ export class TotemStage {
   private iframe: HTMLIFrameElement | null = null;
 
   constructor(parent: HTMLElement, after: Element | null, screen: THREE.Object3D, width: number, height: number, private url = TOTEM_URL) {
-    this.layer = new DomScreen(parent, after, screen, width, height, 'totem-video', TOTEM_PAGE.W);
+    this.layer = new DomScreen(parent, after, screen, width, height, 'totem-video', PAGE_VIEWPORT.W);
   }
 
   /** Is the page in the document? */
@@ -111,7 +107,6 @@ export class TotemStage {
   update(camera: THREE.PerspectiveCamera, on: boolean, clear: boolean): void {
     if (on && !this.iframe) {
       const f = lookOnlyFrame(this.url, 'Totem LABITCONF');
-      Object.assign(f.style, { width: `${TOTEM_PAGE.W}px`, height: `${TOTEM_PAGE.H}px`, border: '0', display: 'block' });
       this.layer.holder.append(f);
       this.iframe = f;
     } else if (!on && this.iframe) {

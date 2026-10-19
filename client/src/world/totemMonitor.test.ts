@@ -7,7 +7,8 @@ import { LABITCONF } from './landmarks/labitconf';
 import { CHAR_HEIGHT } from './character';
 import { obeliskShape } from './obelisk';
 import { smoothRiver } from './island';
-import { TOTEM, TOTEM_URL, buildTotemMonitor, drawTotemCard, inTotemZone, totemInView, OcclusionProbe, TotemStage, TOTEM_PAGE } from './totemMonitor';
+import { TOTEM, TOTEM_URL, buildTotemMonitor, drawTotemCard, inTotemZone, totemInView, OcclusionProbe, TotemStage } from './totemMonitor';
+import { PAGE_VIEWPORT } from '../ui/theaterPanel';
 
 /** LABITCONF's slot and the monitor's footprint in world space, as World places them. */
 function placed() {
@@ -222,9 +223,9 @@ describe('the live totem on the monitor', () => {
     stage.update(camera, true, true);
     const f = parent.querySelector('iframe')!;
     expect(f.src).toBe(TOTEM_URL);
-    // The page's layout viewport is TOTEM_PAGE, and so is the box DomScreen scales onto the screen.
+    // The page's layout viewport is PAGE_VIEWPORT, and so is the box DomScreen scales onto the screen.
     const holder = f.parentElement as HTMLElement;
-    expect([f.style.width, f.style.height, holder.style.width, holder.style.height]).toEqual([`${TOTEM_PAGE.W}px`, `${TOTEM_PAGE.H}px`, `${TOTEM_PAGE.W}px`, `${TOTEM_PAGE.H}px`]);
+    expect([f.style.width, f.style.height, holder.style.width, holder.style.height]).toEqual([`${PAGE_VIEWPORT.W}px`, `${PAGE_VIEWPORT.H}px`, `${PAGE_VIEWPORT.W}px`, `${PAGE_VIEWPORT.H}px`]);
     expect(layer.style.display).toBe('');
     expect(stage.live).toBe(true);
     // Hidden by a building: the 3D card shows, the page keeps running.
@@ -238,8 +239,8 @@ describe('the live totem on the monitor', () => {
   });
 
   it('draws totemcillo’s desktop view (wider than its 700 px phone breakpoint) on a 16:9 screen of the same shape', () => {
-    expect(TOTEM_PAGE.W).toBeGreaterThan(700);
+    expect(PAGE_VIEWPORT.W).toBeGreaterThan(700);
     expect(TOTEM.W / TOTEM.H).toBeCloseTo(16 / 9, 5);
-    expect(TOTEM_PAGE.W / TOTEM_PAGE.H).toBeCloseTo(TOTEM.W / TOTEM.H, 9);
+    expect(PAGE_VIEWPORT.W / PAGE_VIEWPORT.H).toBeCloseTo(TOTEM.W / TOTEM.H, 9);
   });
 });

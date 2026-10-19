@@ -570,15 +570,16 @@ a.account-btn { text-decoration: none; display: inline-flex; align-items: center
 .call-vol { width: 90px; accent-color: #f5d76e; }
 @media (max-width: 720px) { .call-pick { max-width: 110px; } .call-vol { width: 60px; } }
 /* Watch mode: the film fills the page; the chat and the call bar stay over it, where they were; the village isn't drawn. */
-.theater-watch { position: absolute; inset: 0; z-index: 5; background: #000; display: grid; place-items: center; }
+.theater-watch { position: absolute; inset: 0; z-index: 5; background: #000; display: grid; place-items: center; overflow: hidden; }
 /* The film makes room for the chat beside it (right on desktop, left column on phones held sideways). */
 body.watching #app:has(> .chat:not([hidden]):not(.min)) > .theater-watch { right: 412px; }
 body.watching .chat { top: 14px; bottom: 14px; }
 @media (max-width: 720px) { body.watching #app:has(> .chat:not([hidden]):not(.min)) > .theater-watch { right: 0; bottom: 52%; } body.watching .chat { top: auto; } }
 @media (pointer: coarse) and (orientation: landscape) and (max-height: 540px) { body.watching #app:has(> .chat:not([hidden]):not(.min)) > .theater-watch { right: 0; bottom: 0; left: min(408px, calc(46vw + 8px)); } body.watching .chat { top: 8px; bottom: 8px; } }
 .theater-watch video { width: 100%; height: 100%; object-fit: contain; }
-/* The totem monitor's focus: totemcillo's page in place of the film. */
-.theater-watch-page iframe { width: 100%; height: 100%; border: 0; display: block; }
+/* The totem monitor's focus: totemcillo's page in place of the film (lookOnlyFrame gives it a desktop layout width,
+   fitPage the watch view's own height, so it fills this box; the track is 1600 px wide, so center it before scaling it down). */
+.theater-watch-page { place-content: center; }
 .theater-watch video[hidden], .theater-watch-card[hidden] { display: none; }
 .theater-watch-card { text-align: center; color: var(--white); font-family: var(--sans); padding: 24px; }
 .theater-watch-title { font: 800 34px var(--sans); color: #f5d76e; margin-bottom: 8px; }
