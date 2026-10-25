@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { finalizeEvent, generateSecretKey, getPublicKey } from 'nostr-tools/pure';
 import type { EventTemplate } from 'nostr-tools';
-import { editOwnProfile, initialOf, mergeProfile, newestKind0 } from './ownProfile';
+import { editOwnProfile, initialOf, mergeProfile, newestKind0, syncOwnProfile } from './ownProfile';
 import { activeRelay } from './hub';
 
 const sk = generateSecretKey();
@@ -90,6 +90,57 @@ describe('editOwnProfile', () => {
     const { hub, published } = fakeHub([], true);
     const abort = () => { throw new DOMException('superseded', 'AbortError'); };
     await expect(editOwnProfile({ hub: hub as never, pubkey: pk, sign }, { name: 'z' }, abort)).rejects.toThrow(/superseded/);
+    expect(published).toHaveLength(0);
+  });
+});
+
+describe('syncOwnProfile', () => {
+  /** A hub whose group relay holds `onGroup` and the other relays `elsewhere`. */
+  function relayHub(onGroup: ReturnType<typeof kind0>[], elsewhere: ReturnType<typeof kind0>[]) {
+    const published: { relays: readonly string[]; id: string }[] = [];
+    const hub = {
+      query: vi.fn(async (spec: { relays: readonly string[] }) => ({
+        events: spec.relays.includes(activeRelay()) ? onGroup : elsewhere, complete: true, fromCache: false, perRelay: {},
+      })),
+      publish: vi.fn(async (spec: { relays: readonly string[]; event: { id: string } }) => {
+        published.push({ relays: spec.relays, id: spec.event.id });
+        return spec.relays.map((url) => ({ url, status: 'ok' as const, reason: null }));
+      }),
+    };
+    return { hub, published };
+  }
+
+  it('copies a newer profile from the other relays to the group relay, unchanged', async () => {
+    const edited = kind0({ name: 'edited' }, 200);
+    const { hub, published } = relayHub([kind0({ name: 'old' }, 100)], [edited]);
+    expect(await syncOwnProfile({ hub: hub as never, pubkey: pk })).toBe('republished');
+    expect(published).toEqual([{ relays: [activeRelay()], id: edited.id }]);
+  });
+
+  it('copies it to a group relay that has none', async () => {
+    const edited = kind0({ name: 'edited' }, 200);
+    const { hub, published } = relayHub([], [edited]);
+    expect(await syncOwnProfile({ hub: hub as never, pubkey: pk })).toBe('republished');
+    expect(published[0].id).toBe(edited.id);
+  });
+
+  it('uses the profile just saved when no relay returned it', async () => {
+    const saved = kind0({ name: 'saved' }, 300);
+    const { hub, published } = relayHub([kind0({ name: 'old' }, 100)], []);
+    expect(await syncOwnProfile({ hub: hub as never, pubkey: pk }, saved)).toBe('republished');
+    expect(published[0].id).toBe(saved.id);
+  });
+
+  it('leaves a group relay that is up to date alone', async () => {
+    const same = kind0({ name: 'same' }, 200);
+    const { hub, published } = relayHub([same], [kind0({ name: 'older' }, 100)]);
+    expect(await syncOwnProfile({ hub: hub as never, pubkey: pk })).toBe('current');
+    expect(published).toHaveLength(0);
+  });
+
+  it('does nothing without a profile anywhere', async () => {
+    const { hub, published } = relayHub([], []);
+    expect(await syncOwnProfile({ hub: hub as never, pubkey: pk })).toBe('none');
     expect(published).toHaveLength(0);
   });
 });

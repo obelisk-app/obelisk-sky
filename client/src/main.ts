@@ -63,7 +63,7 @@ import { ANONYMOUS_IDENTITY, activeRelay, DEFAULT_GROUP_RELAY, normalizeRelay, p
 import { pageHub } from './nostr/hub';
 import { SessionManager, type LoginArgs, type Session } from './nostr/session';
 import { registerHost } from './shims/host';
-import { editOwnProfile, fetchOwnProfile, initialOf } from './nostr/ownProfile';
+import { editOwnProfile, fetchOwnProfile, initialOf, syncOwnProfile } from './nostr/ownProfile';
 import type { ProfileEditorInitial } from '@/types/session/profile';
 import { Soundscape } from './sound';
 import { openZapSheet } from './ui/zapSheet';
@@ -461,6 +461,9 @@ function startFeed(): void {
   if (me) {
     void avatars.syncOwn(me, async (ev) => (await publishSigned(hub, ev as VerifiedEvent)).ok)
       .then((r) => { if (r === 'republished') console.info('[sky] look copied to', activeRelay()); });
+    // Your profile too: an edit saved on another relay is copied here.
+    void syncOwnProfile({ hub, pubkey: me }, ownKind0?.pubkey === me ? ownKind0 : null)
+      .then((r) => { if (r === 'republished') console.info('[sky] profile copied to', activeRelay()); });
   }
   startActivity();
   book = new GameBook();

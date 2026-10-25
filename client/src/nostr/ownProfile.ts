@@ -130,3 +130,39 @@ export async function editOwnProfile(deps: OwnProfileDeps, edit: ProfileEdit, as
   if (!onGroup.ok && !rest.some((r) => r.status === 'ok')) throw new Error('No relay accepted the profile.');
   return event;
 }
+
+/**
+ * Your kind 0 follows you to the relay you switch to, as your look does
+ * (avatars.ts `syncOwn`): the newest copy on the other profile relays (or the
+ * one you just saved, `known`) is published, unchanged, to the group relay
+ * when it lacks it or holds an older one. No new event is signed.
+ */
+export async function syncOwnProfile(
+  deps: Pick<OwnProfileDeps, 'hub' | 'pubkey'>,
+  known: NostrEvent | null = null,
+): Promise<'republished' | 'current' | 'none' | 'failed'> {
+  if (isGuest()) return 'none';
+  const group = activeRelay();
+  const others = profileRelays().filter((r) => r !== group);
+  const ask = (relays: string[], label: string) => deps.hub.query({
+    relays,
+    filters: [{ kinds: [0], authors: [deps.pubkey], limit: 5 }],
+    maxWaitMs: PROFILE_LOOKUP_MAX_WAIT_MS,
+    cache: { mode: 'bypass' },
+    label,
+  });
+  let onGroup: NostrEvent | null;
+  let best: NostrEvent | null;
+  try {
+    const [g, o] = await Promise.all([ask([group], 'sky-own-profile-group'), ask(others, 'sky-own-profile-others')]);
+    onGroup = newestKind0(g.events, deps.pubkey);
+    best = newestKind0([...o.events, ...g.events, ...(known ? [known] : [])], deps.pubkey);
+  } catch {
+    return 'failed';
+  }
+  if (!best) return 'none';
+  if (onGroup && onGroup.created_at >= best.created_at) return 'current';
+  if (group !== activeRelay()) return 'failed';
+  const out = await publishSigned(deps.hub as RelayHub, best as VerifiedEvent).catch(() => ({ ok: false }));
+  return out.ok ? 'republished' : 'failed';
+}
