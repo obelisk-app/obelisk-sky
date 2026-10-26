@@ -48,7 +48,7 @@ describe('landing copy', () => {
   });
   it('links the family at the foot: Obelisk, nostr-wot, Liberture, La Crypta, and the code on GitHub', () => {
     document.documentElement.innerHTML = html.replace(/^<!doctype html>/i, '');
-    const hrefs = [...document.querySelectorAll('.foot a')].map((a) => a.getAttribute('href'));
+    const hrefs = [...document.querySelectorAll('.foot > a')].map((a) => a.getAttribute('href'));
     expect(hrefs).toEqual(['https://obelisk.ar', 'https://nostr-wot.com', 'https://liberture.com', 'https://lacrypta.ar', GITHUB]);
   });
   it('draws every feature as its own animated icon, stilled for reduced motion', () => {
@@ -165,5 +165,12 @@ describe('the social cards', () => {
       expect(a.target).toBe('_blank');
       expect(a.rel).toContain('noopener');
     }
+  });
+  it('repeats them as named icons in the footer, after the closing call to action', () => {
+    document.documentElement.innerHTML = html.replace(/^<!doctype html>/i, '');
+    const icons = [...document.querySelectorAll<HTMLAnchorElement>('.foot-social a')];
+    expect(icons.map((a) => a.getAttribute('aria-label'))).toEqual(['Instagram @obelisk.ar', 'YouTube @obelisk_ar', 'X @obelisk_ar']);
+    const sections = [...document.querySelectorAll('main > section')].map((s) => s.id || s.className);
+    expect(sections.slice(-2)).toEqual(['cta', 'social']);
   });
 });

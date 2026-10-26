@@ -226,7 +226,7 @@ section h2 { margin: 0; font-size: clamp(30px, 4vw, 44px); letter-spacing: -0.03
 .step-n { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--green); color: var(--ink); font-weight: 800; box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.8); }
 
 /* Obelisk's official accounts: the feature card's frosted tile, one per network, opening in a new tab. */
-.social { max-width: 1180px; margin: 0 auto; padding: 72px 16px 24px; }
+.social { max-width: 1180px; margin: 0 auto; padding: 8px 16px 88px; }
 .social-grid { list-style: none; padding: 0; margin: 44px auto 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 960px; }
 .social-card {
   display: flex; flex-direction: column; align-items: flex-start; height: 100%; box-sizing: border-box; text-decoration: none; color: var(--ink);
@@ -248,6 +248,11 @@ section h2 { margin: 0; font-size: clamp(30px, 4vw, 44px); letter-spacing: -0.03
 .foot { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px; padding: 28px 16px 40px; font-size: 14px; color: var(--ink-muted); border-top: 1px solid rgba(15, 42, 68, 0.08); }
 .foot a { text-decoration: none; font-weight: 600; }
 .foot a:hover { color: var(--ink); }
+.foot-social { display: inline-flex; gap: 8px; align-items: center; }
+.foot-social a { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--card); border: 1px solid rgba(15, 42, 68, 0.12); transition: background 0.2s, transform 0.2s; }
+.foot-social a:hover { background: var(--green); transform: translateY(-2px); }
+.foot-social svg { width: 20px; height: 20px; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.foot-social .dot, .foot-social .play { fill: var(--ink); stroke: none; }
 
 @media (max-width: 860px) {
   .hero { grid-template-columns: 1fr; padding-top: 16px; gap: 40px; text-align: center; }
@@ -273,6 +278,6 @@ section h2 { margin: 0; font-size: clamp(30px, 4vw, 44px); letter-spacing: -0.03
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .sky i, .porthole, .hero-mark, .cta img, .ico * { animation: none; }
-  .feature, .ico, .porthole video, .social-card { transition: none; }
+  .feature, .ico, .porthole video, .social-card, .foot-social a { transition: none; }
   .feature:hover, .feature:hover .ico, .social-card:hover, .social-card:hover .ico { transform: none; }
 }
