@@ -81,11 +81,15 @@ h1 { margin: 0; font-size: clamp(40px, 6vw, 68px); line-height: 1.02; letter-spa
 
 .hero-art { position: relative; justify-self: center; width: min(520px, 100%); aspect-ratio: 1; }
 .porthole {
-  width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: var(--sky);
+  position: relative; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: var(--sky);
   border: 10px solid rgba(255, 255, 255, 0.85); box-shadow: 0 30px 80px rgba(15, 42, 68, 0.25), inset 0 0 0 1px rgba(15, 42, 68, 0.06);
   animation: float 7s ease-in-out infinite;
 }
-.porthole img { width: 100%; height: 100%; object-fit: cover; }
+/* The island's first frame as a picture, and the orbit fading in over it once
+   it plays (the same frame, so the switch can't be seen). */
+.porthole img, .porthole video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.porthole video { opacity: 0; transition: opacity 0.4s ease; }
+.porthole video.playing { opacity: 1; }
 .hero-mark { position: absolute; width: 34%; left: -6%; bottom: -4%; filter: drop-shadow(0 12px 20px rgba(15, 42, 68, 0.2)); animation: float 5s ease-in-out infinite reverse; }
 @keyframes float { 50% { transform: translateY(-10px); } }
 
@@ -246,6 +250,6 @@ section h2 { margin: 0; font-size: clamp(30px, 4vw, 44px); letter-spacing: -0.03
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .sky i, .porthole, .hero-mark, .cta img, .ico * { animation: none; }
-  .feature, .ico { transition: none; }
+  .feature, .ico, .porthole video { transition: none; }
   .feature:hover, .feature:hover .ico { transform: none; }
 }

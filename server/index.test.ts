@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { TOTEM_ORIGIN } from '../client/src/world/totemMonitor';
 process.env.NODE_ENV = 'test';
-const { resolveStatic, redirectFor, SECURITY_HEADERS } = await import('./index');
+const { resolveStatic, redirectFor, SECURITY_HEADERS, parseRange, cacheControl } = await import('./index');
 
 describe('static host', () => {
   it('never resolves outside the client build', () => {
@@ -16,6 +16,21 @@ describe('static host', () => {
     expect(resolveStatic('/nowhere')!.file).toMatch(/dist\/client\/index\.html$/);
     expect(resolveStatic('/application')!.file).toMatch(/dist\/client\/index\.html$/);
     expect(resolveStatic('/assets/x.js')!.rel).toBe('/assets/x.js');
+    // A missing file is a fallback page, never kept a year under an asset's URL.
+    expect(resolveStatic('/landing/nope.mp4')!.fallback).toBe(true);
+  });
+  it('keeps hashed bundles, models and the landing media a year, and checks pages every time', () => {
+    for (const p of ['/assets/app-x.js', '/models/town/a.glb', '/landing/island-orbit.mp4']) expect(cacheControl(p), p).toMatch(/max-age=31536000, immutable/);
+    for (const p of ['/index.html', '/app/index.html', '/og.jpg', '/sounds/manifest.json']) expect(cacheControl(p), p).toBe('no-cache');
+  });
+  it('answers byte ranges, as Safari needs to play the landing video', () => {
+    expect(parseRange('bytes=0-1', 100)).toEqual({ start: 0, end: 1 });
+    expect(parseRange('bytes=0-', 100)).toEqual({ start: 0, end: 99 });
+    expect(parseRange('bytes=90-500', 100)).toEqual({ start: 90, end: 99 });
+    expect(parseRange('bytes=-10', 100)).toEqual({ start: 90, end: 99 });
+    expect(parseRange('bytes=-500', 100)).toEqual({ start: 0, end: 99 });
+    for (const h of ['bytes=100-', 'bytes=5-2', 'bytes=-0']) expect(parseRange(h, 100), h).toBe('unsatisfiable');
+    for (const h of [undefined, '', 'bytes=-', 'bytes=0-1,5-9', 'items=0-1']) expect(parseRange(h, 100), String(h)).toBeNull();
   });
   it('sends old village links (/?relay=, /?time=) to /app', () => {
     expect(redirectFor('/', '?relay=public.obelisk.ar')).toBe('/app?relay=public.obelisk.ar');

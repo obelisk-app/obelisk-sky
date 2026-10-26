@@ -42,6 +42,8 @@ const MIME: Record<string, string> = {
   '.ogg': 'audio/ogg',
   '.m4a': 'audio/mp4',
   '.wav': 'audio/wav',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
 };
 
 // The model loader reads textures embedded in .glb files through blob: URLs
@@ -62,7 +64,8 @@ export const SECURITY_HEADERS = {
     "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://totemcillo.vercel.app; frame-ancestors 'self'",
 };
 
-export function resolveStatic(pathname: string): { file: string; rel: string } | null {
+/** `fallback`: no such file, so a page stands in (never cached for long). */
+export function resolveStatic(pathname: string): { file: string; rel: string; fallback: boolean } | null {
   let rel: string;
   try {
     rel = normalize(decodeURIComponent(pathname)).replace(/^(\.\.[/\\])+/, '');
@@ -74,8 +77,9 @@ export function resolveStatic(pathname: string): { file: string; rel: string } |
   let file = join(STATIC_DIR, rel);
   if (!file.startsWith(STATIC_DIR)) return null;
   // Unknown paths: the village under /app, the landing page elsewhere.
-  if (!existsSync(file) || statSync(file).isDirectory()) file = join(STATIC_DIR, rel.startsWith('/app/') ? 'app/index.html' : 'index.html');
-  return { file, rel };
+  const fallback = !existsSync(file) || statSync(file).isDirectory();
+  if (fallback) file = join(STATIC_DIR, rel.startsWith('/app/') ? 'app/index.html' : 'index.html');
+  return { file, rel, fallback };
 }
 
 /** Links shared before the landing page existed (`/?relay=…`, `/?time=…`)
@@ -86,19 +90,47 @@ export function redirectFor(pathname: string, search: string): string | null {
   return q.has('relay') || q.has('time') ? `/app${search}` : null;
 }
 
+/** Hashed bundles, models and the landing page's media (its URLs carry `?v=`)
+ *  are kept a year; everything else is checked every time. */
+export function cacheControl(rel: string): string {
+  const immutable = rel.startsWith('/assets/') || rel.startsWith('/models/') || rel.startsWith('/landing/');
+  return immutable ? 'public, max-age=31536000, immutable' : 'no-cache';
+}
+
+/** One `Range: bytes=…` span of a `size`-byte file: `null` to send it whole
+ *  (no header, several spans, not bytes), `'unsatisfiable'` for a 416. Safari
+ *  plays a <video> only from a server that answers ranges. */
+export function parseRange(header: string | undefined, size: number): { start: number; end: number } | 'unsatisfiable' | null {
+  const m = header && /^bytes=(\d*)-(\d*)$/.exec(header.trim());
+  if (!m || (m[1] === '' && m[2] === '')) return null;
+  let start: number, end: number;
+  if (m[1] === '') {
+    start = Math.max(0, size - Number(m[2]));
+    end = size - 1;
+  } else {
+    start = Number(m[1]);
+    end = m[2] === '' ? size - 1 : Math.min(Number(m[2]), size - 1);
+  }
+  return start > end || start >= size ? 'unsatisfiable' : { start, end };
+}
+
 function serveStatic(req: IncomingMessage, res: ServerResponse, pathname: string): void {
   const hit = resolveStatic(pathname);
   if (!hit) { res.writeHead(400).end(); return; }
   if (!existsSync(hit.file)) { res.writeHead(503).end('client not built'); return; }
-  const type = MIME[extname(hit.file)] || 'application/octet-stream';
-  const immutable = hit.rel.startsWith('/assets/') || hit.rel.startsWith('/models/');
-  res.writeHead(200, {
+  const size = statSync(hit.file).size;
+  const headers = {
     ...SECURITY_HEADERS,
-    'content-type': type,
-    'cache-control': immutable ? 'public, max-age=31536000, immutable' : 'no-cache',
-  });
+    'content-type': MIME[extname(hit.file)] || 'application/octet-stream',
+    'cache-control': hit.fallback ? 'no-cache' : cacheControl(hit.rel),
+    'accept-ranges': 'bytes',
+  };
+  const range = parseRange(req.headers.range, size);
+  if (range === 'unsatisfiable') { res.writeHead(416, { ...headers, 'cache-control': 'no-cache', 'content-range': `bytes */${size}` }).end(); return; }
+  if (range) res.writeHead(206, { ...headers, 'content-range': `bytes ${range.start}-${range.end}/${size}`, 'content-length': range.end - range.start + 1 });
+  else res.writeHead(200, { ...headers, 'content-length': size });
   if (req.method === 'HEAD') { res.end(); return; }
-  createReadStream(hit.file).pipe(res);
+  createReadStream(hit.file, range ?? {}).pipe(res);
 }
 
 const server = createServer((req, res) => {

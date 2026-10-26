@@ -1,5 +1,5 @@
-// The landing page at /: language switch only. No Three.js, no React; the
-// village itself lives at /app.
+// The landing page at /: the language switch and the hero's island orbit. No
+// Three.js, no React; the village itself lives at /app.
 
 import { COPY, LANGS, pickLang, rememberLang, storedLang, type CopyKey, type Lang } from './copy';
 
@@ -33,8 +33,35 @@ export function glowWord(el: HTMLElement, word: string): void {
   });
 }
 
+/** The hero's island orbit (`video.orbit`): it plays only while it's on
+ *  screen, and never under reduced motion or Save-Data. Until it plays, the
+ *  picture under it (its first frame) shows; it fades in once playing, and a
+ *  browser that can't play it keeps the picture. Nothing is downloaded until
+ *  it first plays (`preload="none"` in the page). */
+export function mountOrbit(video: HTMLVideoElement, win: Window & typeof globalThis = window): void {
+  const still = win.matchMedia?.('(prefers-reduced-motion: reduce)');
+  const saveData = (win.navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
+  let inView = false;
+  video.addEventListener('playing', () => video.classList.add('playing'), { once: true });
+  const sync = (): void => {
+    if (inView && !still?.matches && !saveData) {
+      video.preload = 'auto';
+      // Refused autoplay (a browser's power saving) leaves the picture.
+      video.play()?.catch(() => {});
+    } else if (!video.paused) video.pause();
+  };
+  still?.addEventListener?.('change', sync);
+  if (typeof win.IntersectionObserver !== 'function') { inView = true; sync(); return; }
+  new win.IntersectionObserver((entries) => {
+    inView = entries.some((e) => e.isIntersecting);
+    sync();
+  }).observe(video);
+}
+
 export function mountLanding(doc: Document): void {
   applyLang(doc, pickLang(location.search, storedLang(), navigator.languages ?? [navigator.language]));
+  const orbit = doc.querySelector<HTMLVideoElement>('video.orbit');
+  if (orbit) mountOrbit(orbit);
   for (const b of doc.querySelectorAll<HTMLButtonElement>('[data-lang]')) {
     b.addEventListener('click', () => {
       const lang = b.dataset.lang as Lang;
