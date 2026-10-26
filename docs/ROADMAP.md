@@ -61,6 +61,22 @@ These dex features don't exist, so they aren't listed here: message editing, pin
 - a host for dex's toast store;
 - `@nostr-wot/wallet` (or a shim) for zaps.
 
+## Games inside the village
+
+- **Chain Reaction in the 3D world.** Build a playable in-world experience at
+  the game table: select cells on the table, see orb placements and chain
+  reactions animate, and make turn, player and win states clear. Reuse the
+  existing Chain Reaction engine and kind 2390 game protocol so the same match
+  remains compatible with obelisk.ar. Sky already has game tables and a playable
+  Chain Reaction panel (`games/book.ts`, `ui/gamePanel.ts`); this item is the
+  direct interaction and presentation inside the world.
+- **A playable arcade game.** Let a villager approach an arcade cabinet and
+  launch a short game inside Sky, with keyboard/touch controls, score, restart
+  and a clear way back to the village. Choose the first game during design;
+  the existing decorative cabinets are the starting point, not a finished game.
+
+Requested 2026-10-26; planned, not implemented by this roadmap update.
+
 ## Calls
 
 | Feature | In dex | Sky today |
