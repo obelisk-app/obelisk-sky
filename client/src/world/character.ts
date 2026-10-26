@@ -29,6 +29,13 @@ const RUN_SPEED = 2.4;
 /** Badge height above the head bone (world units). */
 const BADGE_ABOVE_HEAD = 0.3;
 
+/** Smooth lift, bite/sip, and return; roasting has a longer resting interval. */
+function propLift(clock: number, roast: boolean): number {
+  const t = clock % (roast ? 9 : 6);
+  const k = t < 0.5 ? t / 0.5 : t < 1.3 ? 1 : t < 1.8 ? 1 - (t - 1.3) / 0.5 : 0;
+  return k * k * (3 - 2 * k);
+}
+
 /** How high the sitting clip expects the seat (≈0.45 m), in world units. */
 export const SIT_SEAT_HEIGHT = 0.45 * SCALE;
 
@@ -788,14 +795,23 @@ export class Character {
           const tip = this.mate.userData.mouth as THREE.Vector3 | undefined;
           if (head && tip) {
             this.body.worldToLocal(head);
-            const lips = head.add(this.tmp4.set(0, 0.02, 0.04));
-            const d = lips.distanceTo(this.mate.position);
-            const w = 1 - THREE.MathUtils.smoothstep(d, 0.05, 0.11);
-            this.mate.rotation.x = w * 0.35;
-            const s = this.mate.scale.x;
-            const tipNow = this.tmp5.copy(tip).multiplyScalar(s).applyEuler(this.mate.rotation);
-            const at = this.tmp6.copy(lips).sub(tipNow);
-            this.mate.position.lerp(at, w);
+            if (this.mate.userData.roast) {
+              // Lift the far end to the mouth with the hand BELOW it. The
+              // old cup pose put the handle at the face instead of the food.
+              this.mate.rotation.set(-Math.PI / 2 * propLift(this.sipClock, true), 0, 0);
+              // The whole shaft stays in front of the head, including while
+              // the wrist/knuckles shift during the seated animation.
+              this.mate.position.z = Math.max(this.mate.position.z, head.z + 0.09);
+            } else {
+              const lips = head.add(this.tmp4.set(0, 0.02, 0.04));
+              const d = lips.distanceTo(this.mate.position);
+              const w = 1 - THREE.MathUtils.smoothstep(d, 0.05, 0.11);
+              this.mate.rotation.x = w * 0.35;
+              const s = this.mate.scale.x;
+              const tipNow = this.tmp5.copy(tip).multiplyScalar(s).applyEuler(this.mate.rotation);
+              const at = this.tmp6.copy(lips).sub(tipNow);
+              this.mate.position.lerp(at, w);
+            }
           }
         }
       }
@@ -823,17 +839,16 @@ export class Character {
     const side = new THREE.Vector3().subVectors(S, v(chest)).projectOnPlane(fwd).projectOnPlane(upW).normalize(); // toward the left shoulder
     const k = CHAR_HEIGHT / 0.72; // world units per "village person"
     const hold = v(chest).addScaledVector(fwd, 0.09 * k).addScaledVector(side, 0.03 * k).addScaledVector(upW, -0.09 * k);
-    const lips = v(head).addScaledVector(fwd, 0.04 * k).addScaledVector(upW, 0.02 * k);
+    const roast = !!this.mate?.userData.roast;
+    const lips = v(head).addScaledVector(fwd, (roast ? 0.09 : 0.04) * k).addScaledVector(upW, 0.02 * k);
     // Sip: up in 0.5 s, 0.8 s at the lips, down in 0.5 s, every 6 s (a
     // marshmallow: held out over the fire, eaten every 9 s).
-    const roast = !!this.mate?.userData.roast;
-    const t = this.sipClock % (roast ? 9 : 6);
-    const s01 = this.mate ? (t < 0.5 ? t / 0.5 : t < 1.3 ? 1 : t < 1.8 ? 1 - (t - 1.3) / 0.5 : 0) : 0;
     if (roast) hold.addScaledVector(fwd, 0.13 * k).addScaledVector(upW, 0.05 * k);
-    const sip = s01 * s01 * (3 - 2 * s01);
+    const sip = this.mate ? propLift(this.sipClock, roast) : 0;
     // At the lips the hand sits a mate's height below them (the bombilla on top).
-    const tip = (this.mate?.userData.mouth as THREE.Vector3 | undefined)?.y ?? 0.1;
-    const target = hold.lerp(lips.addScaledVector(upW, -tip * (this.mate?.scale.y ?? 1) * 0.9), sip);
+    const mouth = this.mate?.userData.mouth as THREE.Vector3 | undefined;
+    const tip = (roast ? mouth?.z : mouth?.y) ?? 0.1;
+    const target = hold.lerp(lips.addScaledVector(upW, -tip * (this.mate?.scale.y ?? 1) * (roast ? 1 : 0.9)), sip);
     // Handing the mate over (or taking it): out toward the neighbour.
     if (this.reachK > 0) target.lerp(this.reach, this.reachK);
     else if (!this.mate) return; // nothing in hand, nothing to pass: the clip's own arms
