@@ -49,6 +49,7 @@ const en = {
   'social.lead': "News, videos and what's next, wherever you scroll.",
   'social.follow': 'Follow',
   'cta.title': 'The island is up. Come in.',
+  'cta.glow': 'island',
   'cta.enter': 'Enter the island',
   'footer.part': 'Part of Obelisk',
 } as const;
@@ -99,6 +100,7 @@ const es: Record<CopyKey, string> = {
   'social.lead': 'Novedades, videos y lo que se viene, en tus redes.',
   'social.follow': 'Seguir',
   'cta.title': 'La isla ya está arriba. Pasá.',
+  'cta.glow': 'isla',
   'cta.enter': 'Entrar a la isla',
   'footer.part': 'Parte de Obelisk',
 };

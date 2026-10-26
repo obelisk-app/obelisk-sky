@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { COPY, LANGS, pickLang, type CopyKey } from './copy';
-import { applyLang, mountOrbit } from './landing';
+import { applyLang, mountHeader, mountLanding, mountOrbit, nextLang } from './landing';
 
 const html = readFileSync(join(__dirname, '../../index.html'), 'utf8');
 const css = readFileSync(join(__dirname, 'landing.css'), 'utf8');
@@ -41,6 +41,63 @@ describe('landing copy', () => {
       expect(glow[0].textContent).toBe('Nostr');
     }
     expect(COPY.es['hero.title']).toBe('Entrá al mundo de Nostr, caminando.');
+  });
+  it('closes on the mark in a sky-blue pill and "island" shimmering violet like "Nostr", in both languages', () => {
+    document.documentElement.innerHTML = html.replace(/^<!doctype html>/i, '');
+    expect(document.querySelector('.cta > .cta-mark > img')!.getAttribute('src')).toBe('/brand/sky-mark.svg');
+    expect(css).toMatch(/\.cta-mark \{[^}]*border-radius: 999px;[^}]*background: linear-gradient/);
+    expect(css).toMatch(/\.cta-mark \{[^}]*animation: float/);
+    expect(css).toMatch(/prefers-reduced-motion: reduce\)[^@]*\.cta-mark[^{]*\{ animation: none; \}/);
+    expect(document.querySelector('.cta h2 .glow-word')!.textContent).toBe('island');
+    for (const [l, word] of [['es', 'isla'], ['en', 'island']] as const) {
+      applyLang(document, l);
+      const h2 = document.querySelector('.cta h2')!;
+      expect(h2.textContent).toBe(COPY[l]['cta.title']);
+      const glow = h2.querySelectorAll('.glow-word');
+      expect(glow).toHaveLength(1);
+      expect(glow[0].textContent).toBe(word);
+    }
+  });
+  it('keeps the header at the top while scrolling, frosted once the page has moved', () => {
+    document.documentElement.innerHTML = html.replace(/^<!doctype html>/i, '');
+    expect(css).toMatch(/\.nav \{[^}]*position: sticky; top: 0; z-index: 10;/);
+    expect(css).toMatch(/\.nav\.scrolled \{[^}]*backdrop-filter/);
+    const nav = document.querySelector<HTMLElement>('header.nav')!;
+    // Everything the header had is still in it.
+    for (const sel of ['.nav-brand', '.nav-links', '.lang', 'a.gh', '[data-i18n="nav.enter"]']) expect(nav.querySelector(sel), sel).not.toBeNull();
+    let onScroll = (): void => {};
+    const win = { scrollY: 0, addEventListener: (_: string, f: () => void) => { onScroll = f; } } as unknown as Window;
+    mountHeader(nav, win);
+    expect(nav.classList.contains('scrolled')).toBe(false);
+    (win as { scrollY: number }).scrollY = 300;
+    onScroll();
+    expect(nav.classList.contains('scrolled')).toBe(true);
+    (win as { scrollY: number }).scrollY = 0;
+    onScroll();
+    expect(nav.classList.contains('scrolled')).toBe(false);
+  });
+  it('switches language on any click of the EN | ES pill, wherever it lands', () => {
+    document.documentElement.innerHTML = html.replace(/^<!doctype html>/i, '');
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+    localStorage.clear();
+    mountLanding(document);
+    const h1 = () => document.querySelector('h1')!.textContent;
+    const btn = (l: string) => document.querySelector<HTMLButtonElement>(`[data-lang="${l}"]`)!;
+    expect(document.documentElement.lang).toBe('en');
+    btn('en').click(); // the side already on
+    expect(document.documentElement.lang).toBe('es');
+    expect(h1()).toBe(COPY.es['hero.title']);
+    btn('es').click();
+    expect(document.documentElement.lang).toBe('en');
+    document.querySelector<HTMLElement>('.lang')!.click(); // the pill's edge
+    expect(document.documentElement.lang).toBe('es');
+    btn('en').click(); // the other side still picks it
+    expect(document.documentElement.lang).toBe('en');
+    expect(btn('en').getAttribute('aria-pressed')).toBe('true');
+    expect(nextLang('en')).toBe('es');
+    expect(nextLang('es')).toBe('en');
+    localStorage.clear();
+    vi.restoreAllMocks();
   });
   it('sends every call to action to the village', () => {
     document.documentElement.innerHTML = html.replace(/^<!doctype html>/i, '');

@@ -1,5 +1,6 @@
-// The landing page at /: the language switch and the hero's island orbit. No
-// Three.js, no React; the village itself lives at /app.
+// The landing page at /: the language switch, the header that stays at the top
+// and the hero's island orbit. No Three.js, no React; the village itself lives
+// at /app.
 
 import { COPY, LANGS, pickLang, rememberLang, storedLang, type CopyKey, type Lang } from './copy';
 
@@ -11,12 +12,15 @@ export function applyLang(doc: Document, lang: Lang): void {
   for (const el of doc.querySelectorAll<HTMLElement>('[data-i18n]')) {
     const w = words[el.dataset.i18n as CopyKey];
     if (w) el.textContent = w;
-    if (w && el.dataset.glow) glowWord(el, el.dataset.glow);
+    // The shimmering word: the same in every language (`data-glow`), or its own
+    // copy key (`data-glow-key`).
+    const glow = el.dataset.glow ?? (el.dataset.glowKey ? words[el.dataset.glowKey as CopyKey] : undefined);
+    if (w && glow) glowWord(el, glow);
   }
   for (const b of doc.querySelectorAll<HTMLButtonElement>('[data-lang]')) b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
 }
 
-/** Wrap each `word` in `el`'s text in a `.glow-word` span (the hero's shimmering "Nostr"). */
+/** Wrap each `word` in `el`'s text in a `.glow-word` span (the hero's shimmering "Nostr", the closing "island"). */
 export function glowWord(el: HTMLElement, word: string): void {
   const text = el.textContent ?? '';
   const parts = text.split(word);
@@ -58,18 +62,36 @@ export function mountOrbit(video: HTMLVideoElement, win: Window & typeof globalT
   }).observe(video);
 }
 
+/** The header stays at the top (CSS sticky); once the page has scrolled it
+ *  gets a frosted backing (`.scrolled`), so what passes under it doesn't
+ *  clash with its buttons. */
+export function mountHeader(nav: HTMLElement, win: Window = window): void {
+  const sync = (): void => { nav.classList.toggle('scrolled', win.scrollY > 4); };
+  win.addEventListener('scroll', sync, { passive: true });
+  sync();
+}
+
 export function mountLanding(doc: Document): void {
   applyLang(doc, pickLang(location.search, storedLang(), navigator.languages ?? [navigator.language]));
+  const nav = doc.querySelector<HTMLElement>('.nav');
+  if (nav) mountHeader(nav);
   const orbit = doc.querySelector<HTMLVideoElement>('video.orbit');
   if (orbit) mountOrbit(orbit);
-  for (const b of doc.querySelectorAll<HTMLButtonElement>('[data-lang]')) {
-    b.addEventListener('click', () => {
-      const lang = b.dataset.lang as Lang;
-      if (!LANGS.includes(lang)) return;
-      rememberLang(lang);
-      applyLang(doc, lang);
-    });
-  }
+  // The EN | ES pill switches on any click: the other language's side picks it,
+  // anywhere else (the side already on, the pill's edge) goes to the next one.
+  let current = doc.documentElement.lang as Lang;
+  doc.querySelector('.lang')?.addEventListener('click', (e) => {
+    const picked = (e.target as Element).closest<HTMLElement>('[data-lang]')?.dataset.lang as Lang | undefined;
+    const lang = picked && picked !== current && LANGS.includes(picked) ? picked : nextLang(current);
+    rememberLang(lang);
+    applyLang(doc, lang);
+    current = lang;
+  });
+}
+
+/** The language after `lang`, round the list (with two, the other one). */
+export function nextLang(lang: Lang): Lang {
+  return LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length];
 }
 
 if (typeof document !== 'undefined' && document.querySelector('.hero')) mountLanding(document);
