@@ -6,6 +6,7 @@ import { COPY, LANGS, pickLang, type CopyKey } from './copy';
 import { applyLang } from './landing';
 
 const html = readFileSync(join(__dirname, '../../index.html'), 'utf8');
+const css = readFileSync(join(__dirname, 'landing.css'), 'utf8');
 
 describe('landing copy', () => {
   it('has every word in both languages', () => {
@@ -49,6 +50,19 @@ describe('landing copy', () => {
     document.documentElement.innerHTML = html.replace(/^<!doctype html>/i, '');
     const hrefs = [...document.querySelectorAll('.foot a')].map((a) => a.getAttribute('href'));
     expect(hrefs).toEqual(['https://obelisk.ar', 'https://nostr-wot.com', 'https://liberture.com', 'https://lacrypta.ar', GITHUB]);
+  });
+  it('draws every feature as its own animated icon, stilled for reduced motion', () => {
+    document.documentElement.innerHTML = html.replace(/^<!doctype html>/i, '');
+    const icons = [...document.querySelectorAll<SVGElement>('.feature > svg')];
+    expect(icons).toHaveLength(10);
+    for (const svg of icons) {
+      expect(svg.classList.contains('ico')).toBe(true);
+      expect(svg.getAttribute('viewBox')).toBe('0 0 32 32');
+      const name = [...svg.classList].find((c) => c.startsWith('ico-'))!.slice(4);
+      expect(svg.parentElement!.querySelector('h3')!.dataset.i18n).toBe(`f.${name}.t`);
+      expect(css, name).toMatch(new RegExp(`\\.ico-${name} [^{]*\\{[^}]*animation:`));
+    }
+    expect(css).toMatch(/prefers-reduced-motion: reduce\)[^@]*\.ico \* \{ animation: none; \}/);
   });
   it('has a GitHub button in the header', () => {
     document.documentElement.innerHTML = html.replace(/^<!doctype html>/i, '');

@@ -37,7 +37,7 @@ client/
   app/index.html        the village at /app: OG/Twitter tags, header, the guest banner (#gate), loading screen
   public/               served as-is: models/ (Kenney town+nature, pets, people/), brand/ (sky-mark.svg, sky-mark-flat.svg), landing/, og.jpg, icons
   src/main.ts           wiring: session, feed, world, chat, voice, games, prefs, keyboard, boot order
-  src/landing/          the landing page: copy.ts (en/es words), landing.ts (language switch), landing.css
+  src/landing/          the landing page: copy.ts (en/es words), landing.ts (language switch), landing.css (also the feature cards' icons: 64 px tiles, each a small looping scene, `.ico-<feature>`, stilled under reduced motion)
   src/i18n/             the village's language (lang.ts: `?lang=`, else the choice made on the landing page or in settings, else the browser's; `switchLang`), app.ts (en/es words of app/index.html, the gate, the loader, the rotate card), village.ts (en/es words drawn inside the village), boot.ts (applies them before the big bundle: `earlyLang` in vite.config.ts emits it as its own script)
   src/world/            the 3D world
     world.ts              the World: island, buildings, people, seats, stations, landmarks, frame loop

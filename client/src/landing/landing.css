@@ -94,10 +94,128 @@ section h2 { margin: 0; font-size: clamp(30px, 4vw, 44px); letter-spacing: -0.03
 .section-lead { text-align: center; color: var(--ink-muted); max-width: 40em; margin: 14px auto 0; font-size: 17px; }
 .features, .how { max-width: 1180px; margin: 0 auto; padding: 72px 16px; }
 .feature-grid { list-style: none; padding: 0; margin: 44px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
-.feature { background: var(--card); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 22px; padding: 22px; box-shadow: 0 8px 24px rgba(15, 42, 68, 0.06); }
-.feature svg { width: 40px; height: 40px; padding: 8px; border-radius: 12px; background: var(--sky); fill: none; stroke: var(--ink); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.feature {
+  background: var(--card); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 22px; padding: 22px;
+  box-shadow: 0 8px 24px rgba(15, 42, 68, 0.06); transition: transform 0.25s, box-shadow 0.25s;
+}
+.feature:hover { transform: translateY(-4px); box-shadow: 0 16px 36px rgba(15, 42, 68, 0.12); }
 .feature h3, .step h3 { margin: 14px 0 6px; font-size: 17px; letter-spacing: -0.01em; }
 .feature p, .step p { margin: 0; color: var(--ink-muted); font-size: 15px; }
+
+/* The feature icons: a 64 px tile, each drawing a little scene that moves on its own (32-unit viewBox;
+   transform origins are in its units). Reduced motion stills them. */
+.feature h3 { margin-top: 18px; }
+.ico {
+  display: block; width: 64px; height: 64px; padding: 6px; border-radius: 18px; overflow: visible;
+  background: linear-gradient(150deg, #eef8ff 0%, #c4e5ff 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9), 0 6px 16px rgba(15, 42, 68, 0.1);
+  fill: none; stroke: var(--ink); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+  transition: transform 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.feature:hover .ico { transform: scale(1.08) rotate(-4deg); }
+.ico * { transform-box: view-box; }
+
+/* Every channel is a house: it grows a little, smoke from the chimney, the windows light up. */
+.ico-house .house { transform-origin: 16px 26px; animation: house-grow 3.6s ease-in-out infinite; }
+@keyframes house-grow { 0%, 100% { transform: scale(0.9); } 50% { transform: scale(1.04); } }
+.ico-house .smoke { fill: #fff; stroke-width: 1.2; opacity: 0; transform-origin: 22.5px 4.5px; animation: smoke 2.4s ease-out infinite; }
+.ico-house .s2 { animation-delay: -1.2s; }
+@keyframes smoke { 0% { opacity: 0; transform: translate(0, 1px) scale(0.5); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(2.5px, -5px) scale(1.5); } }
+.ico-house .door { fill: #fff; }
+.ico-house .win { stroke-width: 1.3; fill: #fff; animation: lit 3.6s steps(1) infinite; }
+.ico-house .w2 { animation-delay: -1.8s; }
+@keyframes lit { 0%, 100% { fill: #fff; } 50% { fill: var(--green); } }
+
+/* Walk to the conversation: a walk cycle over a moving ground, towards a bubble that types. */
+.ico-walk .walker { animation: walk-bob 0.5s ease-in-out infinite; }
+@keyframes walk-bob { 0%, 100% { transform: translateY(0.5px); } 50% { transform: translateY(-0.5px); } }
+.ico-walk .head, .ico-walk .bubble { fill: #fff; }
+.ico-walk .limb { animation: swing 1s ease-in-out infinite; }
+.ico-walk .leg { --a: 24deg; transform-origin: 12px 17px; }
+.ico-walk .arm { --a: -28deg; transform-origin: 12.6px 10.6px; }
+.ico-walk .limb.b { animation-delay: -0.5s; opacity: 0.45; }
+@keyframes swing { 0%, 100% { transform: rotate(var(--a)); } 50% { transform: rotate(calc(var(--a) * -1)); } }
+.ico-walk .ground { stroke-dasharray: 3 3; animation: ground 0.43s linear infinite; }
+@keyframes ground { to { stroke-dashoffset: 6; } }
+.ico-walk .dot { fill: var(--ink); stroke: none; animation: typing 1.2s ease-in-out infinite; }
+.ico-walk .d2 { animation-delay: 0.15s; }
+.ico-walk .d3 { animation-delay: 0.3s; }
+@keyframes typing { 0%, 60%, 100% { opacity: 0.25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-0.8px); } }
+
+/* Live, together: a beat, a ping going out, the waves lighting in turn. */
+.ico-live .core { fill: var(--green); transform-origin: 16px 16px; animation: beat 2s ease-in-out infinite; }
+@keyframes beat { 0%, 30%, 100% { transform: scale(1); } 15% { transform: scale(1.22); } }
+.ico-live .ping { stroke-width: 1.2; vector-effect: non-scaling-stroke; transform-origin: 16px 16px; animation: ping 2s ease-out infinite; }
+@keyframes ping { 0% { opacity: 0.9; transform: scale(1); } 100% { opacity: 0; transform: scale(4.6); } }
+.ico-live .wave, .ico-voice .wave { animation: wave 2s ease-out infinite; }
+.ico-live .wave { animation-delay: 0.15s; }
+.ico-live .w2 { animation-delay: 0.45s; }
+@keyframes wave { 0%, 60%, 100% { opacity: 0.2; } 25% { opacity: 1; } }
+
+/* Voice calls: a level meter in the mic, sound going out both sides. */
+.ico-voice .mic { fill: #fff; }
+.ico-voice .eq { stroke-width: 1.6; transform-origin: 16px 11px; animation: eq 0.8s ease-in-out infinite alternate; }
+.ico-voice .e2 { animation-duration: 0.55s; }
+.ico-voice .e3 { animation-duration: 0.7s; animation-delay: -0.2s; }
+@keyframes eq { from { transform: scaleY(0.35); } to { transform: scaleY(1.25); } }
+.ico-voice .wave { animation-duration: 1.6s; }
+.ico-voice .w2 { animation-delay: 0.25s; }
+
+/* Games: the pad rocks, its buttons get pressed, orbs pop one after another (a chain reaction). */
+.ico-games .pad { transform-origin: 16px 16px; animation: rock 3s ease-in-out infinite; }
+@keyframes rock { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+.ico-games .body { fill: #fff; }
+.ico-games .key { stroke-width: 1.2; fill: #fff; transform-box: fill-box; transform-origin: center; animation: press 1.5s ease-in-out infinite; }
+.ico-games .k2 { animation-delay: -0.75s; }
+@keyframes press { 0%, 40%, 100% { fill: #fff; transform: scale(1); } 15%, 25% { fill: var(--green); transform: scale(0.8); } }
+.ico-games .orb { fill: var(--green); stroke-width: 1.3; transform-box: fill-box; transform-origin: center; animation: orb 2.4s ease-out infinite; }
+.ico-games .o2 { animation-delay: 0.2s; }
+.ico-games .o3 { animation-delay: 0.4s; }
+@keyframes orb { 0% { opacity: 0; transform: scale(0); } 12% { opacity: 1; transform: scale(1.35); } 22%, 70% { opacity: 1; transform: scale(1); } 85%, 100% { opacity: 0; transform: scale(0); } }
+
+/* Mate: the gourd passed hand to hand, steam rising. */
+.ico-mate .mate { transform-origin: 14.5px 28px; animation: rock 3.2s ease-in-out infinite; }
+.ico-mate .gourd { fill: #fff; }
+.ico-mate .yerba { fill: var(--green); }
+.ico-mate .bombilla { stroke-width: 1.9; }
+.ico-mate .steam { stroke-width: 1.4; opacity: 0; animation: steam 2.6s ease-out infinite; }
+.ico-mate .s2 { animation-delay: -1.3s; }
+@keyframes steam { 0% { opacity: 0; transform: translateY(2px); } 30% { opacity: 0.9; } 100% { opacity: 0; transform: translateY(-3px); } }
+
+/* Calisthenics park: pull-ups. The arms shorten as the body rises, so the hands stay on the bar. */
+.ico-park .body { animation: pull 2.6s ease-in-out infinite; }
+.ico-park .arms { vector-effect: non-scaling-stroke; transform-origin: 16px 6.5px; animation: pull-arms 2.6s ease-in-out infinite; }
+@keyframes pull { 0%, 100% { transform: translateY(0); } 40%, 58% { transform: translateY(-4.5px); } }
+@keyframes pull-arms { 0%, 100% { transform: scaleY(1); } 40%, 58% { transform: scaleY(0.3077); } }
+.ico-park .head { fill: #fff; }
+.ico-park .torso { fill: var(--green); }
+
+/* Your own look: the shirt and the hair keep changing colour. */
+.ico-look .face { fill: #fff; }
+.ico-look .shirt { fill: var(--green); animation: dye 8s ease-in-out infinite; }
+@keyframes dye { 0%, 20%, 100% { fill: var(--green); } 25%, 45% { fill: #8fd3ff; } 50%, 70% { fill: #ffb0c8; } 75%, 95% { fill: #ffd166; } }
+.ico-look .hair { fill: var(--ink); animation: hair 8s ease-in-out infinite -2s; }
+@keyframes hair { 0%, 20%, 100% { fill: #0f2a44; } 25%, 45% { fill: #8a5a2b; } 50%, 70% { fill: #e0a83a; } 75%, 95% { fill: #c2453a; } }
+.ico-look .spark, .ico-key .spark { fill: #fff; stroke-width: 1.1; transform-box: fill-box; transform-origin: center; }
+.ico-look .spark { animation: twinkle 2s ease-in-out infinite; }
+@keyframes twinkle { 0%, 100% { opacity: 0.5; transform: scale(0.6) rotate(0); } 50% { opacity: 1; transform: scale(1.1) rotate(45deg); } }
+
+/* Your key: it turns, and glints. */
+.ico-key .key { transform-origin: 10px 21.5px; animation: turn 3.2s cubic-bezier(0.5, 0, 0.3, 1.4) infinite; }
+@keyframes turn { 0%, 15% { transform: rotate(0); } 40%, 65% { transform: rotate(-12deg); } 90%, 100% { transform: rotate(0); } }
+.ico-key .bow { fill: var(--green); }
+.ico-key .hole { fill: #fff; }
+.ico-key .spark { animation: glint 3.2s ease-out infinite; }
+@keyframes glint { 0%, 35%, 62%, 100% { opacity: 0; transform: scale(0); } 46% { opacity: 1; transform: scale(1.2) rotate(45deg); } }
+
+/* Any NIP-29 relay: signals run from the hub out to each community, which lights up as one arrives. */
+.ico-relay .hub { fill: var(--ink); }
+.ico-relay .node { fill: #fff; transform-box: fill-box; transform-origin: center; animation: arrive 1.8s ease-out infinite; }
+.ico-relay .sig { stroke: var(--green); stroke-width: 2.6; stroke-dasharray: 2.5 12.5; stroke-dashoffset: 2.5; animation: signal 1.8s linear infinite; }
+.ico-relay .s2, .ico-relay .n2 { animation-delay: 0.6s; }
+.ico-relay .s3, .ico-relay .n3 { animation-delay: 1.2s; }
+@keyframes signal { 0% { stroke-dashoffset: 2.5; } 70%, 100% { stroke-dashoffset: -10; } }
+@keyframes arrive { 0%, 50%, 85%, 100% { fill: #fff; transform: scale(1); } 60% { fill: var(--green); transform: scale(1.2); } }
 
 .steps { list-style: none; padding: 0; margin: 44px auto 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 960px; }
 .step { text-align: center; padding: 8px 12px; }
@@ -120,8 +238,14 @@ section h2 { margin: 0; font-size: clamp(30px, 4vw, 44px); letter-spacing: -0.03
 @media (max-width: 560px) {
   .nav-links { display: none; }
   .nav { gap: 10px; }
+  .feature { display: grid; grid-template-columns: 64px 1fr; column-gap: 16px; align-items: center; padding: 18px; }
+  .feature .ico { grid-row: span 2; }
+  .feature h3 { margin: 0 0 4px; align-self: end; }
+  .feature p { align-self: start; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .sky i, .porthole, .hero-mark, .cta img { animation: none; }
+  .sky i, .porthole, .hero-mark, .cta img, .ico * { animation: none; }
+  .feature, .ico { transition: none; }
+  .feature:hover, .feature:hover .ico { transform: none; }
 }
