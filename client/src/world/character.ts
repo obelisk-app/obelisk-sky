@@ -619,24 +619,32 @@ export class Character {
     // Movement.
     let moving = false;
     if (this.path.length && this.activity !== 'sit') {
-      const target = this.path[0];
       const p = this.root.position;
-      const dx = target.x - p.x, dz = target.z - p.z;
-      const d = Math.hypot(dx, dz);
       const speed = this.swimming ? (this.running ? SWIM_SPEEDS.run : SWIM_SPEEDS.walk) : this.running ? (this.pace?.run ?? RUN_SPEED) : (this.pace?.walk ?? WALK_SPEED);
-      if (d < 0.04) {
+      // Spend the whole frame's distance, including across waypoints and a
+      // looping lap's arrival callback. Dropping a frame at every point made
+      // runners alternate between the run and idle clips along the track.
+      let remaining = speed * dt;
+      for (let hops = 0; this.path.length && remaining > 0 && hops < 256; hops++) {
+        const target = this.path[0];
+        const dx = target.x - p.x, dz = target.z - p.z;
+        const d = Math.hypot(dx, dz);
+        if (d > 1e-7) {
+          const step = Math.min(d, remaining);
+          p.x += (dx / d) * step;
+          p.z += (dz / d) * step;
+          remaining -= step;
+          this.facing = Math.atan2(dx, dz);
+          moving = true;
+          if (step < d) break;
+        }
         this.path.shift();
         if (!this.path.length) {
           const cb = this.onArrive;
           this.onArrive = null;
           cb?.();
+          if ((this.activity as Activity) === 'sit') break;
         }
-      } else {
-        const step = Math.min(d, speed * dt);
-        p.x += (dx / d) * step;
-        p.z += (dz / d) * step;
-        this.facing = Math.atan2(dx, dz);
-        moving = true;
       }
     }
     if (this.facing !== null) {
