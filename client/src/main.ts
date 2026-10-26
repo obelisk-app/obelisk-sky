@@ -67,7 +67,7 @@ import { editOwnProfile, fetchOwnProfile, initialOf, syncOwnProfile } from './no
 import type { ProfileEditorInitial } from '@/types/session/profile';
 import { Soundscape } from './sound';
 import { openZapSheet } from './ui/zapSheet';
-import { connectWallet, forgetWallet, loadWallet, walletKindFor, walletView } from './wallet/wallet';
+import { connectWallet, forgetWallet, loadWallet, payerFor, walletKindFor, walletView } from './wallet/wallet';
 import { sendZap, ZapPaymentUnconfirmed } from './wallet/zap';
 import { zapTotal } from './nostr/state';
 import { parseZapCommand, zapCommandMessage } from './wallet/zapCommand';
@@ -78,6 +78,9 @@ import { ALL_MODELS, preload } from './world/assets';
 import { defaultLook, preloadPeople } from './people/people';
 import type { LandmarkId } from './world/landmarks';
 import { NOSTR_WOT_PUBKEY, NOSTR_WOT_SITE } from './world/landmarks/nostrwot';
+import { LA_CRYPTA_PUBKEY, halloweenOn } from './events/halloween';
+import { openTicketDialog, type TicketDialog } from './ui/ticketDialog';
+import { TALK_RADIUS } from './world/halloween';
 import { DEFAULT_SOCIAL_RELAYS } from '@/constants/social/relays';
 import { pubkeyColor } from './world/character';
 import { Director } from './world/director';
@@ -1078,6 +1081,60 @@ function toggleSeat(): void {
   if (seat) sitOn(seat);
   else if (atTotem()) enterTotem();
   else toast(vw.noSeat);
+}
+
+/** The talk with La Crypta at its door, while it's on screen. */
+let ticketTalk: TicketDialog | null = null;
+let talkedToLaCrypta = false;
+/** Set once you're away from La Crypta: the next time you walk up, the talk opens. */
+let laCryptaArmed = true;
+
+/** Walking up to La Crypta (within TALK_RADIUS) opens the talk, every time you
+ *  come back. Away from it (rearmed past TALK_RADIUS + 0.7, so its edge doesn't
+ *  flicker) the talk closes: a little further if you've said something, never
+ *  while you're buying or typing. */
+function tickLaCrypta(): void {
+  const pk = world.playerPk;
+  if (!controller || !pk || world.cam.inIntro) return;
+  const d = world.laCryptaDistance(controller.pos);
+  if (d === null) return;
+  const card = $('card');
+  if (d < TALK_RADIUS && laCryptaArmed) {
+    // Another card (someone's profile, a brand) isn't swapped out under you.
+    if (ticketTalk?.open || card.hidden || card.classList.contains('halloween')) {
+      laCryptaArmed = false;
+      if (!ticketTalk?.open) showTickets(false);
+    }
+  }
+  if (d > TALK_RADIUS + 0.7) laCryptaArmed = true;
+  if (ticketTalk?.open && !ticketTalk.engaged && d > TALK_RADIUS + (ticketTalk.talked ? 3 : 1.2)) {
+    ticketTalk.close();
+    ticketTalk = null;
+  }
+}
+
+/** La Crypta at its door: Halloween 5 and its tickets (ui/ticketDialog.ts). */
+function showTickets(focus = true): void {
+  if (ticketTalk?.open || ticketTalk?.reopen()) {
+    if (focus) world.cam.focus(world.personAnchor(LA_CRYPTA_PUBKEY), 6);
+    return;
+  }
+  const s = session.current;
+  ticketTalk = openTicketDialog({
+    again: talkedToLaCrypta,
+    card: $('card'),
+    openCard,
+    npc: () => {
+      const p = world.profiles.get(LA_CRYPTA_PUBKEY);
+      return { name: p?.name || 'La Crypta', avatar: p?.avatar ?? '/brand/lacrypta-iso.png' };
+    },
+    buyerName: () => (s ? world.profiles.get(s.pubkey)?.name ?? '' : ''),
+    // Buying a ticket publishes nothing, so guests can buy too; paying from a wallet needs an account with one.
+    payer: async () => (s && !isGuest() ? payerFor(s.pubkey, s.method).catch(() => null) : null),
+    toast,
+  });
+  talkedToLaCrypta = true;
+  if (focus) world.cam.focus(world.personAnchor(LA_CRYPTA_PUBKEY), 6);
 }
 
 /** On foot in front of the totem monitor (E watches it, after training and seats). */
@@ -2181,6 +2238,31 @@ function placeOfficial(): void {
   world.addResident(NOSTR_WOT_PUBKEY, 'nostrwot', '#6366f1');
   feed?.state.watch(NOSTR_WOT_PUBKEY);
   void loadOfficial();
+  // La Crypta at its door, selling Halloween tickets until the party's over.
+  if (halloweenOn()) {
+    if (!world.profiles.get(LA_CRYPTA_PUBKEY)?.loaded) {
+      world.setProfile({ pubkey: LA_CRYPTA_PUBKEY, name: 'La Crypta', avatar: '/brand/lacrypta-iso.png', nip05: '_@lacrypta.ar', loaded: false });
+    }
+    world.addResident(LA_CRYPTA_PUBKEY, 'lacrypta', '#fb923c');
+    feed?.state.watch(LA_CRYPTA_PUBKEY);
+    void loadLaCrypta();
+  }
+}
+
+/** La Crypta's kind 0 from the public social relays, once (it lives there, not on the group relay). */
+let laCryptaLoaded = false;
+async function loadLaCrypta(): Promise<void> {
+  if (laCryptaLoaded) return;
+  laCryptaLoaded = true;
+  const r = await hub.query({
+    relays: [...DEFAULT_SOCIAL_RELAYS],
+    filters: [{ kinds: [0], authors: [LA_CRYPTA_PUBKEY], limit: 1 }],
+    maxWaitMs: 5000,
+    label: 'sky-lacrypta',
+  }).catch(() => ({ events: [] as { kind: number; content: string; created_at: number; id: string; tags: string[][] }[] }));
+  const k0 = r.events.filter((e) => e.kind === 0).sort((a, b) => b.created_at - a.created_at)[0];
+  if (k0) feed?.state.ingestProfile(k0 as Parameters<SkyStateLike['ingestProfile']>[0]);
+  else laCryptaLoaded = false;
 }
 
 type SkyStateLike = NonNullable<typeof feed>['state'];
@@ -2558,6 +2640,7 @@ function frame(): void {
   // "auto" quality waits until the intro has landed: a step down mid-swing recompiles and stutters.
   if (qualityHeld && !world.cam.inIntro) { qualityHeld = false; world.post.holdLevel(false); }
   tickActivity();
+  tickLaCrypta();
   renderSeatHint();
   renderRideHint();
   renderChatHint();
@@ -2835,6 +2918,7 @@ function messageList(msgs: WireMessage[], showWho: boolean): HTMLElement {
 
 function showPerson(pk: string): void {
   if (pk === NOSTR_WOT_PUBKEY) { showOfficial(); return; }
+  if (pk === LA_CRYPTA_PUBKEY && halloweenOn()) { showTickets(); return; }
   const prof = world.profiles.get(pk);
   const msgs = player.events.filter((e): e is Extract<Ev, { k: 'msg' }> => e.k === 'msg' && e.m.pubkey === pk).map((e) => e.m);
   openCard((body) => {

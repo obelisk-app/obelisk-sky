@@ -49,6 +49,8 @@ import { builtClipName, emoteAnchor, emoteOf, EMOTE_SYNC_M, type EmoteKind } fro
 import { parseHaunts, pickIdle, type PlaceId } from './places';
 import { vw } from '../i18n/village';
 import { YoutubeStage } from './youtubeStage';
+import { buildHalloweenCorner, TALK_RADIUS, type HalloweenCorner } from './halloween';
+import { LA_CRYPTA_PUBKEY, halloweenOn } from '../events/halloween';
 import { TOTEM, OcclusionProbe, TotemStage, buildTotemMonitor, totemInView, type TotemMonitor } from './totemMonitor';
 import { DomScreen } from './domScreen';
 import { LABITCONF } from './landmarks/labitconf';
@@ -209,6 +211,8 @@ export class World {
   private film: DomScreen | null = null;
   /** The totem monitor on LABITCONF's lawn, built with the landmarks, and its live page (world/totemMonitor.ts). */
   private totem: TotemMonitor | null = null;
+  /** Halloween 5 at La Crypta's door while the party is on (world/halloween.ts). */
+  private halloween: HalloweenCorner | null = null;
   private totemStage: TotemStage | null = null;
   private totemProbe = new OcclusionProbe();
   /** The totem's focus is open (main.ts): its page is there, not on the monitor. */
@@ -573,6 +577,7 @@ export class World {
     this.buildSportsGround();
     this.buildLandmarks();
     this.buildTotem();
+    if (halloweenOn()) this.buildHalloween();
     // Every seat (bench, stool, log, chair) is solid up to its seat height.
     for (const seat of this.seats) {
       if (seat.dynamic || seat.managed) continue;
@@ -717,6 +722,35 @@ export class World {
     this.staticRoot.add(m.group);
     this.solids.push(this.landmarkSolid(s, d.forward, { ...m.solid, x: TOTEM.X + m.solid.x, z: TOTEM.Z + m.solid.z }));
     this.totem = m;
+  }
+
+  /** La Crypta's Halloween sign, lanterns and the aura its account stands in (world/halloween.ts). */
+  private buildHalloween(): void {
+    const s = this.landmarkSlots.get('lacrypta');
+    const d = LANDMARKS.find((x) => x.id === 'lacrypta');
+    if (!s || !d || this.halloween) return;
+    const h = buildHalloweenCorner();
+    const at = this.landmarkToWorld(s, d.forward, { x: 0, z: 0 });
+    h.group.position.set(at.x, 0, at.z);
+    h.group.rotation.y = s.rot;
+    this.staticRoot.add(h.group);
+    for (const so of h.solids) this.solids.push(this.landmarkSolid(s, d.forward, so));
+    // The sign, the lanterns and the aura are La Crypta's: a click on any of them talks to it.
+    h.group.userData.pk = LA_CRYPTA_PUBKEY;
+    this.halloween = h;
+  }
+
+  /** Close enough to La Crypta's account to talk about the party (main.ts opens the talk as you walk up)? */
+  halloweenNear(p: Vec2, radius = TALK_RADIUS): boolean {
+    const d = this.laCryptaDistance(p);
+    return d !== null && d < radius;
+  }
+
+  /** How far p is from La Crypta's account at its door (null without Halloween). */
+  laCryptaDistance(p: Vec2): number | null {
+    if (!this.halloween) return null;
+    const spot = this.landmarkResidentSpot('lacrypta');
+    return spot ? Math.hypot(p.x - spot.pos.x, p.z - spot.pos.z) : null;
   }
 
   /** World → a landmark's local frame. */
@@ -3090,7 +3124,7 @@ export class World {
       const ndc = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
       this.raycaster.setFromCamera(ndc, this.camera);
       const ground = this.staticRoot.getObjectByName('ground');
-      const targets: THREE.Object3D[] = [...[...this.people.values()].map((c) => c.root), this.gameRoot, this.buildingRoot, ...[...this.landmarks.values()].map((b) => b.group), ...(this.totem ? [this.totem.group] : []), ...(ground ? [ground] : [])];
+      const targets: THREE.Object3D[] = [...[...this.people.values()].map((c) => c.root), this.gameRoot, this.buildingRoot, ...[...this.landmarks.values()].map((b) => b.group), ...(this.totem ? [this.totem.group] : []), ...(this.halloween ? [this.halloween.group] : []), ...(ground ? [ground] : [])];
       const hit = this.raycaster.intersectObjects(targets, true)[0];
       const noWalk = this.hooks.onTap?.() ?? false;
       if (!hit) return;
@@ -3400,6 +3434,11 @@ export class World {
     this.pulse = Math.max(0, this.pulse - dt * 0.8);
     this.obelisk?.setGlow(night01, this.pulse + (Math.sin(this.elapsed * 2) * 0.5 + 0.5) * 0.08);
     for (const b of this.landmarks.values()) { b.setNight(night01, this.elapsed); b.update?.(dt, this.elapsed); }
+    if (this.halloween) {
+      const me = this.playerPk ? this.people.get(this.playerPk)?.root.position : null;
+      this.halloween.setNight(night01);
+      this.halloween.update(dt, this.elapsed, !!me && this.halloweenNear({ x: me.x, z: me.z }));
+    }
     this.updateInteriors();
     this.updateTheater();
     this.mill?.setNight(night01);

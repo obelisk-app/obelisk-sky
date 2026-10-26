@@ -10,6 +10,7 @@
 
 import * as THREE from 'three';
 import type { LandmarkBuild, LandmarkSeat } from './index';
+import { buildAura } from './aura';
 
 /** The official nostr-wot account (npub18h3r9fz7snau7hht02nrct29ajkk4y3236h2qs69dzph6mjfr6ws60amaz). */
 export const NOSTR_WOT_PUBKEY = '3de232a45e84fbcf5eeb7aa63c2d45ecad6a922a8eaea0434568837d6e491e9d';
@@ -263,26 +264,9 @@ export function buildNostrWotHq(): LandmarkBuild {
 
   // Entrance hologram, now to the left of the door where the resident stands.
   const RES_X = -0.85;
-  const ringMat = new THREE.MeshBasicMaterial({ color: BRAND_LIGHT, transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
-  const ring = new THREE.Group();
-  ring.position.set(RES_X, 0, 0.65);
-  const veil = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.55, 32, 1, true), ringMat);
-  veil.position.y = 0.28;
-  ring.add(veil);
-  const hoopMat = new THREE.MeshBasicMaterial({ color: BRAND_LIGHT, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
-  const hoops: THREE.Mesh[] = [];
-  for (const y of [0.04, 0.55]) {
-    const h = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.008, 6, 40), hoopMat);
-    h.rotation.x = Math.PI / 2;
-    h.position.y = y;
-    ring.add(h);
-    hoops.push(h);
-  }
-  g.add(ring);
-  const pad = new THREE.Mesh(new THREE.CircleGeometry(0.36, 32), new THREE.MeshBasicMaterial({ color: BRAND, transparent: true, opacity: 0.35, depthWrite: false }));
-  pad.rotation.x = -Math.PI / 2;
-  pad.position.set(RES_X, 0.012, 0.65);
-  g.add(pad);
+  const aura = buildAura(BRAND_LIGHT, BRAND);
+  aura.group.position.set(RES_X, 0, 0.65);
+  g.add(aura.group);
 
   // The rooftop graph: the logo in 3D, standing up, on a short mast.
   const graph = new THREE.Group();
@@ -358,7 +342,7 @@ export function buildNostrWotHq(): LandmarkBuild {
         for (const w of walls) w.castShadow = !on;
       },
     },
-    pulse() { flash = 1; },
+    pulse() { flash = 1; aura.pulse(); },
     update(dt, t) {
       graph.rotation.y = Math.sin(t * 0.25) * 0.6;
       flash = Math.max(0, flash - dt * 1.2);
@@ -387,9 +371,7 @@ export function buildNostrWotHq(): LandmarkBuild {
         p.m.visible = flash > 0.05 || night > 0.3;
       }
       centerNode.scale.setScalar(1 + Math.sin(t * 2) * 0.05 + flash * 0.4);
-      ring.rotation.y = t * 0.6;
-      ringMat.opacity = 0.08 + Math.sin(t * 2.4) * 0.04 + flash * 0.2;
-      hoops[1].position.y = 0.45 + Math.sin(t * 1.3) * 0.1;
+      aura.update(dt, t);
       glowLight.intensity = night * 2.2 + flash * 3;
     },
     setNight(n) {

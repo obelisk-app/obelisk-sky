@@ -8,6 +8,7 @@
 //   GET /healthz           JSON status
 //   GET /api/link-preview  OpenGraph unfurl for chat links (server/linkPreview.ts)
 //   GET /api/avatar        a profile picture whose host sends no CORS (server/avatarProxy.ts)
+//   /api/lacrypta-tickets/ La Crypta's Halloween checkout, which sends no CORS (server/ticketProxy.ts)
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { existsSync, statSync, createReadStream } from 'node:fs';
@@ -15,6 +16,7 @@ import { join, normalize, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { handleLinkPreview } from './linkPreview';
 import { handleAvatar } from './avatarProxy';
+import { handleTickets, TICKETS_PREFIX } from './ticketProxy';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.PORT || 3024);
@@ -103,6 +105,10 @@ const server = createServer((req, res) => {
   const url = new URL(req.url || '/', 'http://x');
   if (url.pathname === '/healthz') {
     res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ ok: true, built: existsSync(join(STATIC_DIR, 'index.html')) && existsSync(join(STATIC_DIR, 'app', 'index.html')) }));
+    return;
+  }
+  if (url.pathname.startsWith(TICKETS_PREFIX)) {
+    handleTickets(req, res, url).catch(() => { if (!res.headersSent) res.writeHead(500).end(); });
     return;
   }
   if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405).end(); return; }

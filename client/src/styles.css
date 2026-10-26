@@ -1153,3 +1153,79 @@ body.menu-open .controls button[hidden] { display: none; }
   .sp-avatar-wrap { bottom: -38px; }
   .sp-hero { margin-bottom: 44px; }
 }
+
+/* ── Halloween 5 at La Crypta's door (ui/ticketDialog.ts): a conversation in
+   the card, in the event page's colours, brown and pumpkin orange. The log
+   scrolls, the replies and the input stay at the bottom; with a phone's
+   keyboard up (.kb, --kb from visualViewport) the card sits above it. ── */
+.card.halloween { --hw-text: #fff7ed; --hw-muted: #fdba74; --hw-accent: #fb923c; --hw-border: rgba(254, 215, 170, 0.22);
+  width: min(390px, calc(100vw - 32px)); height: min(640px, calc(100% - 150px)); max-height: none;
+  background: linear-gradient(160deg, rgba(65, 32, 13, 0.97), rgba(39, 18, 8, 0.97)); border-color: var(--hw-border); color: var(--hw-text); }
+.card.halloween .card-close { background: rgba(39, 18, 8, 0.7); border-color: var(--hw-border); color: var(--hw-text); }
+.card.halloween .card-body { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.tk { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.tk-top { flex: none; display: flex; align-items: center; gap: 10px; padding: 12px 52px 10px 14px; border-bottom: 1px solid var(--hw-border); }
+.tk-npc { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--hw-accent); box-shadow: 0 0 14px rgba(251, 146, 60, 0.55); background: #111; flex: none; }
+.tk-who { min-width: 0; flex: 1; }
+.tk-name { font: 700 14px var(--sans); }
+.tk-tag { font: 600 11px var(--mono); color: var(--hw-muted); }
+.tk-lang { flex: none; display: inline-flex; border: 1px solid var(--hw-border); border-radius: 999px; overflow: hidden; }
+.tk-lang button { border: 0; background: transparent; color: var(--hw-muted); font: 700 11px var(--mono); padding: 5px 10px; cursor: pointer; }
+.tk-lang button.on { background: var(--hw-accent); color: #090909; }
+.tk-log { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 12px 6px; display: flex; flex-direction: column; gap: 8px; -webkit-overflow-scrolling: touch; }
+.tk-msg { max-width: 86%; padding: 8px 11px; border-radius: 14px; font-size: 13.5px; line-height: 1.42; overflow-wrap: anywhere; }
+.tk-msg.new { animation: feed-in 0.2s ease-out; }
+.tk-msg.npc { align-self: flex-start; background: var(--hw-text); color: #2a1206; border-bottom-left-radius: 4px; }
+.tk-msg.me { align-self: flex-end; background: var(--hw-accent); color: #160800; font-weight: 600; border-bottom-right-radius: 4px; }
+.tk-event, .tk-invoice, .tk-done { background: rgba(0, 0, 0, 0.28) !important; color: var(--hw-text) !important; border: 1px solid var(--hw-border); max-width: 100%; width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.tk-cover { display: block; width: 100%; aspect-ratio: 1; max-height: 180px; object-fit: cover; border-radius: 10px; }
+.tk-eyebrow { font: 700 10px var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--hw-muted); }
+.tk-title { font: 900 22px/1.05 var(--sans); color: var(--hw-accent); text-transform: uppercase; }
+.tk-sub { font-weight: 700; font-size: 13px; }
+.tk-facts { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; }
+.tk-price { display: flex; flex-direction: column; gap: 2px; border-top: 1px dashed var(--hw-border); padding-top: 6px; }
+.tk-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; align-items: baseline; }
+.tk-row s { color: var(--hw-muted); opacity: 0.8; white-space: nowrap; }
+.tk-ln b { color: var(--hw-accent); font-size: 17px; }
+.card.halloween a.tk-link, .tk-link { color: var(--hw-accent); font-weight: 700; text-decoration: none; }
+.tk-msg.npc .tk-link { color: #c2410c; }
+.tk-event .tk-link, .tk-done .tk-link { color: var(--hw-accent); }
+.tk-links { padding: 6px 11px; }
+.tk-invoice { align-items: center; text-align: center; }
+.tk-amount { font: 800 20px var(--mono); }
+.tk-qr-link { display: block; line-height: 0; }
+.tk-qr { width: 220px; height: 220px; max-width: 100%; border-radius: 10px; image-rendering: pixelated; }
+.tk-btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.tk-wait { font-size: 12px; color: var(--hw-muted); display: inline-flex; align-items: center; gap: 8px; }
+.tk-wait::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--hw-accent); animation: tk-pulse 1.1s ease-in-out infinite; }
+@keyframes tk-pulse { 50% { opacity: 0.25; transform: scale(0.7); } }
+.tk-error { background: rgba(220, 38, 38, 0.18); border: 1px solid rgba(248, 113, 113, 0.4); color: #fecaca; border-radius: 10px; padding: 6px 10px; font-size: 12px; }
+.tk-code { display: flex; justify-content: space-between; gap: 10px; background: rgba(0, 0, 0, 0.3); border: 1px dashed var(--hw-accent); border-radius: 10px; padding: 7px 11px; font-size: 12px; color: var(--hw-muted); }
+.tk-code b { font: 700 14px var(--mono); color: var(--hw-text); overflow-wrap: anywhere; }
+.tk-chips { flex: none; display: flex; gap: 6px; padding: 6px 12px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.tk-chips::-webkit-scrollbar { display: none; }
+.tk-chip { flex: none; display: inline-flex; align-items: center; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--hw-border); background: rgba(0, 0, 0, 0.28); color: var(--hw-text); font: 600 12.5px var(--sans); cursor: pointer; text-decoration: none; white-space: nowrap; touch-action: manipulation; }
+.tk-chip:hover { border-color: var(--hw-accent); }
+.tk-chip.primary { background: var(--hw-accent); border-color: var(--hw-accent); color: #090909; }
+.tk-chip:disabled { opacity: 0.55; cursor: default; }
+.tk-input { flex: none; display: flex; gap: 8px; padding: 8px 12px 12px; padding-bottom: max(12px, env(safe-area-inset-bottom)); border-top: 1px solid var(--hw-border); }
+/* 16 px: iOS zooms the page into any smaller field. */
+.tk-input input { flex: 1; min-width: 0; font: 500 16px var(--sans); color: var(--hw-text); background: rgba(0, 0, 0, 0.32); border: 1px solid var(--hw-border); border-radius: 999px; padding: 9px 14px; outline: none; -webkit-appearance: none; appearance: none; }
+.tk-input input::placeholder { color: rgba(253, 186, 116, 0.6); }
+.tk-input input:focus { border-color: var(--hw-accent); }
+.tk-send { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--hw-accent); color: #090909; display: grid; place-items: center; cursor: pointer; touch-action: manipulation; }
+.tk-send svg { width: 18px; height: 18px; }
+/* Phones upright: the card is a bottom sheet; tall enough to talk in. */
+@media (max-width: 720px) {
+  .card.halloween { height: min(70%, 560px); width: auto; }
+  .card.halloween.kb { bottom: var(--kb); height: calc(100% - var(--kb) - 56px); max-height: 460px; }
+}
+/* Sideways phones: the right side sheet; the keyboard takes the bottom half. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 540px) {
+  .card.halloween { width: min(420px, 52vw); height: auto; }
+  .card.halloween.kb { bottom: calc(var(--kb) + 4px); top: max(4px, env(safe-area-inset-top)); }
+  .card.halloween.kb .tk-top { padding-top: 6px; padding-bottom: 6px; }
+  .card.halloween.kb .tk-npc { width: 28px; height: 28px; }
+  .tk-cover { max-height: 110px; aspect-ratio: 16 / 9; }
+  .tk-qr { width: 170px; height: 170px; }
+}

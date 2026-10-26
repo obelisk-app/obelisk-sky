@@ -109,6 +109,9 @@ export const LA_CRYPTA_STAIRS = {
 export const LA_CRYPTA_ROOM = ROOM;
 /** The door (local): its centre x, width, sill and height. */
 export const LA_CRYPTA_DOOR = { x: doorX, w: DOOR_W, sill: lift, h: DOOR_H } as const;
+/** Where La Crypta's own account stands (local): on the street right of the
+ *  steps' foot, facing out (world/halloween.ts puts its sign beside it). */
+export const LA_CRYPTA_RESIDENT: Vec2 = { x: doorX + 0.15, z: moundDepth + 0.3 };
 /** The logo plaque on the brick right of the door (local): its centre x, bottom, size. */
 export const LA_CRYPTA_LOGO = { x: (doorX + DOOR_W / 2 + W / 2) / 2 + 0.04, y: lift + 0.16, w: 0.42, h: 0.5 } as const;
 
@@ -602,6 +605,7 @@ export function buildLaCryptaHouse(): LandmarkBuild {
   return {
     group: g,
     doorLocal: new THREE.Vector3(doorX - 0.6, 0, moundDepth + 0.3),
+    residentLocal: LA_CRYPTA_RESIDENT,
     seats: room.seats,
     solids: [
       ...room.solids,
