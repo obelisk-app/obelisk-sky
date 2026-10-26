@@ -225,6 +225,23 @@ section h2 { margin: 0; font-size: clamp(30px, 4vw, 44px); letter-spacing: -0.03
 .step { text-align: center; padding: 8px 12px; }
 .step-n { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--green); color: var(--ink); font-weight: 800; box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.8); }
 
+/* Obelisk's official accounts: the feature card's frosted tile, one per network, opening in a new tab. */
+.social { max-width: 1180px; margin: 0 auto; padding: 72px 16px 24px; }
+.social-grid { list-style: none; padding: 0; margin: 44px auto 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 960px; }
+.social-card {
+  display: flex; flex-direction: column; align-items: flex-start; height: 100%; box-sizing: border-box; text-decoration: none; color: var(--ink);
+  background: var(--card); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 22px; padding: 24px;
+  box-shadow: 0 8px 24px rgba(15, 42, 68, 0.06); transition: transform 0.25s, box-shadow 0.25s;
+}
+.social-card:hover { transform: translateY(-4px); box-shadow: 0 16px 36px rgba(15, 42, 68, 0.12); }
+.social-card:hover .ico { transform: scale(1.08) rotate(-4deg); }
+.social-card .ico .dot, .social-card .ico .play { fill: var(--ink); stroke: none; }
+.social-card .net { margin-top: 18px; font-size: 14px; font-weight: 600; color: var(--ink-muted); }
+.social-card .handle { margin: 4px 0 16px; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: var(--green-ink); word-break: break-all; }
+.social-card .follow { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 14px; font-weight: 700; }
+.social-card .follow::after { content: '↗'; }
+.social-card:hover .follow { background: var(--green); color: var(--ink); }
+
 .cta { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 72px 16px 96px; text-align: center; }
 .cta img { width: 96px; height: 96px; animation: float 5s ease-in-out infinite; }
 
@@ -238,6 +255,7 @@ section h2 { margin: 0; font-size: clamp(30px, 4vw, 44px); letter-spacing: -0.03
   .lead { margin-left: auto; margin-right: auto; }
   .hero-art { width: min(400px, 88%); }
   .steps { grid-template-columns: 1fr; }
+  .social-grid { grid-template-columns: 1fr; max-width: 420px; }
 }
 @media (max-width: 560px) {
   .nav-links { display: none; }
@@ -246,10 +264,15 @@ section h2 { margin: 0; font-size: clamp(30px, 4vw, 44px); letter-spacing: -0.03
   .feature .ico { grid-row: span 2; }
   .feature h3 { margin: 0 0 4px; align-self: end; }
   .feature p { align-self: start; }
+  .social-card { display: grid; grid-template-columns: 64px 1fr; column-gap: 16px; row-gap: 2px; align-items: center; padding: 18px; }
+  .social-card .ico { grid-row: span 3; }
+  .social-card .net { margin: 0; }
+  .social-card .handle { margin: 0 0 6px; font-size: 20px; }
+  .social-card .follow { margin: 0; justify-self: start; padding: 6px 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .sky i, .porthole, .hero-mark, .cta img, .ico * { animation: none; }
-  .feature, .ico, .porthole video { transition: none; }
-  .feature:hover, .feature:hover .ico { transform: none; }
+  .feature, .ico, .porthole video, .social-card { transition: none; }
+  .feature:hover, .feature:hover .ico, .social-card:hover, .social-card:hover .ico { transform: none; }
 }

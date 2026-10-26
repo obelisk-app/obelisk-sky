@@ -150,3 +150,20 @@ describe('pickLang', () => {
     expect(pickLang('?lang=fr', 'xx', ['pt-BR', 'de'])).toBe('en');
   });
 });
+
+describe('the social cards', () => {
+  it("links Obelisk's official accounts, each in a new tab", () => {
+    document.documentElement.innerHTML = html.replace(/^<!doctype html>/i, '');
+    const links = [...document.querySelectorAll<HTMLAnchorElement>('#social a.social-card')];
+    expect(links.map((a) => a.getAttribute('href'))).toEqual([
+      'https://www.instagram.com/obelisk.ar',
+      'https://www.youtube.com/@obelisk_ar',
+      'https://x.com/obelisk_ar',
+    ]);
+    expect(links.map((a) => a.querySelector('.handle')!.textContent)).toEqual(['@obelisk.ar', '@obelisk_ar', '@obelisk_ar']);
+    for (const a of links) {
+      expect(a.target).toBe('_blank');
+      expect(a.rel).toContain('noopener');
+    }
+  });
+});
