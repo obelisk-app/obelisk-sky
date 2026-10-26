@@ -51,7 +51,7 @@ client/
     totemMonitor.ts       the totem monitor on LABITCONF's lawn: a 16:9 screen on a stand playing totemcillo live (iframe over it, domScreen, hidden when occluded), E in front opens it in Watch mode's view (main.ts `enterTotem`)
     theaterScreen.ts      the theater's big screen: a call's shared screen as a video texture (letterboxed), else a card
     domScreen.ts          a page element (<iframe>, <video>) placed in 3D over a screen mesh with CSS3DRenderer: plays at its own frame rate, not the world's
-    gym.ts                the gym hall a fitness channel gets (machines, interior, ramp), the barbell; dressed as openGym (dark cladding, lime dumbbell sign, the app's home card on a wall screen)
+    gym.ts                the gym hall a fitness channel gets (machines, interior, ramp), the barbell; its panes (`gym-glass`) stay separate for transparency sorting and its sliding door runs outside them; dressed as openGym (dark cladding, lime dumbbell sign, the app's home card on a wall screen)
     halloween.ts          La Crypta's Halloween corner: the sign, two jack-o'-lanterns and the orange aura its account stands in (built by `World.buildHalloween` while `halloweenOn()`)
     mateRound.ts          sharing one mate along a bench
     nostrich.ts           the purple nostrich (procedural) and the wild flock

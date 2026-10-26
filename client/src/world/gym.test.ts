@@ -86,13 +86,47 @@ describe('the gym never closes', () => {
     const moving = findDynamic(gb.group, (mark) => {
       gb.interior.setDoor(1); mark(); gb.interior.setInside(true); mark(); gb.interior.setInside(false); gb.interior.setDoor(0);
     });
-    mergeStatic(gb.group, (m) => moving.has(m) || m.name === 'roof' || gb.windows.includes(m));
+    mergeStatic(gb.group, (m) => moving.has(m) || m.name === 'roof' || m.name === 'gym-glass' || gb.windows.includes(m));
     const all = () => { const out: InstanceType<typeof THREE.Mesh>[] = []; gb.group.traverse((o) => { if ((o as InstanceType<typeof THREE.Mesh>).isMesh) out.push(o as InstanceType<typeof THREE.Mesh>); }); return out; };
     gb.group.updateMatrixWorld(true);
     const at = new Map(all().map((m) => [m, m.matrixWorld.elements.slice()]));
     gb.interior.setDoor(1);
     gb.group.updateMatrixWorld(true);
     expect(all().some((m) => at.get(m)?.some((x, i) => Math.abs(x - m.matrixWorld.elements[i]) > 1e-6))).toBe(true);
+    expect(all().filter((m) => m.name === 'gym-glass')).toHaveLength(4);
+  });
+
+  it('keeps the sliding door clear of the fixed panes at every opening', () => {
+    const gb = buildGym({ pos: { x: 0, z: 0 }, rot: 0, w: 2.4, d: 2 } as never, 0x334455);
+    const door = gb.group.getObjectByName('gym-door')!;
+    const panes = gb.group.children.filter((o) => o.name === 'gym-glass');
+    for (const pane of panes) {
+      // The upper rail starts at floor 0.115 + wall 1.25 - rail 0.05.
+      expect(new THREE.Box3().setFromObject(pane).max.y).toBeCloseTo(1.315);
+    }
+    for (let open = 0; open <= 1; open += 0.1) {
+      gb.interior.setDoor(open);
+      gb.group.updateMatrixWorld(true);
+      const doorBox = new THREE.Box3().setFromObject(door);
+      for (const pane of panes) expect(doorBox.intersectsBox(new THREE.Box3().setFromObject(pane))).toBe(false);
+    }
+    // Side panes span the side wall; thickness is reduced along x, not z.
+    const side = panes.filter((o) => Math.abs(o.position.x) > 1);
+    expect(side).toHaveLength(2);
+    for (const pane of side) {
+      const size = new THREE.Box3().setFromObject(pane).getSize(new THREE.Vector3());
+      expect(size.x).toBeCloseTo(0.032);
+      expect(size.z).toBeCloseTo(2);
+    }
+  });
+
+  it('shows the screen ahead of its bezel from inside the hall', () => {
+    const gb = buildGym({ pos: { x: 0, z: 0 }, rot: 0, w: 2.4, d: 2 } as never, 0x334455);
+    const screen = gb.group.getObjectByName('gym-screen')!;
+    gb.group.updateMatrixWorld(true);
+    const origin = new THREE.Vector3(screen.position.x, screen.position.y, 0);
+    const hits = new THREE.Raycaster(origin, new THREE.Vector3(0, 0, -1)).intersectObject(gb.group, true);
+    expect(hits[0].object).toBe(screen);
   });
 });
 

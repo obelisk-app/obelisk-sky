@@ -363,7 +363,7 @@ export class World {
         const moving = findDynamic(gb.group, (mark) => {
           gb.interior.setDoor(1); mark(); gb.interior.setInside(true); mark(); gb.interior.setInside(false); gb.interior.setDoor(0);
         });
-        this.meshesMerged += mergeStatic(gb.group, (m) => moving.has(m) || m.name === 'roof' || gb.windows.includes(m));
+        this.meshesMerged += mergeStatic(gb.group, (m) => moving.has(m) || m.name === 'roof' || m.name === 'gym-glass' || gb.windows.includes(m));
         this.setGym(gb, g.id, slot);
       }
       // A house is dozens of little pieces: draw them as a handful (the roof

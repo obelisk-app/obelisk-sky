@@ -134,14 +134,23 @@ export function buildGym(slot: Slot, roofColor: number): GymBuild {
   mirror.castShadow = false;
   // The openGym home card on a wall screen: today's workout, body weight, the streak.
   const screen = new THREE.Mesh(new THREE.PlaneGeometry(W * 0.26, W * 0.26 * 0.62), new THREE.MeshBasicMaterial({ map: openGymScreen(), toneMapped: false }));
-  screen.position.set(W * 0.27, F + 0.66, -D / 2 + T + 0.006);
+  screen.name = 'gym-screen';
+  // The bezel ends at T + 0.008: put the picture in front of that face,
+  // rather than inside the box where depth precision makes it flicker.
+  screen.position.set(W * 0.27, F + 0.66, -D / 2 + T + 0.012);
   group.add(screen);
   add(box(W * 0.26 + 0.03, W * 0.26 * 0.62 + 0.03, 0.012, mat(OPENGYM.ink)), W * 0.27, F + 0.66, -D / 2 + T + 0.002).castShadow = false;
   const DOOR = 0.62;
   const glassWall = (x: number, z: number, w: number, d: number) => {
     walls.push(add(box(w, 0.28, d, brick), x, F + 0.14, z));
-    const pane = add(box(w, H - 0.28, d * 0.4, glass), x, F + 0.28 + (H - 0.28) / 2, z);
-    pane.castShadow = false;
+    // Stop below the upper rail: a pane extending through it puts two top
+    // faces at exactly the same height, causing striped depth flicker.
+    const paneH = H - 0.28 - 0.05;
+    const pane = add(box(w === T ? w * 0.4 : w, paneH, d === T ? d * 0.4 : d, glass), x, F + 0.28 + paneH / 2, z);
+    // Keep each pane independently sortable. Merging transparent walls fixes
+    // their triangle order and makes the glass pop as the camera moves.
+    pane.name = 'gym-glass';
+    pane.castShadow = pane.receiveShadow = false;
     walls.push(add(box(w, 0.05, d, frame), x, F + H - 0.025, z));
   };
   glassWall(-W / 2 + T / 2, 0, T, D);
@@ -150,8 +159,11 @@ export function buildGym(slot: Slot, roofColor: number): GymBuild {
   glassWall(-W / 2 + side / 2, D / 2 - T / 2, side, T);
   glassWall(W / 2 - side / 2, D / 2 - T / 2, side, T);
   // Sliding glass door.
-  const door = add(box(DOOR, H - 0.05, 0.03, glass), 0, F + (H - 0.05) / 2, D / 2 - T / 2);
-  door.castShadow = false;
+  // A separate outer sliding track keeps the open door clear of the fixed
+  // pane; coincident glass faces used to shimmer where they overlapped.
+  const door = add(box(DOOR, H - 0.05, 0.03, glass), 0, F + (H - 0.05) / 2, D / 2 + 0.01);
+  door.name = 'gym-door';
+  door.castShadow = door.receiveShadow = false;
   // "Bitcoin accepted here" stuck on the glass beside the door.
   const btc = add(bitcoinSign(), DOOR / 2 + 0.2, F + 0.72, D / 2 - T * 0.3 + 0.004);
   btc.castShadow = false;
