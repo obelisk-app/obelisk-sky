@@ -24,7 +24,15 @@ export interface FeedHooks {
 
 /** A relay CLOSED reason that means "this key is not admitted here". */
 export function isAccessRefusal(reason: string): boolean {
-  return /^restricted:/i.test(reason) && /whitelist|not allowed|access denied|not admitted|web of trust|wot/i.test(reason);
+  // "Access denied to private group" is one channel, not the relay: an
+  // admitted account sent there would land on the guest island.
+  if (isPrivateGroupRefusal(reason)) return false;
+  return /^restricted:/i.test(reason) && /whitelist|not allowed|access denied|not admitted|blocked from this relay|web of trust|wot/i.test(reason);
+}
+
+/** A relay CLOSED reason that means "a private group in this REQ isn't yours to read". */
+export function isPrivateGroupRefusal(reason: string): boolean {
+  return /^restricted:/i.test(reason) && /private group/i.test(reason);
 }
 
 /** A relay set may miss a kind 0 (or a new account publishes it minutes
@@ -118,10 +126,27 @@ export class Feed {
   }
 
   private subscribeContent(): void {
+    this.resubTimer = null;
     if (this.stopped) return;
-    const ids = this.state.visibleGroupIds();
+    const ids = this.state.readableGroupIds();
+    // The relay sends a private group's member list only to its members.
+    const unknown = this.state.unknownPrivateGroupIds();
     const prev = this.contentSub;
-    if (!ids.length) { prev?.release(); this.contentSub = null; return; }
+    if (!ids.length && !unknown.length) { prev?.release(); this.contentSub = null; return; }
+    const members = unknown.length ? [{ kinds: [39002], '#d': unknown }] : [];
+    if (!ids.length) {
+      this.contentSub = this.hub.subscribe({
+        relays: [activeRelay()],
+        filters: members,
+        priority: 'active',
+        watchdogMs: 8000,
+        label: 'sky-content',
+        onEvent: (ev: NostrEvent) => { if (this.state.ingestMembers(ev)) this.scheduleContent(); },
+        onEose: () => { if (!this.resubTimer) this.finishSnapshot(); },
+      });
+      prev?.release();
+      return;
+    }
     const since = Math.floor(Date.now() / 1000) - HISTORY_SECONDS;
     this.contentSub = this.hub.subscribe({
       relays: [activeRelay()],
@@ -131,6 +156,7 @@ export class Feed {
         { kinds: [5], '#h': ids, since, limit: 2000 },
         // Game tables live a day (the app's GAME_LOG_WINDOW_SECONDS).
         { kinds: [2390], '#h': ids, since: Math.floor(Date.now() / 1000) - 24 * 3600, limit: 3000 },
+        ...members,
       ],
       priority: 'active',
       watchdogMs: 8000,
@@ -140,9 +166,14 @@ export class Feed {
         else if (ev.kind === 7) this.state.ingestReaction(ev);
         else if (ev.kind === 5) this.state.ingestDeletion(ev);
         else if (ev.kind === 2390) this.hooks.onGame?.(ev);
+        else if (ev.kind === 39002 && this.state.ingestMembers(ev)) this.scheduleContent();
       },
-      onEose: () => { this.finishSnapshot(); this.fetchZaps(true); },
-      onRelayClosed: (_r, reason) => { if (isAccessRefusal(reason)) this.hooks.onAccess('refused', reason); },
+      // A private group just opened to us: its history comes with the next REQ, before the snapshot.
+      onEose: () => { if (!this.resubTimer) this.finishSnapshot(); this.fetchZaps(true); },
+      onRelayClosed: (_r, reason) => {
+        if (isAccessRefusal(reason)) this.hooks.onAccess('refused', reason);
+        else if (isPrivateGroupRefusal(reason)) { this.state.forgetPrivateReads(); this.scheduleContent(); }
+      },
     });
     // Release the old REQ only after the new one holds the socket.
     prev?.release();

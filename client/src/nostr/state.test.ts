@@ -353,3 +353,34 @@ describe('voice notes (obelisk-dex: a `voice` tag on a message that is just its 
     expect(voiceNoteOf(url, [])).toEqual({});
   });
 });
+
+describe('private groups in the content REQ', () => {
+  const meta = (id: string, extra: string[][] = []) =>
+    ({ kind: 39000, created_at: 1, tags: [['d', id], ['name', id], ...extra], content: '', pubkey: 'r', id: id, sig: '' }) as never;
+  const members = (id: string) => ({ kind: 39002, created_at: 1, tags: [['d', id], ['p', 'me']], content: '', pubkey: 'r', id: `m${id}`, sig: '' }) as never;
+  const state = () => {
+    const s = new SkyState(() => {}, () => 100, { publicOnly: false });
+    s.ingestGroupMeta(meta('pub', [['public']]));
+    s.ingestGroupMeta(meta('priv', [['private']]));
+    return s;
+  };
+
+  it('names a private group only once its member list reached us', () => {
+    const s = state();
+    expect(s.readableGroupIds()).toEqual(['pub']);
+    expect(s.unknownPrivateGroupIds()).toEqual(['priv']);
+    expect(s.ingestMembers(members('priv'))).toBe(true);
+    expect(s.readableGroupIds().sort()).toEqual(['priv', 'pub']);
+    expect(s.unknownPrivateGroupIds()).toEqual([]);
+    expect(s.ingestMembers(members('priv'))).toBe(false);
+  });
+
+  it('after the relay refuses a private group, asks for public ones only', () => {
+    const s = state();
+    s.ingestMembers(members('priv'));
+    s.forgetPrivateReads();
+    expect(s.readableGroupIds()).toEqual(['pub']);
+    expect(s.unknownPrivateGroupIds()).toEqual([]);
+    expect(s.ingestMembers(members('priv'))).toBe(false);
+  });
+});

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isAccessRefusal, nextProfileRetry, profilesDue, PROFILE_REFRESH_MS, zapAsks, type ProfileAsks } from './feed';
+import { isAccessRefusal, isPrivateGroupRefusal, nextProfileRetry, profilesDue, PROFILE_REFRESH_MS, zapAsks, type ProfileAsks } from './feed';
 
 describe('isAccessRefusal', () => {
   it('recognises the relay refusing this key', () => {
@@ -9,6 +9,14 @@ describe('isAccessRefusal', () => {
   it('does not treat auth or membership closes as a relay-wide refusal', () => {
     expect(isAccessRefusal('auth-required: Authentication required')).toBe(false);
     expect(isAccessRefusal('restricted: not a member of this group')).toBe(false);
+  });
+  it('does not send an admitted account to the guest island over one private group', () => {
+    expect(isAccessRefusal('restricted: Access denied to private group')).toBe(false);
+    expect(isPrivateGroupRefusal('restricted: Access denied to private group')).toBe(true);
+    expect(isPrivateGroupRefusal('restricted: Access denied: your pubkey is not whitelisted on this relay')).toBe(false);
+  });
+  it('recognises a blocked key', () => {
+    expect(isAccessRefusal('restricted: This pubkey is blocked from this relay')).toBe(true);
   });
 });
 

@@ -1063,6 +1063,19 @@ body.menu-open .controls button[hidden] { display: none; }
 .account-menu-item { border: 0; background: none; color: var(--white); text-align: left; padding: 9px 12px; border-radius: 9px; font: 600 13px var(--sans); cursor: pointer; white-space: nowrap; }
 .account-menu-item:hover, .account-menu-item:focus-visible { background: rgba(255, 255, 255, 0.08); color: var(--green); outline: none; }
 
+/* ── "Invite people" (ui/invitePanel.ts): the settings' dark rows, one per live link ── */
+.invite-panel { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+.invite-quota { font: 12.5px/1.45 var(--sans); color: var(--muted); }
+.invite-create { align-self: flex-start; }
+.invite-create:disabled { opacity: 0.55; cursor: default; }
+.invite-codes { display: flex; flex-direction: column; gap: 8px; }
+.invite-code { display: flex; align-items: center; gap: 10px; background: #0f0f0f; border: 1px solid var(--border); border-radius: 12px; padding: 10px 10px 10px 12px; min-width: 0; }
+.invite-code-info { flex: 1; min-width: 0; }
+.invite-code code { display: block; font: 600 13.5px var(--mono); color: var(--green); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.invite-code-use { font: 500 11.5px var(--sans); color: var(--muted); margin-top: 3px; }
+.invite-code .pill { flex: none; background: #262626; }
+.invite-code .pill:hover { background: #333; }
+
 /* ── the profile editor (profile/ProfilePanel.tsx, SkyProfileForm.tsx): a cloud card in sky's palette ── */
 .profile-host { position: relative; z-index: 60; }
 .profile-overlay { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(15, 42, 68, 0.42); backdrop-filter: blur(6px); }

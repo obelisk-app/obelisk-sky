@@ -18,7 +18,6 @@ function deps(over: Partial<InvitePanelDeps> = {}): InvitePanelDeps {
     relayHost: 'public.obelisk.ar',
     load: vi.fn(async () => ME),
     create: vi.fn(async () => ({ ...ME.codes[0], code: 'new' })),
-    revoke: vi.fn(async () => undefined),
     linkFor: (code) => `https://sky.obelisk.ar/invite/${code}`,
     copy: vi.fn(),
     toast: vi.fn(),
@@ -27,13 +26,19 @@ function deps(over: Partial<InvitePanelDeps> = {}): InvitePanelDeps {
 }
 
 describe('invite panel', () => {
-  it('shows the quota and each link, with actions only on live ones', async () => {
+  it('shows the quota and each live link as its code with one Copy link', async () => {
     const body = document.createElement('div');
-    await renderInvitePanel(body, deps());
+    const d = deps();
+    await renderInvitePanel(body, d);
     expect(body.textContent).toContain('5 people');
     expect(body.textContent).toContain('3 of 10 used');
-    expect(body.querySelector('[data-code="live"] .actions')).not.toBeNull();
-    expect(body.querySelector('[data-code="done"] .actions')).toBeNull();
+    const row = body.querySelector('[data-code="live"]')!;
+    expect(row.querySelector('code')!.textContent).toBe('live');
+    const buttons = row.querySelectorAll('button');
+    expect([...buttons].map((b) => b.textContent)).toEqual([VILLAGE_WORDS.en.invite.copy]);
+    fireEvent.click(buttons[0]);
+    expect(d.copy).toHaveBeenCalledWith('https://sky.obelisk.ar/invite/live');
+    expect(body.querySelector('[data-code="done"]')).toBeNull();
   });
 
   it('creates a link and copies it at once', async () => {
