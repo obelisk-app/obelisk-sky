@@ -22,6 +22,15 @@ export const ZAP_LIVE_S = 120;
 
 export interface Episode { start: number; end: number; count: number; groupId: string }
 
+/** Put `ev` into `events` (sorted by time) after every event at or before its
+ *  time, so equal times keep their arrival order. Returns its index. */
+export function insertByTime(events: Ev[], ev: Ev): number {
+  let i = events.length;
+  while (i > 0 && events[i - 1].at > ev.at) i--;
+  events.splice(i, 0, ev);
+  return i;
+}
+
 export function findEpisodes(events: Ev[], minCount = 3): Episode[] {
   const msgs = events.filter((e): e is Extract<Ev, { k: 'msg' }> => e.k === 'msg');
   const out: Episode[] = [];
@@ -105,9 +114,13 @@ export class Player {
   push(ev: Ev, now: number): void {
     if (this.ids.has(evId(ev))) return;
     this.ids.add(evId(ev));
-    this.events.push(ev);
+    // Kept in time order (the chat, unread counts and read cursors read it so):
+    // a reconnect's catch-up or a channel listed late comes newest first.
+    const at = insertByTime(this.events, ev);
     // Kept for history and the chat's totals, but news it isn't: no flight, no cut to live.
     if (ev.k === 'zap' && now - ev.at > ZAP_LIVE_S) return;
+    // Backfill from before what's already here: kept, not acted out as if just said.
+    if (at < this.events.length - 1 && now - ev.at > ZAP_LIVE_S) return;
     this.quietFor = 0;
     if (this.history) {
       // Kept for later; counted so you know the present moved on.

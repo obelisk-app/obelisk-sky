@@ -138,3 +138,48 @@ describe('ChatPanel forum', { timeout: 30_000 }, () => {
     await bar(p);
   });
 });
+
+describe('ChatPanel keeps to the newest message', { timeout: 30_000 }, () => {
+  it('follows the bottom as bodies render and messages come, until you scroll up yourself', () => {
+    // A layout for jsdom: the list's content grows by `h`, and observers are told so.
+    const observers: (() => void)[] = [];
+    const RO = globalThis.ResizeObserver;
+    globalThis.ResizeObserver = class { constructor(cb: () => void) { observers.push(cb); } observe() {} unobserve() {} disconnect() {} } as unknown as typeof ResizeObserver;
+    try {
+      const many = Array.from({ length: 12 }, (_, i) => ({ ...msg, id: String(i).padStart(64, '0'), createdAt: i }));
+      const p = new ChatPanel(document.body, {
+        me: () => 'f'.repeat(64), nameOf: () => 'Alice', avatarOf: () => null, messages: () => many, reactions: () => [],
+        send: async () => null, react: () => {}, unreact: () => {}, remove: () => {}, join: async () => null,
+        people: () => [], relay: () => 'wss://relay.test',
+      } as ChatPanelDeps);
+      const list = p.el.querySelector<HTMLElement>('.chat-list')!;
+      let h = 1000, top = 0;
+      const max = () => Math.max(0, h - 300);
+      Object.defineProperty(list, 'clientHeight', { get: () => 300 });
+      Object.defineProperty(list, 'scrollHeight', { get: () => h });
+      Object.defineProperty(list, 'scrollTop', { get: () => top, set: (v: number) => { top = Math.min(max(), Math.max(0, v)); } });
+      const grow = (by: number) => { h += by; for (const cb of observers) cb(); };
+      const scrollTo = (v: number) => { list.scrollTop = v; list.dispatchEvent(new Event('scroll')); };
+
+      p.open(group);
+      expect(top).toBe(max());
+      // The message bodies render a moment later (React), an image later still.
+      grow(240);
+      expect(top).toBe(max());
+      grow(500);
+      expect(top).toBe(max());
+      // You scroll up to read: it stays where you are.
+      scrollTo(200);
+      grow(300);
+      p.refresh(group.id);
+      expect(top).toBe(200);
+      // Back at the bottom: it follows again.
+      scrollTo(max());
+      grow(120);
+      expect(top).toBe(max());
+      p.close();
+    } finally {
+      globalThis.ResizeObserver = RO;
+    }
+  });
+});

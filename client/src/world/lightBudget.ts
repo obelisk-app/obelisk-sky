@@ -38,6 +38,15 @@ export function chooseLights(lights: readonly LightSpot[], to: { x: number; y: n
   return keep;
 }
 
+/**
+ * A street lamp at full night (three.js physical units: candela, falling off
+ * as 1/d²). Its pool on the cobbles is a little brighter than the moonlit
+ * lawn, never brighter than the noon sun (6 cd at decay 1.6 was: the plaza's
+ * eight overlapping pools burnt to orange-white and bloomed). The bulb glows
+ * just over the bloom threshold, so the lamp itself shines and its pool doesn't.
+ */
+export const STREET_LAMP = { cd: 2.2, distance: 6, decay: 2, bulb: 1.8 } as const;
+
 /** How far the street lamps are on for a night amount (0 day … 1 night):
  *  off in daylight, fully on from early dusk, so they never sit half-lit. */
 export function lampLevel(night01: number): number {

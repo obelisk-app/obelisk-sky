@@ -28,8 +28,8 @@ import { buildBarbell, buildGym, pickGymChannel, type GymBuild } from './gym';
 import { Flock } from './nostrich';
 import { WalkPin } from './walkPin';
 import { buildMarshmallow } from './campfire';
-import { findDynamic, mergeStatic } from './merge';
-import { chooseLights, lampLevel, lightBudget, LightScan, scanOnChange, type LightSpot } from './lightBudget';
+import { findDynamic, mergeStatic, mergeTogether } from './merge';
+import { chooseLights, lampLevel, lightBudget, LightScan, scanOnChange, STREET_LAMP, type LightSpot } from './lightBudget';
 import { buildObelisk, obeliskShape, plinthSteps, type Obelisk } from './obelisk';
 import { Overlay } from './overlay';
 import { Pet, buildHat } from './pet';
@@ -368,7 +368,11 @@ export class World {
       }
       // A house is dozens of little pieces: draw them as a handful (the roof
       // lights up for mentions and the windows at night, so they stay apart).
-      else this.meshesMerged += mergeStatic(b.group, (m) => m.name === 'roof' || b.windows.includes(m) || underCampfire(m));
+      else {
+        this.meshesMerged += mergeStatic(b.group, (m) => m.name === 'roof' || b.windows.includes(m) || underCampfire(m));
+        // The panes light up together at night: one mesh per house, not one draw call per pane.
+        b.windows = mergeTogether(b.group, b.windows, 'windows');
+      }
       this.setTreeSeats(g.id, slot, b.tree ?? null);
       b.group.userData = { groupId: g.id, tier, kind: g.kind, district, gym };
       this.buildingRoot.add(b.group);
@@ -1344,7 +1348,7 @@ export class World {
     const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 4), this.lampGlow);
     bulb.position.set(p.x, 0.85, p.z);
     this.staticRoot.add(bulb);
-    const pl = new THREE.PointLight(0xffb45a, 0, 5, 1.6);
+    const pl = new THREE.PointLight(0xffb45a, 0, STREET_LAMP.distance, STREET_LAMP.decay);
     pl.position.set(p.x, 0.95, p.z);
     this.lampLights.push(pl);
     this.staticRoot.add(pl);
@@ -1831,7 +1835,9 @@ export class World {
     return {
       get: () => {
         const c = this.people.get(pk);
-        if (!c || !c.root.visible) return null;
+        // Gone, or hidden for good: the bubble goes. Only off screen (culled,
+        // `offscreen`): it waits, hidden, until they're back in view.
+        if (!c || (!c.root.visible && !c.offscreen)) return null;
         // Over the head itself, so bubbles rise with a jump or a pull-up.
         return c.headTop(new THREE.Vector3()).add(new THREE.Vector3(0, 0.18 + extra, 0));
       },
@@ -3429,8 +3435,8 @@ export class World {
     }
     this.swayUniform.value = this.elapsed;
     const lamps = lampLevel(night01);
-    this.lampGlow.emissiveIntensity = lamps * 3;
-    for (const l of this.lampLights) l.intensity = lamps * 6;
+    this.lampGlow.emissiveIntensity = lamps * STREET_LAMP.bulb;
+    for (const l of this.lampLights) l.intensity = lamps * STREET_LAMP.cd;
     this.pulse = Math.max(0, this.pulse - dt * 0.8);
     this.obelisk?.setGlow(night01, this.pulse + (Math.sin(this.elapsed * 2) * 0.5 + 0.5) * 0.08);
     for (const b of this.landmarks.values()) { b.setNight(night01, this.elapsed); b.update?.(dt, this.elapsed); }

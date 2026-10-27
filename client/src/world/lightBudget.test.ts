@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { chooseLights, lampLevel, lightBudget, LightScan, scanOnChange, type LightSpot } from './lightBudget';
+import { chooseLights, lampLevel, lightBudget, LightScan, scanOnChange, STREET_LAMP, type LightSpot } from './lightBudget';
+import { DAY, NIGHT } from './sky';
 
 const at = (x: number, kind: 'point' | 'spot' = 'point', lit = true): LightSpot => ({ x, y: 0, z: 0, kind, lit });
 
@@ -69,5 +70,23 @@ describe('looking for new lights', () => {
     // Nothing added: the backstop every 3 s.
     expect(scan.due(3)).toBe(false);
     expect(scan.due(3.1)).toBe(true);
+  });
+});
+
+describe('a street lamp at night', () => {
+  const lum = (c: THREE.Color) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+  const lamp = new THREE.Color(0xffb45a);
+  // Light on the cobbles at `d` metres from the bulb (physical: candela / d^decay).
+  const at = (d: number) => (lum(lamp) * STREET_LAMP.cd) / d ** STREET_LAMP.decay;
+  const noon = lum(DAY.sun) * DAY.sunI;
+  const moon = lum(NIGHT.sun) * NIGHT.sunI + lum(NIGHT.hemiSky) * NIGHT.hemiI;
+
+  it('lights a pool under it dimmer than the noon sun (the plaza burnt orange-white)', () => {
+    expect(at(0.95)).toBeLessThan(noon);
+    expect(at(0.95)).toBeGreaterThan(moon);
+  });
+  it('fades to under the moonlight a couple of metres out, and to nothing at its reach', () => {
+    expect(at(2)).toBeLessThan(moon);
+    expect(at(STREET_LAMP.distance)).toBeLessThan(0.05);
   });
 });

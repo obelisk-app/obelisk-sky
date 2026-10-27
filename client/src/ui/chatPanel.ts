@@ -106,6 +106,7 @@ export class ChatPanel {
     head.append(this.back, titles, games, min, x);
     head.addEventListener('dblclick', () => this.setMinimised(!this.minimised));
     this.list = div('chat-list');
+    this.list.addEventListener('scroll', () => this.onScroll(), { passive: true });
     this.error = div('chat-error');
     this.error.hidden = true;
     this.composerSlot = div('chat-composer chat-bar');
@@ -132,7 +133,8 @@ export class ChatPanel {
     // A forum is read through its publications: no message bar of its own.
     this.el.classList.toggle('forum', g.kind === 'forum');
     this.composerSlot.hidden = g.kind === 'forum';
-    if (changed) { this.replyTo = null; this.error.hidden = true; this.setMinimised(false); }
+    // Another channel opens at its newest message.
+    if (changed) { this.replyTo = null; this.error.hidden = true; this.setMinimised(false); this.stick = true; }
     this.renderComposer();
     this.render();
   }
@@ -141,6 +143,7 @@ export class ChatPanel {
     this.group = null;
     this.openedBy = null;
     this.el.hidden = true;
+    this.follow?.disconnect();
     this.bodies?.pruneBodies(new Set());
     document.body.classList.remove('chat-open');
     this.setReply(null);
@@ -267,11 +270,36 @@ export class ChatPanel {
     });
   }
 
+  /** The list rests at the newest message and follows it as messages come
+   *  and their bodies (drawn by React a moment later, images later still)
+   *  grow. Let go only when you scroll up yourself. */
+  private stick = true;
+  /** Where the list was last scrolled to, to tell your scrolling up from content growing. */
+  private lastTop = 0;
+  private follow = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => { if (this.stick) this.toBottom(); });
+
+  private nearBottom(): boolean {
+    return this.list.scrollHeight - this.list.scrollTop - this.list.clientHeight < 40;
+  }
+
+  private onScroll(): void {
+    const top = this.list.scrollTop;
+    if (top < this.lastTop - 2) this.stick = this.nearBottom();
+    else if (this.nearBottom()) this.stick = true;
+    this.lastTop = top;
+  }
+
+  private toBottom(): void {
+    if (this.group?.kind === 'forum') return;
+    this.list.scrollTop = this.list.scrollHeight;
+    this.lastTop = this.list.scrollTop;
+  }
+
   private render(): void {
     if (!this.group) return;
-    if (this.group.kind === 'forum') { this.renderForum(this.group); return; }
+    if (this.group.kind === 'forum') { this.follow?.disconnect(); this.renderForum(this.group); return; }
     this.loadBodies();
-    const atBottom = this.list.scrollHeight - this.list.scrollTop - this.list.clientHeight < 40;
+    const atBottom = this.stick;
     const msgs = this.deps.messages(this.group.id).slice(-MAX_SHOWN);
     this.list.replaceChildren();
     if (!msgs.length) {
@@ -280,9 +308,14 @@ export class ChatPanel {
       this.list.append(empty);
     }
     const me = this.deps.me();
-    for (const m of msgs) this.list.append(this.row(m, me));
+    this.follow?.disconnect();
+    for (const m of msgs) {
+      const row = this.row(m, me);
+      this.list.append(row);
+      this.follow?.observe(row);
+    }
     this.bodies?.pruneBodies(new Set(msgs.map((m) => m.id)));
-    if (atBottom || msgs.length < 8) this.list.scrollTop = this.list.scrollHeight;
+    if (atBottom || msgs.length < 8) { this.stick = true; this.toBottom(); }
   }
 
   private row(m: WireMessage, me: string | null): HTMLElement {

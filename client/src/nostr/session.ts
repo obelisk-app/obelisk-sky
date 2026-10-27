@@ -14,7 +14,7 @@ import type { EventTemplate, VerifiedEvent } from 'nostr-tools';
 import { isSealedBox, openSessionVault, type SealedBox } from '@/lib/crypto';
 import { ANONYMOUS_IDENTITY, activeRelay } from './hub';
 import { RemoteSigner } from './remoteSigner';
-import { isGuest } from './guest';
+import { isGuest, isOwnWrite, ownWritesAllowed } from './guest';
 
 export const SESSION_KEY = 'obelisk-sky/session';
 const AAD = 'obelisk-sky/session/v1';
@@ -87,6 +87,18 @@ export class SessionManager {
     if (!this.current) return Promise.reject(new Error('not logged in'));
     // The guest island signs nothing (nostr/guest.ts).
     if (isGuest()) return Promise.reject(new Error('guest island: nothing is signed'));
+    return this.current.signer.signEvent(template) as Promise<VerifiedEvent>;
+  }
+
+  /**
+   * Sign your own profile, look or a profile picture's upload grant
+   * (`isOwnWrite`): as `sign`, and on the island too when the relay refused
+   * the account (it holds a real key, and these are its own).
+   */
+  signOwn(template: EventTemplate): Promise<VerifiedEvent> {
+    if (!this.current) return Promise.reject(new Error('not logged in'));
+    if (!isOwnWrite(template)) return Promise.reject(new Error('not your profile or look'));
+    if (!ownWritesAllowed()) return Promise.reject(new Error('guest island: nothing is signed'));
     return this.current.signer.signEvent(template) as Promise<VerifiedEvent>;
   }
 

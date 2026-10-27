@@ -5,15 +5,19 @@
 // published when the current profile couldn't be loaded, so an edit never
 // wipes a profile. Sky's own profile cache keeps only a few fields, which is
 // why the raw event is read again here.
+//
+// A refused account (the guest island, nostr/guest.ts) edits its profile the
+// same way, through the public profile relays only: the group relay would
+// refuse it, and `syncOwnProfile` copies it there once you're admitted.
 
 import type { Event as NostrEvent, EventTemplate, VerifiedEvent } from 'nostr-tools';
 import type { RelayHub } from '@nostr-wot/relay/hub';
 import { CodedError } from '@/utils/errors/codes';
 import { PROFILE_LOOKUP_MAX_WAIT_MS } from '@/constants/nostr-bridge/profile';
 import type { ProfileEditorInitial } from '@/types/session/profile';
-import { activeRelay, profileRelays } from './hub';
+import { activeRelay, profileRelays, publicProfileRelays } from './hub';
 import { publishSigned } from './publish';
-import { isGuest } from './guest';
+import { isGuest, ownWritesAllowed } from './guest';
 
 /** The fields the editor sets (obelisk-dex EditUserMetadataOptions). */
 export interface ProfileEdit {
@@ -87,10 +91,16 @@ export function initialOf(ev: NostrEvent | null): ProfileEditorInitial | null {
   return ev ? profileInitial(parseContent(ev)) : null;
 }
 
+/** Where your kind 0 is read and written: every profile relay, or on the
+ *  guest island (refused) the public ones, which don't ask for AUTH. */
+export function ownProfileRelays(): string[] {
+  return isGuest() ? publicProfileRelays() : profileRelays();
+}
+
 /** The relays' newest copy of your kind 0, read past every cache. */
 export async function fetchOwnProfile(deps: Pick<OwnProfileDeps, 'hub' | 'pubkey'>): Promise<{ event: NostrEvent | null; complete: boolean }> {
   const r = await deps.hub.query({
-    relays: profileRelays(),
+    relays: ownProfileRelays(),
     filters: [{ kinds: [0], authors: [deps.pubkey], limit: 5 }],
     maxWaitMs: PROFILE_LOOKUP_MAX_WAIT_MS,
     cache: { mode: 'bypass' },
@@ -101,13 +111,13 @@ export async function fetchOwnProfile(deps: Pick<OwnProfileDeps, 'hub' | 'pubkey
 
 /**
  * Merge the edit into your newest kind 0, sign it and publish it to the
- * profile relays (the group relay with sky's AUTH retry). Throws
- * `profile-load-failed` when no profile was found and not every relay
- * answered, and when no relay took the event.
+ * profile relays (the group relay with sky's AUTH retry; on the guest island
+ * the public ones only). Throws `profile-load-failed` when no profile was
+ * found and not every relay answered, and when no relay took the event.
  */
 export async function editOwnProfile(deps: OwnProfileDeps, edit: ProfileEdit, assertCurrent: () => void = () => {}): Promise<VerifiedEvent> {
-  // The guest island publishes nothing (nostr/guest.ts).
-  if (isGuest()) throw new CodedError('profile-load-failed', 'Not available on the guest island.');
+  // A logged-out guest has no profile to edit (nostr/guest.ts).
+  if (!ownWritesAllowed()) throw new CodedError('profile-load-failed', 'Not available on the guest island.');
   const { event: existing, complete } = await fetchOwnProfile(deps);
   assertCurrent();
   if (!existing && !complete) throw new CodedError('profile-load-failed', 'Could not load your current profile. Try again.');
@@ -121,10 +131,10 @@ export async function editOwnProfile(deps: OwnProfileDeps, edit: ProfileEdit, as
     content: JSON.stringify(merged),
   });
   assertCurrent();
-  const group = activeRelay();
-  const others = profileRelays().filter((r) => r !== group);
+  // Refused: not to the group relay (it would refuse; `syncOwnProfile` copies it once you're in).
+  const others = publicProfileRelays();
   const [onGroup, rest] = await Promise.all([
-    publishSigned(deps.hub as RelayHub, event).catch(() => ({ ok: false })),
+    isGuest() ? { ok: false } : publishSigned(deps.hub as RelayHub, event).catch(() => ({ ok: false })),
     deps.hub.publish({ relays: others, event, authMode: 'never' }).catch(() => []),
   ]);
   if (!onGroup.ok && !rest.some((r) => r.status === 'ok')) throw new Error('No relay accepted the profile.');
@@ -143,7 +153,7 @@ export async function syncOwnProfile(
 ): Promise<'republished' | 'current' | 'none' | 'failed'> {
   if (isGuest()) return 'none';
   const group = activeRelay();
-  const others = profileRelays().filter((r) => r !== group);
+  const others = publicProfileRelays();
   const ask = (relays: string[], label: string) => deps.hub.query({
     relays,
     filters: [{ kinds: [0], authors: [deps.pubkey], limit: 5 }],

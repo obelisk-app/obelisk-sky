@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Director } from './director';
-import { Player, findEpisodes, paceDelay, type Ev, LIVE_IDLE_BEFORE_STORY, ZAP_LIVE_S } from './player';
+import { Player, findEpisodes, insertByTime, paceDelay, type Ev, LIVE_IDLE_BEFORE_STORY, ZAP_LIVE_S } from './player';
 
 let n = 0;
 const m = (pubkey: string, at: number, groupId = 'g'): Ev =>
@@ -131,5 +131,41 @@ describe('a zap reaching the village', () => {
     p.push(zap('z3', NOW), NOW);
     expect(flights(d)).toHaveLength(0);
     expect(p.missed).toBe(1);
+  });
+});
+
+describe('messages that arrive late (a reconnect, a channel listed later)', () => {
+  const NOW = 100_000;
+  const says = (d: Director) => d.take().filter((c) => c.c === 'say' && !c.instant);
+
+  it('are kept in time order, whatever order they came in', () => {
+    const p = new Player(new Director());
+    p.load([m('A', NOW - 600), m('B', NOW - 30)], NOW);
+    // The relay's catch-up, newest first.
+    for (const at of [NOW - 100, NOW - 200, NOW - 300]) p.push(m('C', at), NOW);
+    p.push(m('D', NOW), NOW);
+    expect(p.events.map((e) => e.at)).toEqual([NOW - 600, NOW - 300, NOW - 200, NOW - 100, NOW - 30, NOW]);
+  });
+
+  it('are not acted out when they are from before what is already here', () => {
+    const d = new Director();
+    const p = new Player(d);
+    p.load([m('A', NOW - 10)], NOW);
+    d.take();
+    p.push(m('B', NOW - 500), NOW);
+    expect(says(d)).toHaveLength(0);
+    // Just said: acted out, even if a moment older than the last one.
+    p.push(m('C', NOW - 20), NOW);
+    p.push(m('D', NOW), NOW);
+    expect(says(d).map((c) => (c as { pk: string }).pk)).toEqual(['C', 'D']);
+  });
+
+  it('insertByTime keeps equal times in arrival order', () => {
+    const evs: Ev[] = [];
+    const a = m('A', 5), b = m('B', 5), c = m('C', 1);
+    insertByTime(evs, a);
+    insertByTime(evs, b);
+    expect(insertByTime(evs, c)).toBe(0);
+    expect(evs).toEqual([c, a, b]);
   });
 });

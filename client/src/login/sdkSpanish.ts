@@ -2,12 +2,19 @@
 // way to pass others (obelisk-dex shows them in English too). In Spanish,
 // while the login modal is open, its texts, placeholders and labels are
 // swapped for these as they appear.
+//
+// A few of them obelisk-dex's generated-profile step finds by their English
+// (vendor services/shell/desktop/generated-profile.ts) and takes over: it
+// writes the About label in its own words, hides the "Optional." line and
+// listens to the about field. Swapped before it saw them, a new account's
+// "about" was never saved. So those texts are left to dex (`DEX_TAKES`), and
+// the about field's placeholder is swapped only once dex has marked the field
+// (`DEX_MARKS`).
 
 const ES: Record<string, string> = {
   'Sign in to Nostr': 'Conectate a Nostr',
   'Close': 'Cerrar',
   'Nostr Connect QR code': 'Código QR de Nostr Connect',
-  'About': 'Sobre mí',
   'Action required': 'Falta un paso',
   'Advanced': 'Avanzado',
   'Advanced ▾': 'Avanzado ▾',
@@ -28,7 +35,6 @@ const ES: Record<string, string> = {
   'I have backed up my nsec. I understand that losing it means losing access to this account permanently.': 'Guardé mi nsec. Entiendo que si la pierdo, pierdo el acceso a esta cuenta para siempre.',
   'Loading…': 'Cargando…',
   'nsec or 64-char hex — risky in browsers': 'nsec o hex de 64 caracteres: riesgoso en el navegador',
-  'Optional. You can fill these in later from any Nostr client.': 'Opcional. Podés completarlo después desde cualquier cliente de Nostr.',
   'Paste a bunker:// URI from your remote signer': 'Pegá una URI bunker:// de tu firmador remoto',
   'Paste a bunker:// URI from your remote signer.': 'Pegá una URI bunker:// de tu firmador remoto.',
   'Paste private key': 'Pegar clave privada',
@@ -63,6 +69,12 @@ const ES: Record<string, string> = {
   'Sign in': 'Entrar',
 };
 
+/** Texts dex's generated-profile step rewrites or hides itself (see the top). */
+export const DEX_TAKES = new Set(['About', 'Optional. You can fill these in later from any Nostr client.']);
+
+/** Placeholders dex's step finds a field by: swapped once dex has set this data attribute on it. */
+export const DEX_MARKS: Record<string, string> = { 'Builder, chef, occasional cyclist.': 'data-obelisk-tracked' };
+
 /** The Spanish for one of the SDK's texts, keeping its spaces; null if it has none. */
 export function spanishFor(text: string): string | null {
   const core = text.trim();
@@ -88,6 +100,8 @@ export function translateSdk(root: Node): void {
       const el = n as Element;
       for (const attr of ['placeholder', 'aria-label', 'title']) {
         const v = el.getAttribute(attr);
+        const mark = attr === 'placeholder' && v ? DEX_MARKS[v.trim()] : undefined;
+        if (mark && !el.hasAttribute(mark)) continue;
         const es = v && spanishFor(v);
         if (es && es !== v) el.setAttribute(attr, es);
       }
@@ -105,6 +119,6 @@ export function watchSdk(root: HTMLElement): () => void {
       else for (const n of r.addedNodes) translateSdk(n);
     }
   });
-  obs.observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['placeholder', 'aria-label', 'title'] });
+  obs.observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['placeholder', 'aria-label', 'title', ...new Set(Object.values(DEX_MARKS))] });
   return () => obs.disconnect();
 }

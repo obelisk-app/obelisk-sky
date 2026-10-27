@@ -51,6 +51,12 @@ export function profileRelays(): string[] {
   return [...new Set([active, ...BASE_PROFILE_RELAYS])];
 }
 
+/** The profile relays other than the group relay: open to any key, where a
+ *  refused account's profile and look go (and a new account's first profile). */
+export function publicProfileRelays(): string[] {
+  return profileRelays().filter((r) => r !== active);
+}
+
 export const ANONYMOUS_IDENTITY: Identity = { id: SESSION_IDENTITY_ID, pubkey: null, signer: null, authPolicy: 'auth-when-challenged' };
 
 let hub: RelayHub | null = null;

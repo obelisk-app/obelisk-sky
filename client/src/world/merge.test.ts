@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { mergeStatic } from './merge';
+import { mergeStatic, mergeTogether } from './merge';
 
 const meshes = (o: THREE.Object3D) => { const out: THREE.Mesh[] = []; o.traverse((x) => { if ((x as THREE.Mesh).isMesh) out.push(x as THREE.Mesh); }); return out; };
 const worldBox = (o: THREE.Object3D) => { o.updateMatrixWorld(true); return new THREE.Box3().setFromObject(o); };
@@ -129,5 +129,49 @@ describe('finding what moves', () => {
         b.interior.setDoor(0);
       }
     }
+  });
+});
+
+describe('merging panes that light up together', () => {
+  it('makes one mesh in the same place, hidden as they were, and toggled as one', () => {
+    const root = new THREE.Group();
+    root.position.set(3, 0, 1);
+    root.rotation.y = 1.1;
+    const glow = new THREE.MeshBasicMaterial();
+    const geo = new THREE.PlaneGeometry(0.3, 0.3);
+    const panes: THREE.Mesh[] = [];
+    for (let i = 0; i < 5; i++) {
+      const cell = new THREE.Group();
+      cell.rotation.y = i * 0.5;
+      cell.position.set(i, i * 0.4, 0);
+      const pane = new THREE.Mesh(geo, glow);
+      pane.position.set(0.5, 0.55, 0);
+      pane.visible = false;
+      cell.add(pane);
+      root.add(cell);
+      panes.push(pane);
+    }
+    root.updateMatrixWorld(true);
+    const before = new THREE.Box3();
+    for (const p of panes) before.expandByObject(p);
+    const out = mergeTogether(root, panes, 'windows');
+    expect(out).toHaveLength(1);
+    expect(out[0].name).toBe('windows');
+    expect(out[0].visible).toBe(false);
+    expect(panes.every((p) => !p.parent)).toBe(true);
+    root.updateMatrixWorld(true);
+    const after = new THREE.Box3().setFromObject(out[0], true);
+    expect(after.min.distanceTo(before.min)).toBeLessThan(1e-5);
+    expect(after.max.distanceTo(before.max)).toBeLessThan(1e-5);
+  });
+
+  it('leaves them as they were when there is nothing to merge or they differ', () => {
+    const root = new THREE.Group();
+    const one = [new THREE.Mesh(new THREE.PlaneGeometry(), new THREE.MeshBasicMaterial())];
+    root.add(one[0]);
+    expect(mergeTogether(root, one, 'w')).toBe(one);
+    const two = [new THREE.Mesh(new THREE.PlaneGeometry(), new THREE.MeshBasicMaterial()), new THREE.Mesh(new THREE.PlaneGeometry(), new THREE.MeshBasicMaterial())];
+    root.add(...two);
+    expect(mergeTogether(root, two, 'w')).toBe(two);
   });
 });

@@ -21,11 +21,11 @@ import { EMPTY_THEMES, ThemeStore, resolveTheme, themesTemplate, type ThemeConfi
 import { guardHub, guestAuthor, guestPubkey, guestReason, isGuest, setGuest, type GuestReason } from './nostr/guest';
 import { GuestFeed } from './guest/feed';
 import { NPCS } from './guest/script';
-import { loadGuestLook, saveGuestLook } from './guest/look';
+import { clearGuestLook, loadGuestLook, saveGuestLook } from './guest/look';
 import { openThemeEditor } from './ui/themeEditor';
 import { GameBook, createTable, joinTable, startTable, moveOnTable, resignTable, cancelTable, timeoutOnTable, claimableTimeout, gameMarker, type CRSizeKey } from './games/book';
 import { GamePanel } from './ui/gamePanel';
-import { AvatarStore, DEFAULT_AVATAR, avatarTemplate, type Avatar } from './nostr/avatars';
+import { AvatarStore, DEFAULT_AVATAR, avatarTemplate, cacheAvatar, fetchOwnLook, loadCachedAvatar, type Avatar } from './nostr/avatars';
 import { ActivityBeacon, ActivityStore, activityTemplate, emoteActivity, emoteOfActivity, hereSpotId, parseSpot, type Activity, type Claim } from './nostr/activity';
 import { MotionBeacon, MotionStore, motionTemplate } from './nostr/motion';
 import { closeCreator, openCreator } from './ui/creator';
@@ -59,7 +59,7 @@ import { FirstState } from './ui/firstState';
 import { installVoiceBridge } from './shims/bridge';
 import { dist, hashStr, ISLAND_R, type Vec2 } from './world/layout';
 import { readBoard } from '@/utils/games/chain-reaction/board-view';
-import { ANONYMOUS_IDENTITY, activeRelay, DEFAULT_GROUP_RELAY, normalizeRelay, profileRelays, setActiveRelay, SUGGESTED_RELAYS } from './nostr/hub';
+import { ANONYMOUS_IDENTITY, activeRelay, DEFAULT_GROUP_RELAY, normalizeRelay, publicProfileRelays, setActiveRelay, SUGGESTED_RELAYS } from './nostr/hub';
 import { pageHub } from './nostr/hub';
 import { SessionManager, type LoginArgs, type Session } from './nostr/session';
 import { registerHost } from './shims/host';
@@ -272,7 +272,8 @@ world.hooks = {
     sound.blip(pk);
   },
   // Messages are seen and heard only at the speaker's place (ui/livePlaces.ts).
-  hears: (pk, groupId) => bubbleShown(place, speakerPlace(isLivePk(pk), standingPlace(pk), groupId)),
+  // Replaying History you asked for the past: every bubble. Live, only what's said where you are.
+  hears: (pk, groupId) => player.history || bubbleShown(place, speakerPlace(isLivePk(pk), standingPlace(pk), groupId)),
   onPersonClick: (pk) => showPerson(pk),
   onGroupClick: (id) => {
     // Something for you there (the "@"): open the chat at it and go.
@@ -423,6 +424,18 @@ function myPk(): string | null {
 let sessionGen = 0;
 /** Your kind 0 as last read or published (the editor's starting point; sky's profile cache keeps only a few fields). */
 let ownKind0: Parameters<typeof initialOf>[0] = null;
+/** A new account's first kind 0, signed in the login modal before the account logs in (it becomes `ownKind0` then). */
+let signupKind0: Parameters<typeof initialOf>[0] = null;
+/** The account just made in the login modal: its look is asked for as soon as it walks in. */
+let newAccount: string | null = null;
+
+/** Your kind 0 as last saved, into the feed's state as any kind 0: the pill, badge, chat and card follow at once. */
+function showOwnKind0(): void {
+  const s = session.current;
+  if (!s || !feed || ownKind0?.pubkey !== s.pubkey) return;
+  feed.state.watch(s.pubkey);
+  feed.state.ingestProfile(ownKind0);
+}
 /** The profile editor module, once loaded (React, obelisk-dex's form). Declared here: session.onChange closes it. */
 let profileMount: typeof import('./profile/ProfileMount') | null = null;
 
@@ -467,7 +480,7 @@ function startFeed(): void {
   // that doesn't have it (or has an older one) gets the same signed event.
   const me = session.current?.pubkey;
   if (me) {
-    void avatars.syncOwn(me, async (ev) => (await publishSigned(hub, ev as VerifiedEvent)).ok)
+    void avatars.syncOwn(me, async (ev) => (await publishSigned(hub, ev as VerifiedEvent)).ok, publicProfileRelays())
       .then((r) => { if (r === 'republished') console.info('[sky] look copied to', activeRelay()); });
     // Your profile too: an edit saved on another relay is copied here.
     void syncOwnProfile({ hub, pubkey: me }, ownKind0?.pubkey === me ? ownKind0 : null)
@@ -492,6 +505,7 @@ function startFeed(): void {
   setProfileRequester((pk) => f.state.watch(pk));
   // Your own picture and name, from the profile relays, even before you post.
   if (session.current) f.state.watch(session.current.pubkey);
+  showOwnKind0();
 }
 
 function resetVillage(): void {
@@ -542,18 +556,26 @@ function startGuest(why: GuestReason): void {
   }
   const look = loadGuestLook(me);
   if (look) world.setAvatar(me, look);
+  // Refused: your look as you last saved it anywhere (the public profile relays keep the island's too).
+  if (s) {
+    void fetchOwnLook(hub, me, publicProfileRelays()).then((ev) => {
+      const a = ev && isGuest() && guestAuthor() === me ? loadGuestLook(me) : null;
+      if (a) world.setAvatar(me, a);
+    }).catch(() => {});
+  }
   const g = new GuestFeed(hub, { onMsg: (m) => (ready ? handle(m) : pending.push(m)) }, {
     lang,
     relay: activeRelay(),
     me,
     guestName: s ? null : vw.guestName,
     // Kind 0s from the public profile relays only: the group relay would ask for AUTH.
-    profileRelays: () => profileRelays().filter((r) => r !== activeRelay()),
+    profileRelays: publicProfileRelays,
   });
   feed = g;
   clearProfiles();
   setProfileRequester((pk) => g.state.watch(pk));
   g.start();
+  showOwnKind0();
   renderAccess(why);
   renderBell();
   renderCall();
@@ -591,7 +613,9 @@ session.onChange((s) => {
   refreshInviteMenu();
   // Logged in: off the guest island (startFeed below opens the real village).
   if (s) setGuest(null);
-  ownKind0 = null;
+  ownKind0 = s && signupKind0?.pubkey === s.pubkey ? signupKind0 : null;
+  signupKind0 = null;
+  if (newAccount && newAccount !== s?.pubkey) newAccount = null;
   closeAccountMenu();
   profileMount?.closeProfileEditor();
   renderAccount(s);
@@ -710,19 +734,26 @@ function openInvites(): void {
 
 // The re-hosted obelisk-dex login modal reaches sky through this host.
 registerHost({
-  login: (args) => { freshLogin = true; return session.login(args as LoginArgs); },
+  login: (args) => {
+    freshLogin = true;
+    const a = args as LoginArgs;
+    // A key made just now in the modal: once in, it is asked for its look.
+    newAccount = a.method === 'generate' ? a.pubkey : null;
+    return session.login(a);
+  },
   sign: (t) => session.sign(t),
+  // Your profile is yours even where the relay hasn't admitted you (the guest island).
+  signOwn: (t) => session.signOwn(t),
   pubkey: () => session.current?.pubkey ?? null,
   generation: () => sessionGen,
   editProfile: async (edit, assertCurrent) => {
     const s = session.current;
     if (!s) throw new Error('Not logged in');
-    const ev = await editOwnProfile({ hub, pubkey: s.pubkey, sign: (t) => session.sign(t) }, edit, assertCurrent);
-    ownKind0 = ev;
-    // Through the feed's state, as any kind 0: the pill, badge, chat and card follow.
-    feed?.state.watch(s.pubkey);
-    feed?.state.ingestProfile(ev);
+    ownKind0 = await editOwnProfile({ hub, pubkey: s.pubkey, sign: (t) => session.signOwn(t) }, edit, assertCurrent);
+    showOwnKind0();
   },
+  // The login modal's new account: its first profile, shown as soon as it logs in.
+  ownProfileSigned: (ev) => { signupKind0 = ev; },
 });
 
 /** The login module, once loaded (logging out resets it). */
@@ -740,8 +771,8 @@ $('gate-hide').addEventListener('click', () => { gateHiddenFor = $('gate').datas
 function renderAccount(s: Session | null): void {
   $('login').hidden = !!s;
   $('account').hidden = !s;
-  // On the guest island your kind 0 can't be published: only your look (kept here).
-  ($('account-menu').querySelector('[data-act="edit-profile"]') as HTMLElement).hidden = isGuest();
+  // Your profile is yours to edit wherever you stand, the guest island too (a refused account's goes to the public profile relays).
+  ($('account-menu').querySelector('[data-act="edit-profile"]') as HTMLElement).hidden = !s;
   (document.querySelector('.controls [data-act="logout"]') as HTMLElement).hidden = !s;
   if (!s) return;
   const prof = world.profiles.get(s.pubkey);
@@ -1767,6 +1798,8 @@ function toast(text: string, onClick?: () => void): void {
 
 let avatars = new AvatarStore(hub);
 const LOOK_ASKED = 'obelisk-sky/look-asked';
+/** A new account's look creator opens this long after it lands (the entrance swing is 2.6 s). */
+const WELCOME_NEW_MS = 2800;
 
 function myLook(): Avatar {
   const pk = myPk();
@@ -1787,14 +1820,37 @@ function openLook(first = false): void {
     preview: (a) => world.setAvatar(pk, a),
     cancel: () => world.setAvatar(pk, before),
     save: async (a) => {
-      // The guest island: kept in this browser only.
-      if (isGuest()) { saveGuestLook(pk, a); world.setAvatar(pk, a); return null; }
+      if (isGuest()) { await saveIslandLook(pk, a); return null; }
       const out = await publishToGroup(hub, (t) => session.sign(t), avatarTemplate(a, avatars.createdAt(pk)));
       if (!out.ok) return out.reason;
       avatars.ingest(out.event);
+      clearGuestLook(pk);
       return null;
     },
   }, first);
+}
+
+/**
+ * Your look saved on the guest island. Refused, it is still your account's:
+ * signed, cached (`AvatarStore.syncOwn` copies it to the group relay once
+ * you're admitted) and sent to the public profile relays, so another device
+ * finds it. A logged-out guest's, or one whose signature failed, stays in
+ * this browser.
+ */
+async function saveIslandLook(pk: string, a: Avatar): Promise<void> {
+  world.setAvatar(pk, a);
+  if (guestReason() === 'refused' && session.current?.pubkey === pk) {
+    try {
+      const ev = await session.signOwn(avatarTemplate(a, loadCachedAvatar(pk)?.created_at ?? 0));
+      cacheAvatar(ev);
+      clearGuestLook(pk);
+      await hub.publish({ relays: publicProfileRelays(), event: ev, authMode: 'never' }).catch(() => []);
+      return;
+    } catch (e) {
+      console.info('[sky] look kept on this device only:', e instanceof Error ? e.message : e);
+    }
+  }
+  saveGuestLook(pk, a);
 }
 
 // ── the account pill: Edit profile / Your look ───────────────────────────
@@ -2010,19 +2066,30 @@ function playEmoteClaims(claims: readonly Claim[]): void {
 // Best effort: tell the others you left (the expiration covers a lost one).
 window.addEventListener('pagehide', () => { if (beacon.published) publishActivity(null, 0); });
 
-/** First visit with no saved look: offer the creator once. */
+function lookAsked(pk: string): boolean {
+  try { return localStorage.getItem(`${LOOK_ASKED}/${pk}`) === '1'; } catch { return false; /* private mode */ }
+}
+
+/** Do you have a look of your own (here, or on the guest island)? */
+function hasOwnLook(pk: string): boolean {
+  return !!(isGuest() ? loadGuestLook(pk) : avatars.get(pk));
+}
+
+/**
+ * First visit with no saved look: offer the creator once. On the guest island
+ * too when the relay refused the account (a new one always is, until it's
+ * admitted); a new account from the login modal gets it as it lands.
+ */
 function maybeWelcome(): void {
   const pk = session.current?.pubkey;
-  if (!pk || isGuest()) return;
-  let asked = false;
-  try { asked = localStorage.getItem(`${LOOK_ASKED}/${pk}`) === '1'; } catch { /* private mode */ }
-  if (asked) return;
+  if (!pk || guestReason() === 'logged-out' || lookAsked(pk)) return;
   setTimeout(() => {
-    if (avatars.get(pk) || session.current?.pubkey !== pk) return;
+    // Asked meanwhile: a second snapshot (the guest island after a refusal) set its own timer.
+    if (hasOwnLook(pk) || session.current?.pubkey !== pk || lookAsked(pk)) return;
     if (document.querySelector('.guide')) { maybeWelcome(); return; }
     try { localStorage.setItem(`${LOOK_ASKED}/${pk}`, '1'); } catch { /* private mode */ }
     openLook(true);
-  }, 6000);
+  }, newAccount === pk ? WELCOME_NEW_MS : 6000);
 }
 
 // ── games (obelisk-dex tables, kind 2390) ────────────────────────────────

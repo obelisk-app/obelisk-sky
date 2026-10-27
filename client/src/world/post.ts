@@ -250,10 +250,16 @@ export class Post {
     this.tiltH.uniforms.uAmount.value = this.tiltV.uniforms.uAmount.value = k;
   }
 
-  /** Night makes lamps and windows bloom more. */
+  /** How far into the night (0 day … 1 night), from `setNight`. */
+  private night = 0;
+
+  /** Night lets glowing things bloom a little more: bulbs, signs, the
+   *  obelisk's tip. The threshold stays over the lamp-lit ground (at 0.65 the
+   *  pools themselves bloomed, a haze over the whole plaza). */
   setNight(night01: number): void {
-    this.bloom.strength = 0.25 + night01 * 0.55;
-    this.bloom.threshold = 0.9 - night01 * 0.25;
+    this.night = night01;
+    this.bloom.strength = 0.25 + night01 * 0.2;
+    this.bloom.threshold = 0.9 - night01 * 0.08;
   }
 
   render(dt: number): void {
@@ -267,9 +273,11 @@ export class Post {
     this.safeAo.enabled = this.gtao.enabled && this.bloom.enabled;
     // On medium the sun's shadows refresh every other frame (people move
     // little in one), every third on a phone; on a phone, high skips one too.
+    // At night the moon's are faint: every other frame at most, anywhere.
     this.frameNo++;
     if (this.renderer.shadowMap.enabled) {
-      const every = this.level === 'medium' ? (this.coarse ? 3 : 2) : this.coarse && this.level === 'high' ? 2 : 1;
+      const day = this.level === 'medium' ? (this.coarse ? 3 : 2) : this.coarse && this.level === 'high' ? 2 : 1;
+      const every = this.night > 0.85 ? Math.max(2, day) : day;
       this.renderer.shadowMap.autoUpdate = every === 1;
       if (every > 1 && this.frameNo % every === 0) this.renderer.shadowMap.needsUpdate = true;
     }

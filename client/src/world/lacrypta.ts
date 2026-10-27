@@ -640,7 +640,7 @@ export function buildLaCryptaHouse(): LandmarkBuild {
       ballMat.emissiveIntensity = 0.35 + night * 0.75;
       ballLight.intensity = night * 1.6;
       red.intensity = night * 1.1;
-      violet.intensity = night * 6;
+      violet.intensity = night * 3.5;
       room.setNight(night);
     },
   };

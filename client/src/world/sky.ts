@@ -16,7 +16,8 @@ const P = (top: number, horizon: number, bottom: number, sun: number, sunI: numb
 
 // Night keeps a cool moonlit fill: faces turned from the moon (people,
 // building sides) must stay readable, not go black under the tone mapping.
-export const NIGHT = P(0x070b24, 0x283063, 0x141a3a, 0x9fb4ff, 0.8, 0x7080c0, 0x433e62, 1.15);
+// The moon itself is soft (0.55): at 0.8 the night was a quarter of the day.
+export const NIGHT = P(0x070b24, 0x283063, 0x141a3a, 0x9fb4ff, 0.55, 0x7080c0, 0x433e62, 1.15);
 // The fill (hemisphere) light is what faces turned from the sun get: faces,
 // pets' bellies, building sides. Kept bright enough that they read.
 export const DUSK = P(0x6c74c4, 0xf7b694, 0xf1a2a0, 0xffa66b, 1.5, 0xc9a7d8, 0x8a6a66, 1.1);

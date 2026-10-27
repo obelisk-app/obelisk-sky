@@ -54,6 +54,33 @@ export function mergeStatic(root: THREE.Object3D, keep: (m: THREE.Mesh) => boole
 }
 
 /**
+ * Merge `meshes` (one material, shown and hidden together: a house's window
+ * panes) into one mesh named `name` in `root`'s frame, hidden or shown as the
+ * first one is. Returns what to toggle from now on: the merged mesh, or the
+ * meshes as they were when there is nothing to gain or they can't be merged.
+ */
+export function mergeTogether(root: THREE.Object3D, meshes: THREE.Mesh[], name: string): THREE.Mesh[] {
+  if (meshes.length < 2) return meshes;
+  root.updateMatrixWorld(true);
+  const mat = meshes[0].material;
+  if (Array.isArray(mat) || meshes.some((m) => m.material !== mat || m.matrixWorld.determinant() < 0)) return meshes;
+  const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
+  const local = new THREE.Matrix4();
+  const geos = meshes.map((m) => { const g = m.geometry.clone().applyMatrix4(local.multiplyMatrices(inv, m.matrixWorld)); g.clearGroups(); return g; });
+  const merged = mergeGeometries(geos, false);
+  for (const g of geos) g.dispose();
+  if (!merged) return meshes;
+  const mesh = new THREE.Mesh(merged, mat);
+  mesh.name = name;
+  mesh.visible = meshes[0].visible;
+  mesh.castShadow = meshes[0].castShadow;
+  mesh.receiveShadow = meshes[0].receiveShadow;
+  root.add(mesh);
+  for (const m of meshes) m.removeFromParent();
+  return [mesh];
+}
+
+/**
  * The meshes under `root` that change on their own: `poke` runs the thing's
  * own hooks (its frame update at a few times, night, doors, going inside),
  * and every mesh whose transform, visibility, shadow flag or geometry moved

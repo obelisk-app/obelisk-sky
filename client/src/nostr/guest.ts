@@ -1,11 +1,17 @@
 // The guest island (guest/): for people the relay doesn't let in, logged out
-// or refused. While it is on, nothing is signed or published anywhere: the
-// village runs on scripted events and the guest's own words stay in this tab.
+// or refused. While it is on, nothing the village sees is signed or
+// published: it runs on scripted events and the guest's own words stay in
+// this tab.
 //
 // `setGuest` is the one switch. `publishToGroup` / `publishSigned` turn a
 // template into a local unsigned event (`localEvent`), `SessionManager.sign`
 // refuses, and `guardHub` makes the page hub's `publish` refuse too (DMs,
-// profile edits, read-state and the voice bridge publish through it).
+// read-state and the voice bridge publish through it).
+//
+// One exception, for a refused account (a real key the relay hasn't admitted
+// yet): its own profile and look are its own, not the village's, so they are
+// edited as anywhere else (`isOwnWrite`, `SessionManager.signOwn`) and go to
+// the public profile relays; the group relay gets them once it admits you.
 
 import { getEventHash, type EventTemplate, type VerifiedEvent } from 'nostr-tools';
 import type { RelayHub } from '@nostr-wot/relay/hub';
@@ -27,6 +33,26 @@ export function guestReason(): GuestReason | null {
 /** Who your local events are from: your own pubkey when refused, a per-tab one when logged out. */
 export function guestAuthor(): string | null {
   return author;
+}
+
+/** Your look's d-tag (nostr/avatars.ts `AVATAR_D_TAG`; kept here so this
+ *  module doesn't pull in the people models). */
+const LOOK_D_TAG = 'obelisk:avatar3d:v1';
+
+/**
+ * Yours rather than the village's: your profile (kind 0), your look (kind
+ * 30078 `obelisk:avatar3d:v1`) and the Blossom upload grant (kind 24242) for
+ * its picture and banner.
+ */
+export function isOwnWrite(t: Pick<EventTemplate, 'kind' | 'tags'>): boolean {
+  if (t.kind === 0 || t.kind === 24242) return true;
+  return t.kind === 30078 && t.tags.some((x) => x[0] === 'd' && x[1] === LOOK_D_TAG);
+}
+
+/** May your profile and look be signed and published now? Off the island, and
+ *  on it for a refused account (a logged-out guest has no key). */
+export function ownWritesAllowed(): boolean {
+  return reason !== 'logged-out';
 }
 
 /** On (with why, and whose your words are) or off (`null`). */
@@ -66,7 +92,8 @@ const UNGUARDED = Symbol('sky-guest-unguarded');
 
 type GuardedHub = RelayHub & { [GUARDED]?: true; [UNGUARDED]?: RelayHub['publish'] };
 
-/** Make the hub refuse every publish while on the guest island (once per hub). */
+/** Make the hub refuse every publish while on the guest island (once per hub),
+ *  but a refused account's own profile and look (`isOwnWrite`). */
 export function guardHub(hub: RelayHub): RelayHub {
   const h = hub as GuardedHub;
   if (h[GUARDED]) return hub;
@@ -74,6 +101,7 @@ export function guardHub(hub: RelayHub): RelayHub {
   h[UNGUARDED] = real;
   h.publish = ((args: Parameters<RelayHub['publish']>[0]) => {
     if (!isGuest()) return real(args);
+    if (reason === 'refused' && args.event.pubkey === author && isOwnWrite(args.event)) return real(args);
     return Promise.resolve(args.relays.map((url) => ({ url, status: 'rejected' as const, reason: 'blocked: guest island (nothing is published)' })));
   }) as RelayHub['publish'];
   h[GUARDED] = true;

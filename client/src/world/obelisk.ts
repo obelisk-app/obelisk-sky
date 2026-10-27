@@ -127,11 +127,13 @@ export function buildObelisk(height = 8, opts: { lights?: boolean; plinth?: bool
     setGlow(night: number, pulse: number) {
       // Kept under the bloom threshold by day; at night only the tip and the
       // edges bloom, so the monument glows without washing the island.
-      lightFace.emissiveIntensity = 0.1 + night * 0.25 + pulse * 0.3;
-      limeFace.emissiveIntensity = 0.12 + night * 0.28 + pulse * 0.35;
-      edgeMat.opacity = 0.5 + night * 0.4;
-      up.intensity = night * 6 + pulse * 6;
-      tipLight.intensity = night * 1.5 + pulse * 2;
+      lightFace.emissiveIntensity = 0.1 + night * 0.15 + pulse * 0.3;
+      limeFace.emissiveIntensity = 0.12 + night * 0.16 + pulse * 0.35;
+      edgeMat.opacity = 0.5 + night * 0.2;
+      // The uplight grazes the shaft from a few centimetres: at 6 cd the whole
+      // monument burnt lime-white and bloomed over the plaza.
+      up.intensity = night * 1.2 + pulse * 3;
+      tipLight.intensity = night * 1.2 + pulse * 2;
     },
   };
 }

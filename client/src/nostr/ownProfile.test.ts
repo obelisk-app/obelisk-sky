@@ -1,8 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import { finalizeEvent, generateSecretKey, getPublicKey } from 'nostr-tools/pure';
 import type { EventTemplate } from 'nostr-tools';
 import { editOwnProfile, initialOf, mergeProfile, newestKind0, syncOwnProfile } from './ownProfile';
-import { activeRelay } from './hub';
+import { activeRelay, publicProfileRelays } from './hub';
+import { setGuest } from './guest';
+
+afterEach(() => setGuest(null));
 
 const sk = generateSecretKey();
 const pk = getPublicKey(sk);
@@ -84,6 +87,27 @@ describe('editOwnProfile', () => {
   it('fails when no relay takes it', async () => {
     const { hub } = fakeHub([], true, false);
     await expect(editOwnProfile({ hub: hub as never, pubkey: pk, sign }, { name: 'z' })).rejects.toThrow(/No relay/);
+  });
+
+  it('works for an account the relay refused: read and published through the public profile relays', async () => {
+    setGuest('refused', pk);
+    const now = Math.floor(Date.now() / 1000);
+    const { hub, published } = fakeHub([kind0({ name: 'old', lud06: 'x' }, now - 10)], true);
+    const ev = await editOwnProfile({ hub: hub as never, pubkey: pk, sign }, { name: 'Ana', displayName: 'Ana' });
+    expect(JSON.parse(ev.content)).toEqual({ name: 'Ana', display_name: 'Ana', lud06: 'x' });
+    expect(hub.query).toHaveBeenCalledWith(expect.objectContaining({ relays: publicProfileRelays() }));
+    const relays = published.flatMap((p) => p.relays);
+    expect(relays).toEqual(publicProfileRelays());
+    expect(relays).not.toContain(activeRelay());
+    expect(hub.publish).toHaveBeenCalledWith(expect.objectContaining({ authMode: 'never' }));
+  });
+
+  it('is refused to a logged-out guest, who has no key', async () => {
+    setGuest('logged-out', pk);
+    const { hub, published } = fakeHub([], true);
+    await expect(editOwnProfile({ hub: hub as never, pubkey: pk, sign }, { name: 'x' })).rejects.toMatchObject({ code: 'profile-load-failed' });
+    expect(hub.query).not.toHaveBeenCalled();
+    expect(published).toHaveLength(0);
   });
 
   it('stops when the account changed while loading', async () => {

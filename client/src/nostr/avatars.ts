@@ -115,6 +115,29 @@ export function cacheAvatar(ev: NostrEvent, store: Storage | null = storage()): 
   try { store?.setItem(AVATAR_CACHE_PREFIX + ev.pubkey, JSON.stringify({ id, pubkey, kind, tags, content, created_at, sig })); } catch { /* full or private */ }
 }
 
+/**
+ * Your newest look on `relays` (the public profile relays, where a refused
+ * account's look goes), kept in this browser's cache when newer than the
+ * one there. Null when none came.
+ */
+export async function fetchOwnLook(hub: Pick<RelayHub, 'query'>, pk: string, relays: readonly string[], store: Storage | null = storage()): Promise<NostrEvent | null> {
+  if (!relays.length) return null;
+  const r = await hub.query({
+    relays: [...relays],
+    filters: [{ kinds: [30078], authors: [pk], '#d': [AVATAR_D_TAG] }],
+    maxWaitMs: 5000,
+    cache: { mode: 'bypass' },
+    label: 'sky-avatar-own-public',
+  });
+  let best: NostrEvent | null = null;
+  for (const ev of r.events) {
+    if (ev.pubkey !== pk || !parseAvatar(ev.content)) continue;
+    if (!best || ev.created_at > best.created_at) best = ev;
+  }
+  if (best) cacheAvatar(best, store);
+  return best;
+}
+
 /** The relay is missing your look, or has an older one than you saved. */
 export function shouldRepublish(cached: NostrEvent | null, relayAt: number): boolean {
   return !!cached && cached.created_at > relayAt;
@@ -157,23 +180,28 @@ export class AvatarStore {
 
   /**
    * Your look on this relay: show the cached one at once, ask the relay for
-   * its copy, and hand the cached event to `republish` when the relay is
-   * missing it or behind. Resolves to what happened.
+   * its copy (and `elsewhere`, the public profile relays, for one saved while
+   * refused on another device), and hand the newest event to `republish`
+   * when the relay is missing it or behind. Resolves to what happened.
    */
-  async syncOwn(pk: string, republish: (ev: NostrEvent) => Promise<boolean>): Promise<'republished' | 'current' | 'none' | 'failed'> {
+  async syncOwn(pk: string, republish: (ev: NostrEvent) => Promise<boolean>, elsewhere: readonly string[] = []): Promise<'republished' | 'current' | 'none' | 'failed'> {
     this.own = pk;
     const cached = loadCachedAvatar(pk, this.store);
     if (cached) this.ingest(cached);
     this.asked.add(pk);
     let relayAt = 0;
     try {
-      const r = await this.hub.query({
-        relays: [activeRelay()],
-        filters: [{ kinds: [30078], authors: [pk], '#d': [AVATAR_D_TAG] }],
-        maxWaitMs: 5000,
-        cache: { mode: 'bypass' },
-        label: 'sky-avatar-own',
-      });
+      const [r, outside] = await Promise.all([
+        this.hub.query({
+          relays: [activeRelay()],
+          filters: [{ kinds: [30078], authors: [pk], '#d': [AVATAR_D_TAG] }],
+          maxWaitMs: 5000,
+          cache: { mode: 'bypass' },
+          label: 'sky-avatar-own',
+        }),
+        fetchOwnLook(this.hub, pk, elsewhere, this.store).catch(() => null),
+      ]);
+      if (outside) this.ingest(outside);
       for (const ev of r.events) {
         if (ev.pubkey !== pk) continue;
         this.ingest(ev);

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { finalizeEvent, generateSecretKey } from 'nostr-tools';
-import { parseAvatar, avatarTemplate, AvatarStore, AVATAR_D_TAG, DEFAULT_AVATAR, AVATAR_CACHE_PREFIX, cacheAvatar, loadCachedAvatar, shouldRepublish } from './avatars';
+import { parseAvatar, avatarTemplate, AvatarStore, AVATAR_D_TAG, DEFAULT_AVATAR, AVATAR_CACHE_PREFIX, cacheAvatar, fetchOwnLook, loadCachedAvatar, shouldRepublish } from './avatars';
+import { activeRelay } from './hub';
 import { defaultLook, parseLook } from '../people/people';
 
 describe('avatar config', () => {
@@ -140,6 +141,28 @@ describe('your look across relays', () => {
     expect(sent).toBe(0);
     expect(store.get(newer.pubkey)!.hat).toBe('boina');
     expect(loadCachedAvatar(newer.pubkey, s)!.id).toBe(newer.id);
+  });
+
+  it('takes a look saved while refused (on the public relays) to a group relay that lacks it', async () => {
+    const s = mem();
+    const fromIsland = ev(60, 'boina');
+    // The group relay has an older one; the public profile relays have the island's.
+    const hub = { query: async (q: { relays: string[] }) => ({ events: q.relays.includes(activeRelay()) ? [ev(20)] : [fromIsland], complete: true }) } as never;
+    const store = new AvatarStore(hub, s);
+    const sent: string[] = [];
+    expect(await store.syncOwn(fromIsland.pubkey, async (e) => { sent.push(e.id); return true; }, ['wss://elsewhere.example'])).toBe('republished');
+    expect(sent).toEqual([fromIsland.id]);
+    expect(store.get(fromIsland.pubkey)!.hat).toBe('boina');
+  });
+
+  it('reads your newest look off other relays and caches it if newer', async () => {
+    const s = mem();
+    cacheAvatar(ev(30), s);
+    const pk = ev(1).pubkey;
+    const other = finalizeEvent({ ...avatarTemplate({ ...DEFAULT_AVATAR, hat: 'crown' }), created_at: 90 }, generateSecretKey());
+    expect((await fetchOwnLook(hubWith([ev(70, 'boina'), ev(50), other]), pk, ['wss://x'], s))!.created_at).toBe(70);
+    expect(loadCachedAvatar(pk, s)!.created_at).toBe(70);
+    expect(await fetchOwnLook(hubWith([ev(70)]), pk, [], s)).toBeNull();
   });
 
   it('caches the look you save', async () => {
