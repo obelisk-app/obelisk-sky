@@ -162,6 +162,11 @@ export type Emit = (msg: ServerMsg) => void;
 export class SkyState {
   private meta = new Map<string, GroupMeta>();
   private visible = new Set<string>();
+  /** Private groups whose member list (kind 39002) the relay sent us: it only
+   *  sends that to members, so these are the private groups we may read. */
+  private readable = new Set<string>();
+  /** The relay refused a private group anyway: read none for this feed. */
+  private privateRefused = false;
   private messages = new Map<string, StoredMessage>();
   private reactions = new Map<string, WireReaction>();
   private zaps = new Map<string, WireZap>();
@@ -185,6 +190,34 @@ export class SkyState {
 
   visibleGroupIds(): string[] {
     return [...this.visible];
+  }
+
+  /** The visible groups a content REQ may name: asking for a private group
+   *  we aren't in gets the whole REQ closed ("Access denied to private group"). */
+  readableGroupIds(): string[] {
+    return [...this.visible].filter((id) => this.meta.get(id)?.isPublic !== false || this.readable.has(id));
+  }
+
+  /** Visible private groups we don't yet know we may read: ask for their 39002. */
+  unknownPrivateGroupIds(): string[] {
+    if (this.privateRefused) return [];
+    return [...this.visible].filter((id) => this.meta.get(id)?.isPublic === false && !this.readable.has(id));
+  }
+
+  /** A kind 39002 reached us: true when it opens a private group to us. */
+  ingestMembers(ev: NostrEvent): boolean {
+    if (ev.kind !== 39002) return false;
+    const id = ev.tags.find((t) => t[0] === 'd')?.[1];
+    if (!id || this.privateRefused || this.readable.has(id)) return false;
+    this.readable.add(id);
+    return this.meta.get(id)?.isPublic === false && this.visible.has(id);
+  }
+
+  /** The relay refused a private group after all (we were removed): read
+   *  only public groups from now on, rather than ask again and be refused again. */
+  forgetPrivateReads(): void {
+    this.privateRefused = true;
+    this.readable.clear();
   }
 
   /** Ids of the messages we hold, oldest first (only those since `since`, if given). */

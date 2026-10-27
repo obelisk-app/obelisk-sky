@@ -63,7 +63,7 @@ import { ANONYMOUS_IDENTITY, activeRelay, DEFAULT_GROUP_RELAY, normalizeRelay, p
 import { pageHub } from './nostr/hub';
 import { SessionManager, type LoginArgs, type Session } from './nostr/session';
 import { registerHost } from './shims/host';
-import { captureInvite, createInvite, freshKeyLogin, inviteFor, inviteStatus, inviteWaitingForKey, redeemInvite, revokeInvite, skyInviteLink } from './nostr/invite';
+import { captureInvite, createInvite, freshKeyLogin, inviteFor, inviteStatus, inviteWaitingForKey, redeemInvite, skyInviteLink } from './nostr/invite';
 import { renderInvitePanel } from './ui/invitePanel';
 import { editOwnProfile, fetchOwnProfile, initialOf, syncOwnProfile } from './nostr/ownProfile';
 import type { ProfileEditorInitial } from '@/types/session/profile';
@@ -724,7 +724,6 @@ function openInvites(): void {
       relayHost: relay.replace(/^wss?:\/\//, '').replace(/\/$/, ''),
       load: () => inviteStatus(sign, relay),
       create: () => createInvite(sign, relay),
-      revoke: (code) => revokeInvite(sign, relay, code),
       linkFor: (code) => skyInviteLink(location.origin, code, relay),
       copy: (text) => void navigator.clipboard?.writeText(text).catch(() => undefined),
       toast: (text) => toast(text),

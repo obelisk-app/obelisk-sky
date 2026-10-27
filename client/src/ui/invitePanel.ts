@@ -1,7 +1,8 @@
 /**
  * "Invite people" in the account menu, for accounts the relay lets invite
- * (nostr/invite.ts, obelisk-relay's /api/invites): make a link, copy it, see
- * each link's use and turn one off. Drawn into the card.
+ * (nostr/invite.ts, obelisk-relay's /api/invites): make a link (copied at
+ * once), and each live link as its code with one Copy link. Links that are
+ * off, used up or expired are left out. Drawn into the card.
  */
 import { vw as words, type VillageWords } from '../i18n/village';
 import type { InviteCode, InviteStatus } from '../nostr/invite';
@@ -10,7 +11,6 @@ export interface InvitePanelDeps {
   relayHost: string;
   load(): Promise<InviteStatus | null>;
   create(): Promise<InviteCode>;
-  revoke(code: string): Promise<void>;
   linkFor(code: string): string;
   copy(text: string): void;
   toast(text: string): void;
@@ -31,8 +31,8 @@ export async function renderInvitePanel(body: HTMLElement, deps: InvitePanelDeps
   const draw = (me: InviteStatus | null, busy = false) => {
     root.replaceChildren();
     if (!me) return;
-    root.append(el('div', 'sub', me.is_admin ? w.invite.quotaAdmin : w.invite.quota(me.admits_left ?? 0, me.codes_left ?? 0)));
-    const create = el('button', 'pill primary', w.invite.create);
+    root.append(el('div', 'invite-quota', me.is_admin ? w.invite.quotaAdmin : w.invite.quota(me.admits_left ?? 0, me.codes_left ?? 0)));
+    const create = el('button', 'pill primary invite-create', w.invite.create);
     create.disabled = busy || !me.can_mint;
     create.dataset.testid = 'invite-create';
     create.addEventListener('click', () => void act(async () => {
@@ -40,27 +40,21 @@ export async function renderInvitePanel(body: HTMLElement, deps: InvitePanelDeps
       deps.copy(deps.linkFor(code.code));
       deps.toast(w.invite.copied);
     }));
-    root.append(el('div', 'actions'));
-    (root.lastChild as HTMLElement).append(create);
-    for (const c of me.codes) {
+    root.append(create);
+    const list = el('div', 'invite-codes');
+    for (const c of me.codes.filter((x) => x.status === 'active')) {
       const row = el('div', 'invite-code');
       row.dataset.code = c.code;
-      row.append(
-        el('div', 'invite-link', deps.linkFor(c.code)),
-        el('div', 'sub', `${w.invite.status[c.status] ?? c.status} · ${w.invite.uses(c.uses, c.max_uses)} · ${w.invite.joined(c.redemptions.length)}`),
-      );
-      if (c.status === 'active') {
-        const actions = el('div', 'actions');
-        const copy = el('button', 'pill', w.invite.copy);
-        copy.addEventListener('click', () => { deps.copy(deps.linkFor(c.code)); deps.toast(w.invite.copied); });
-        const off = el('button', 'pill', w.invite.revoke);
-        off.disabled = busy;
-        off.addEventListener('click', () => void act(() => deps.revoke(c.code)));
-        actions.append(copy, off);
-        row.append(actions);
-      }
-      root.append(row);
+      const info = el('div', 'invite-code-info');
+      const code = el('code', '', c.code);
+      code.title = deps.linkFor(c.code);
+      info.append(code, el('div', 'invite-code-use', `${w.invite.uses(c.uses, c.max_uses)} · ${w.invite.joined(c.redemptions.length)}`));
+      const copy = el('button', 'pill', w.invite.copy);
+      copy.addEventListener('click', () => { deps.copy(deps.linkFor(c.code)); deps.toast(w.invite.copied); });
+      row.append(info, copy);
+      list.append(row);
     }
+    if (list.childElementCount) root.append(list);
   };
 
   let current: InviteStatus | null = null;
@@ -75,7 +69,7 @@ export async function renderInvitePanel(body: HTMLElement, deps: InvitePanelDeps
     draw(current);
   };
 
-  root.append(el('div', 'sub', w.invite.loading));
+  root.append(el('div', 'invite-quota', w.invite.loading));
   current = await deps.load();
   draw(current);
 }
