@@ -5,7 +5,7 @@
 # Usage: scripts/vendor-obelisk.sh [commit]   (default: obelisk-dex HEAD)
 set -euo pipefail
 cd "$(dirname "$0")/.."
-REPO=/root/obelisk-dex
+REPO=${OBELISK_DEX:-/root/obelisk-dex}
 COMMIT=$(git -C "$REPO" rev-parse "${1:-HEAD}")
 rm -rf vendor/obelisk
 mkdir -p vendor/obelisk

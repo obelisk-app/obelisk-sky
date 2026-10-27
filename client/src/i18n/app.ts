@@ -98,6 +98,7 @@ const en = {
   'pcall.mute': 'Mute',
   'pcall.hangup': 'Hang up',
   'account.title': 'Your profile and look',
+  'account.invite': 'Invite people',
   'account.editProfile': 'Edit profile',
   'account.look': 'Your look',
 };
@@ -195,6 +196,7 @@ const es: Record<AppKey, string> = {
   'pcall.mute': 'Silenciar',
   'pcall.hangup': 'Cortar',
   'account.title': 'Tu perfil y tu aspecto',
+  'account.invite': 'Invitar personas',
   'account.editProfile': 'Editar perfil',
   'account.look': 'Tu aspecto',
 };

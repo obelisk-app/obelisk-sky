@@ -85,6 +85,16 @@ export function resolveStatic(pathname: string): { file: string; rel: string; fa
 /** Links shared before the landing page existed (`/?relay=…`, `/?time=…`)
  *  opened the village: send them to /app with the same query. */
 export function redirectFor(pathname: string, search: string): string | null {
+  // A relay invite link: the village reads `?invite=` and keeps the code
+  // (client/src/nostr/invite.ts). The server only rewrites the address.
+  const invite = /^\/invite\/([A-Za-z0-9_-]{1,64})\/?$/.exec(pathname);
+  if (invite) {
+    const q = new URLSearchParams(search);
+    const out = new URLSearchParams({ invite: invite[1] });
+    const relay = q.get('relay');
+    if (relay) out.set('relay', relay);
+    return `/app?${out.toString()}`;
+  }
   if (pathname !== '/' || !search) return null;
   const q = new URLSearchParams(search);
   return q.has('relay') || q.has('time') ? `/app${search}` : null;

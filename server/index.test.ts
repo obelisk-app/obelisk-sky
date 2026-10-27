@@ -37,6 +37,12 @@ describe('static host', () => {
     expect(redirectFor('/', '?time=night')).toBe('/app?time=night');
     expect(redirectFor('/', '?lang=es')).toBeNull();
     expect(redirectFor('/', '')).toBeNull();
+    // Relay invite links go to the village, carrying only the code and the relay.
+    expect(redirectFor('/invite/Xk3abc_-9', '?relay=public.obelisk.ar')).toBe('/app?invite=Xk3abc_-9&relay=public.obelisk.ar');
+    expect(redirectFor('/invite/Xk3abc', '')).toBe('/app?invite=Xk3abc');
+    expect(redirectFor('/invite/Xk3abc', '?relay=a.example&evil=1')).toBe('/app?invite=Xk3abc&relay=a.example');
+    expect(redirectFor('/invite/bad%20code', '')).toBeNull();
+    expect(redirectFor('/invite/', '')).toBeNull();
     expect(redirectFor('/app', '?relay=x')).toBeNull();
   });
   it('serves no keys and allows only first-party scripts', () => {

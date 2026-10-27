@@ -67,7 +67,11 @@
     },
     "nameRequired": "Name is required",
     "notSignedIn": "Not signed in",
-    "publishFailed": "Failed to publish"
+    "publishFailed": "Failed to publish",
+    "placeholder": {
+      "nip05": "you@example.com",
+      "lud16": "you@walletofsatoshi.com"
+    }
   },
   "desktop": {
     "empty": {
@@ -455,7 +459,63 @@
       "fallbackHint": "Fallback: copy it, then in Amber open New application → Paste from clipboard."
     },
     "keyLoginFailed": "Could not log in with that key.",
-    "finishFailed": "Could not finish setting up your account. Try again."
+    "finishFailed": "Could not finish setting up your account. Try again.",
+    "sdk": {
+      "back": "← Back",
+      "signingIn": "Signing in…",
+      "methods": {
+        "extension": "Browser extension",
+        "extensionHint": "NIP-07: Alby, nos2x, Flamingo",
+        "bunker": "Remote signer (bunker)",
+        "bunkerHint": "NIP-46: Amber, Nsec.app, Keychat",
+        "generate": "Create a new account",
+        "generateHint": "Generates a fresh keypair on this device",
+        "import": "Paste private key",
+        "importHint": "nsec or 64-character hex, risky in a browser"
+      },
+      "noExtension": {
+        "title": "Get the Nostr WoT extension",
+        "hint": "Browser extension with a NIP-07 signer and Web of Trust spam filtering ↗",
+        "error": "No NIP-07 extension detected. Install Alby, nos2x, or another Nostr signer extension and reload."
+      },
+      "import": {
+        "warning": "⚠️ Pasting your private key into a web page is risky. Prefer a browser extension (NIP-07) or a remote signer (NIP-46) when possible.",
+        "placeholder": "nsec1… or 64-character hex",
+        "signIn": "Sign in",
+        "invalidKey": "Paste an nsec1… or a 64-character hex private key.",
+        "invalidNsec": "Invalid nsec"
+      },
+      "generated": {
+        "title": "Your new key",
+        "backupLead": "Back this up",
+        "backupWhen": "before",
+        "backupTail": "you continue. If you lose it, your identity is gone and there is no recovery.",
+        "nsecLabel": "Private key (nsec), keep it secret",
+        "copyNsec": "Copy nsec",
+        "download": "Download .txt",
+        "acknowledge": "I have backed up my nsec. I understand that losing it means losing access to this account permanently.",
+        "continue": "Continue"
+      },
+      "profile": {
+        "title": "Set up your profile",
+        "displayName": "Display name",
+        "aboutPlaceholder": "Builder, chef, occasional cyclist.",
+        "save": "Save profile and continue",
+        "publishing": "Publishing…"
+      },
+      "bunker": {
+        "scanQr": "Scan QR",
+        "authTitle": "Action required",
+        "authBody": "Approve the request in your signer app, then this will continue automatically. Click to open ↗",
+        "qrLabel": "Nostr Connect QR code",
+        "qrHint": "Scan with Amber, Nsec.app, Keychat, or any NIP-46 signer.",
+        "slowHint": "Still waiting? Some signer apps scan only once by default, so try reopening the scanner.",
+        "restart": "Restart",
+        "generatingQr": "Generating QR…",
+        "pasteLabel": "Paste a bunker:// URI from your remote signer",
+        "connect": "Connect"
+      }
+    }
   },
   "channel": {
     "create": {
@@ -510,8 +570,7 @@
       "authBunker": "Approve the signing request in your bunker app to complete NIP-42 AUTH.",
       "authNip07": "Approve the signing request in your Nostr extension to complete NIP-42 AUTH.",
       "authFailed": "NIP-42 AUTH did not complete. Try reloading or switching login methods.",
-      "unreachable": "The relay isn’t responding. It may be offline, blocked by your network, or briefly unavailable. We’ll keep trying in the background. Switch relays if you need to keep working.",
-      "restricted": "This relay accepted your signature but won’t serve or accept events from your pubkey. Ask the operator to add you to its allowlist, or switch relays."
+      "unreachable": "The relay isn’t responding. It may be offline, blocked by your network, or briefly unavailable. We’ll keep trying in the background. Switch relays if you need to keep working."
     },
     "connection": {
       "connected": "Connected",
@@ -527,5 +586,11 @@
     "publishing": "Publishing your profile…",
     "publishFailed": "Your profile could not be confirmed by a relay. Your draft is kept here. Retry to sync it before entering.",
     "retryPublish": "Retry profile sync"
+  },
+  "relayAccess": {
+    "title": "{host} has not let you in yet",
+    "body": "This relay only accepts the keys on its list. Ask its operator to add yours: send them your npub.",
+    "npubLabel": "Your npub",
+    "other": "Or pick a relay that is open to you."
   }
 }
