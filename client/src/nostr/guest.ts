@@ -62,16 +62,30 @@ export function localEvent(t: EventTemplate, pubkey: string): VerifiedEvent {
 }
 
 const GUARDED = Symbol('sky-guest-guard');
+const UNGUARDED = Symbol('sky-guest-unguarded');
+
+type GuardedHub = RelayHub & { [GUARDED]?: true; [UNGUARDED]?: RelayHub['publish'] };
 
 /** Make the hub refuse every publish while on the guest island (once per hub). */
 export function guardHub(hub: RelayHub): RelayHub {
-  const h = hub as RelayHub & { [GUARDED]?: true };
+  const h = hub as GuardedHub;
   if (h[GUARDED]) return hub;
   const real = hub.publish.bind(hub);
+  h[UNGUARDED] = real;
   h.publish = ((args: Parameters<RelayHub['publish']>[0]) => {
     if (!isGuest()) return real(args);
     return Promise.resolve(args.relays.map((url) => ({ url, status: 'rejected' as const, reason: 'blocked: guest island (nothing is published)' })));
   }) as RelayHub['publish'];
   h[GUARDED] = true;
   return hub;
+}
+
+/**
+ * Publish past the guest guard. One caller only: a relay invite claim
+ * (`nostr/invite.ts`), the event a refused account must send to stop being
+ * refused, and which the relay never stores or relays. Nothing else may use it.
+ */
+export function publishPastGuestGuard(hub: RelayHub, args: Parameters<RelayHub['publish']>[0]): ReturnType<RelayHub['publish']> {
+  const real = (hub as GuardedHub)[UNGUARDED];
+  return real ? real(args) : hub.publish(args);
 }

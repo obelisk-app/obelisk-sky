@@ -67,7 +67,11 @@
     },
     "nameRequired": "El nombre es obligatorio",
     "notSignedIn": "No iniciaste sesión",
-    "publishFailed": "No se pudo publicar"
+    "publishFailed": "No se pudo publicar",
+    "placeholder": {
+      "nip05": "vos@ejemplo.com",
+      "lud16": "vos@walletofsatoshi.com"
+    }
   },
   "desktop": {
     "empty": {
@@ -455,7 +459,63 @@
       "fallbackHint": "Alternativa: copiala y después, en Amber, abrí New application → Paste from clipboard."
     },
     "keyLoginFailed": "No se pudo iniciar sesión con esa clave.",
-    "finishFailed": "No se pudo terminar de configurar tu cuenta. Probá de nuevo."
+    "finishFailed": "No se pudo terminar de configurar tu cuenta. Probá de nuevo.",
+    "sdk": {
+      "back": "← Volver",
+      "signingIn": "Entrando…",
+      "methods": {
+        "extension": "Extensión del navegador",
+        "extensionHint": "NIP-07: Alby, nos2x, Flamingo",
+        "bunker": "Firmador remoto (bunker)",
+        "bunkerHint": "NIP-46: Amber, Nsec.app, Keychat",
+        "generate": "Crear una cuenta nueva",
+        "generateHint": "Genera un par de claves nuevo en este dispositivo",
+        "import": "Pegar clave privada",
+        "importHint": "nsec o hex de 64 caracteres, riesgoso en un navegador"
+      },
+      "noExtension": {
+        "title": "Instalá la extensión Nostr WoT",
+        "hint": "Extensión del navegador con firmador NIP-07 y filtro de spam por Web of Trust ↗",
+        "error": "No encontramos una extensión NIP-07. Instalá Alby, nos2x u otra extensión firmadora de Nostr y recargá la página."
+      },
+      "import": {
+        "warning": "⚠️ Pegar tu clave privada en una página web es riesgoso. Si podés, usá una extensión del navegador (NIP-07) o un firmador remoto (NIP-46).",
+        "placeholder": "nsec1… o hex de 64 caracteres",
+        "signIn": "Entrar",
+        "invalidKey": "Pegá una clave privada nsec1… o en hex de 64 caracteres.",
+        "invalidNsec": "nsec inválida"
+      },
+      "generated": {
+        "title": "Tu clave nueva",
+        "backupLead": "Guardá una copia",
+        "backupWhen": "antes",
+        "backupTail": "de continuar. Si la perdés, perdés tu identidad y no hay forma de recuperarla.",
+        "nsecLabel": "Clave privada (nsec): guardala en secreto",
+        "copyNsec": "Copiar nsec",
+        "download": "Descargar .txt",
+        "acknowledge": "Ya guardé una copia de mi nsec. Entiendo que si la pierdo, pierdo el acceso a esta cuenta para siempre.",
+        "continue": "Continuar"
+      },
+      "profile": {
+        "title": "Armá tu perfil",
+        "displayName": "Nombre",
+        "aboutPlaceholder": "Programo, cocino, salgo en bici.",
+        "save": "Guardar el perfil y continuar",
+        "publishing": "Publicando…"
+      },
+      "bunker": {
+        "scanQr": "Escanear QR",
+        "authTitle": "Acción requerida",
+        "authBody": "Aprobá el pedido en tu app firmadora y esto sigue solo. Tocá para abrirla ↗",
+        "qrLabel": "Código QR de Nostr Connect",
+        "qrHint": "Escanealo con Amber, Nsec.app, Keychat o cualquier firmador NIP-46.",
+        "slowHint": "¿Sigue esperando? Algunas apps firmadoras escanean una sola vez por defecto: probá abrir el escáner de nuevo.",
+        "restart": "Reiniciar",
+        "generatingQr": "Generando QR…",
+        "pasteLabel": "Pegá una URI bunker:// de tu firmador remoto",
+        "connect": "Conectar"
+      }
+    }
   },
   "channel": {
     "create": {
@@ -510,8 +570,7 @@
       "authBunker": "Aprobá la solicitud de firma en tu app de bunker para completar el AUTH NIP-42.",
       "authNip07": "Aprobá la solicitud de firma en tu extensión de Nostr para completar el AUTH NIP-42.",
       "authFailed": "El AUTH NIP-42 no se completó. Probá recargar o entrar con otro método.",
-      "unreachable": "El relay no responde. Puede estar caído, bloqueado por tu red o no disponible por un rato. Vamos a seguir intentando en segundo plano. Cambiá de relay si necesitás seguir trabajando.",
-      "restricted": "Este relay aceptó tu firma pero no entrega ni acepta eventos de tu pubkey. Pedile al operador que te agregue a su whitelist, o cambiá de relay."
+      "unreachable": "El relay no responde. Puede estar caído, bloqueado por tu red o no disponible por un rato. Vamos a seguir intentando en segundo plano. Cambiá de relay si necesitás seguir trabajando."
     },
     "connection": {
       "connected": "Conectado",
@@ -527,5 +586,11 @@
     "publishing": "Publicando tu perfil…",
     "publishFailed": "Ningún relay confirmó tu perfil. Tu borrador sigue acá. Reintentá para sincronizarlo antes de entrar.",
     "retryPublish": "Reintentar sincronización"
+  },
+  "relayAccess": {
+    "title": "{host} todavía no te dejó entrar",
+    "body": "Este relay solo acepta las claves de su lista. Pedile a quien lo administra que agregue la tuya: mandale tu npub.",
+    "npubLabel": "Tu npub",
+    "other": "O elegí un relay que esté abierto para vos."
   }
 }

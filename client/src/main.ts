@@ -63,6 +63,8 @@ import { ANONYMOUS_IDENTITY, activeRelay, DEFAULT_GROUP_RELAY, normalizeRelay, p
 import { pageHub } from './nostr/hub';
 import { SessionManager, type LoginArgs, type Session } from './nostr/session';
 import { registerHost } from './shims/host';
+import { captureInvite, createInvite, freshKeyLogin, inviteFor, inviteStatus, inviteWaitingForKey, redeemInvite, revokeInvite, skyInviteLink } from './nostr/invite';
+import { renderInvitePanel } from './ui/invitePanel';
 import { editOwnProfile, fetchOwnProfile, initialOf, syncOwnProfile } from './nostr/ownProfile';
 import type { ProfileEditorInitial } from '@/types/session/profile';
 import { Soundscape } from './sound';
@@ -181,6 +183,8 @@ prefs.onChange(applyPrefs);
 
 // ── relays (one village per relay) ───────────────────────────────────────
 
+// An invite link (`/invite/<code>` → `/app?invite=`): keep the code, drop it from the address.
+captureInvite(location.href, (u) => history.replaceState(null, '', u));
 const urlRelay = normalizeRelay(new URLSearchParams(location.search).get('relay') ?? '');
 setActiveRelay(urlRelay ?? (prefs.get().relay || DEFAULT_GROUP_RELAY));
 
@@ -236,6 +240,7 @@ function switchRelay(url: string): void {
   u.searchParams.set('relay', url.replace(/^wss:\/\//, ''));
   history.replaceState(null, '', u);
   if (session.current) { startReadState(); startFeed(); }
+  if (session.current) { redeemStoredInvite(session.current); refreshInviteMenu(); }
   toast(vw.nowIn(url.replace(/^wss?:\/\//, '')));
 }
 
@@ -582,6 +587,8 @@ function startReadState(): void {
 
 session.onChange((s) => {
   sessionGen++;
+  if (s) redeemStoredInvite(s);
+  refreshInviteMenu();
   // Logged in: off the guest island (startFeed below opens the real village).
   if (s) setGuest(null);
   ownKind0 = null;
@@ -638,7 +645,68 @@ function playEntrance(): void {
   sound.whoosh();
 }
 
-void session.restore().then((ok) => { if (!ok) { renderAccount(null); startGuest('logged-out'); } }).finally(() => { restoringSession = false; });
+void session.restore().then((ok) => {
+  if (ok) return;
+  // Came in on a fresh invite with no account: make one and walk in (the key
+  // can be backed up later). Once the invite let any key in, a logged-out
+  // visitor gets the guest island and the login, as anyone does.
+  if (inviteWaitingForKey(activeRelay())) {
+    freshLogin = true;
+    void session.login(freshKeyLogin()).catch(() => { renderAccount(null); startGuest('logged-out'); });
+    return;
+  }
+  renderAccount(null);
+  startGuest('logged-out');
+}).finally(() => { restoringSession = false; });
+
+// ── relay invites (nostr/invite.ts) ──────────────────────────────────────
+
+const invitesTried = new Set<string>();
+/** Let this key in with the stored invite, once per key, relay and code; on OK the real village opens. */
+function redeemStoredInvite(s: Session): void {
+  const relay = activeRelay();
+  const invite = inviteFor(relay, s.pubkey);
+  const attempt = invite ? `${s.pubkey}|${relay}|${invite.code}` : '';
+  if (!invite || invitesTried.has(attempt)) return;
+  invitesTried.add(attempt);
+  void redeemInvite(hub, s.signer, invite, s.pubkey).then((out) => {
+    if (out.status === 'retry') invitesTried.delete(attempt);
+    if (session.current !== s || activeRelay() !== relay) return;
+    if (out.status === 'admitted') { toast(vw.invite.welcome); startReadState(); startFeed(); refreshInviteMenu(); }
+    else if (out.status === 'dead') toast(vw.invite.dead[out.reason] ?? vw.invite.deadTitle);
+  }).catch(() => invitesTried.delete(attempt));
+}
+
+/** Show "Invite people" in the account menu only to accounts this relay lets invite. */
+let inviteMenuFor = '';
+function refreshInviteMenu(): void {
+  const item = $('account-menu').querySelector('[data-act="invite"]') as HTMLElement;
+  const s = session.current;
+  const key = s && !isGuest() ? `${s.pubkey}|${activeRelay()}` : '';
+  if (key === inviteMenuFor) return;
+  inviteMenuFor = key;
+  item.hidden = true;
+  if (!s || !key) return;
+  void inviteStatus((t) => session.sign(t), activeRelay()).then((me) => {
+    if (inviteMenuFor === key) item.hidden = !me?.can_mint;
+  });
+}
+
+function openInvites(): void {
+  const relay = activeRelay();
+  const sign = (t: Parameters<typeof session.sign>[0]) => session.sign(t);
+  openCard((body) => {
+    void renderInvitePanel(body, {
+      relayHost: relay.replace(/^wss?:\/\//, '').replace(/\/$/, ''),
+      load: () => inviteStatus(sign, relay),
+      create: () => createInvite(sign, relay),
+      revoke: (code) => revokeInvite(sign, relay, code),
+      linkFor: (code) => skyInviteLink(location.origin, code, relay),
+      copy: (text) => void navigator.clipboard?.writeText(text).catch(() => undefined),
+      toast: (text) => toast(text),
+    });
+  });
+}
 
 // The re-hosted obelisk-dex login modal reaches sky through this host.
 registerHost({
@@ -1749,6 +1817,7 @@ $('account-menu').addEventListener('click', (e) => {
   closeAccountMenu();
   if (act === 'your-look') openLook();
   else if (act === 'edit-profile') void openProfile();
+  else if (act === 'invite') openInvites();
 });
 document.addEventListener('pointerdown', (e) => {
   if (!$('account-menu').hidden && !(e.target as Element).closest('.account')) closeAccountMenu();
