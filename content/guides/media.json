@@ -94,7 +94,7 @@
     "alt": { "en": "Logging in with a key: paste the nsec, or Upload key file to use the .txt saved when the account was made.", "es": "Entrar con una clave: pegá la nsec o tocá Subir archivo de clave para usar el .txt que guardaste al crear la cuenta." }
   },
   "controls": {
-    "kind": "shot", "src": "videos/obelisk-sky-guides/captures/help-{lang}.png", "crop": [365, 20, 550, 740],
+    "kind": "shot", "src": "videos/obelisk-sky-guides/captures/help-{lang}.png", "crop": [380, 70, 520, 660],
     "alt": { "en": "The How to play panel listing the keys to move and talk.", "es": "El panel Cómo jugar, con las teclas para moverse y hablar." }
   },
   "phone": {

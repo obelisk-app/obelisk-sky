@@ -86,7 +86,7 @@ You are the character with your name above it. The **?** button in the bottom ba
 | <kbd>V</kbd> | First-person view |
 | <kbd>N</kbd> | The minimap; click it to open it big |
 
-<Shot name="controls" caption="How to play, from the ? button: every key, in your language." maxWidth={560} />
+<Shot name="controls" caption="How to play, from the ? button: every key, in your language." maxWidth={520} />
 
 The minimap is the quickest way around. Open it big, click a house and you walk straight there.
 

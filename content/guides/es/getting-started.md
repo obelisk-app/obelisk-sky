@@ -86,7 +86,7 @@ Sos el personaje con tu nombre encima. El botón **?** de la barra de abajo abre
 | <kbd>V</kbd> | Primera persona |
 | <kbd>N</kbd> | El minimapa; hacé clic para agrandarlo |
 
-<Shot name="controls" caption="Cómo se juega, desde el botón ?: todas las teclas, en tu idioma." maxWidth={560} />
+<Shot name="controls" caption="Cómo se juega, desde el botón ?: todas las teclas, en tu idioma." maxWidth={520} />
 
 El minimapa es la forma más rápida de moverte. Agrandalo, hacé clic en una casa y caminás directo hasta ahí.
 

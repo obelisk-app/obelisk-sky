@@ -2,7 +2,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { COPY, LANGS, pickLang, type CopyKey } from './copy';
+import { COPY, LANGS, cookieCountry, pickLang, type CopyKey } from './copy';
 import { applyLang, mountHeader, mountLanding, mountOrbit, nextLang } from './landing';
 
 const html = readFileSync(join(__dirname, '../../index.html'), 'utf8');
@@ -206,12 +206,28 @@ describe('the hero orbit', () => {
   });
 });
 
+describe('cookieCountry', () => {
+  it('reads the country the server put in the sky-country cookie', () => {
+    expect(cookieCountry('a=1; sky-country=AR; b=2')).toBe('AR');
+    expect(cookieCountry('sky-country=uy')).toBe('UY');
+    expect(cookieCountry('xsky-country=AR')).toBeNull();
+    expect(cookieCountry('')).toBeNull();
+  });
+});
+
 describe('pickLang', () => {
   it('prefers ?lang=, then the saved choice, then the browser', () => {
     expect(pickLang('?lang=es', 'en', ['en-US'])).toBe('es');
     expect(pickLang('', 'es', ['en-US'])).toBe('es');
     expect(pickLang('', null, ['es-AR', 'en'])).toBe('es');
-    expect(pickLang('?lang=fr', 'xx', ['pt-BR', 'de'])).toBe('en');
+    // Nothing it knows: Spanish.
+    expect(pickLang('?lang=fr', 'xx', ['pt-BR', 'de'])).toBe('es');
+    // A visitor from a Spanish-speaking country starts in Spanish whatever the browser says;
+    // a choice made on the page still wins.
+    expect(pickLang('', null, ['en-US'], 'AR')).toBe('es');
+    expect(pickLang('', 'en', ['en-US'], 'AR')).toBe('en');
+    expect(pickLang('?lang=en', null, ['es'], 'MX')).toBe('en');
+    expect(pickLang('', null, ['en-US'], 'US')).toBe('en');
   });
 });
 

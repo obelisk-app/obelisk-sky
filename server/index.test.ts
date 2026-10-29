@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { TOTEM_ORIGIN } from '../client/src/world/totemMonitor';
 process.env.NODE_ENV = 'test';
-const { resolveStatic, redirectFor, SECURITY_HEADERS, parseRange, cacheControl } = await import('./index');
+const { resolveStatic, redirectFor, SECURITY_HEADERS, parseRange, cacheControl, countryCookie } = await import('./index');
 
 describe('static host', () => {
   it('never resolves outside the client build', () => {
@@ -44,6 +44,11 @@ describe('static host', () => {
     expect(redirectFor('/invite/bad%20code', '')).toBeNull();
     expect(redirectFor('/invite/', '')).toBeNull();
     expect(redirectFor('/app', '?relay=x')).toBeNull();
+  });
+  it('hands the page the visitor\'s country from Cloudflare, and nothing it cannot use', () => {
+    expect(countryCookie('AR')).toBe('sky-country=AR; Path=/; Max-Age=86400; SameSite=Lax');
+    expect(countryCookie(' es ')).toMatch(/^sky-country=ES;/);
+    for (const h of [undefined, '', 'XX', 'T1', 'ARG', 'A1;x=1']) expect(countryCookie(h), String(h)).toBeNull();
   });
   it('gives each guide one address, without a trailing slash', () => {
     expect(redirectFor('/guides/', '')).toBe('/guides');

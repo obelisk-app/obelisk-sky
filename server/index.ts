@@ -137,6 +137,16 @@ export function parseRange(header: string | undefined, size: number): { start: n
   return start > end || start >= size ? 'unsatisfiable' : { start, end };
 }
 
+/** The visitor's country as Cloudflare sees it (`cf-ipcountry`), handed to the page as the
+ *  `sky-country` cookie so the landing page and the village can start in Spanish for a visitor
+ *  from a Spanish-speaking country (client/src/landing/copy.ts `pickLang`). Null when there is
+ *  no usable country (no Cloudflare, `XX` unknown, `T1` Tor). */
+export function countryCookie(header: string | string[] | undefined): string | null {
+  const c = (Array.isArray(header) ? header[0] : header)?.trim().toUpperCase();
+  if (!c || !/^[A-Z]{2}$/.test(c) || c === 'XX' || c === 'T1') return null;
+  return `sky-country=${c}; Path=/; Max-Age=86400; SameSite=Lax`;
+}
+
 function serveStatic(req: IncomingMessage, res: ServerResponse, pathname: string): void {
   const hit = resolveStatic(pathname);
   if (!hit) { res.writeHead(400).end(); return; }
@@ -147,6 +157,7 @@ function serveStatic(req: IncomingMessage, res: ServerResponse, pathname: string
     'content-type': MIME[extname(hit.file)] || 'application/octet-stream',
     'cache-control': hit.fallback ? 'no-cache' : cacheControl(hit.rel),
     'accept-ranges': 'bytes',
+    ...(extname(hit.file) === '.html' && countryCookie(req.headers['cf-ipcountry']) ? { 'set-cookie': countryCookie(req.headers['cf-ipcountry'])! } : {}),
   };
   const range = hit.status === 200 ? parseRange(req.headers.range, size) : null;
   if (range === 'unsatisfiable') { res.writeHead(416, { ...headers, 'cache-control': 'no-cache', 'content-range': `bytes */${size}` }).end(); return; }

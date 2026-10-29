@@ -44,20 +44,20 @@
     }
   },
   "controls": {
-    "sig": "1b4519d8",
+    "sig": "08229e83",
     "kind": "shot",
     "perLang": true,
     "en": {
-      "width": 550,
-      "height": 740,
-      "src": "/media/guides/controls-en-1280.360961bd.webp",
-      "small": "/media/guides/controls-en-640.360961bd.webp"
+      "width": 520,
+      "height": 660,
+      "src": "/media/guides/controls-en-1280.b096d44b.webp",
+      "small": "/media/guides/controls-en-640.b096d44b.webp"
     },
     "es": {
-      "width": 550,
-      "height": 740,
-      "src": "/media/guides/controls-es-1280.515e30a4.webp",
-      "small": "/media/guides/controls-es-640.515e30a4.webp"
+      "width": 520,
+      "height": 660,
+      "src": "/media/guides/controls-es-1280.ad78817b.webp",
+      "small": "/media/guides/controls-es-640.ad78817b.webp"
     }
   },
   "dance-front": {

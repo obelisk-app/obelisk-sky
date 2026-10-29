@@ -1191,6 +1191,18 @@ body.menu-open .controls button[hidden] { display: none; }
 .creator .account-btn.primary:hover { background: #c6ff6b; }
 .creator .account-btn:disabled { opacity: 0.6; cursor: default; }
 
+/* ── How to play (ui/controlsGuide.ts): the same cloud card as the look editor ── */
+.guide { background: linear-gradient(180deg, #ffffff 0%, #f3f9ff 100%); color: var(--ink); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 22px; box-shadow: 0 24px 64px rgba(15, 42, 68, 0.3), 0 0 0 1px rgba(143, 211, 255, 0.35); }
+.guide .themes-head { border-bottom: 1px solid #e1eef9; }
+.guide .themes-title { color: var(--ink); }
+.guide .themes-sub, .guide .themes-status { color: var(--ink-muted); }
+.guide .themes-section { color: #1e6fb8; }
+.guide .guide-text { color: var(--ink); }
+.guide .guide-keys kbd { color: var(--ink); background: #fff; border-color: #c4e2fa; box-shadow: 0 1px 0 #c4e2fa; }
+.guide .themes-foot { border-top: 1px solid #e1eef9; background: linear-gradient(180deg, rgba(243, 249, 255, 0), #f3f9ff 35%); }
+.guide .account-btn.primary { background: var(--green); border-color: transparent; color: var(--ink); box-shadow: 0 6px 18px rgba(120, 190, 40, 0.3); }
+.guide .account-btn.primary:hover { background: #c6ff6b; }
+
 /* Phones sideways (and short windows): edge to edge, a shorter banner. */
 @media (max-height: 540px) {
   .profile-overlay { padding: 8px; }

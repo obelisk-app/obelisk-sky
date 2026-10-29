@@ -2,7 +2,7 @@
 // and the hero's island orbit. No Three.js, no React; the village itself lives
 // at /app.
 
-import { COPY, LANGS, pickLang, rememberLang, storedLang, type CopyKey, type Lang } from './copy';
+import { COPY, LANGS, rememberLang, visitorLang, type CopyKey, type Lang } from './copy';
 
 /** Put `lang`'s words into every `[data-i18n]` element under `root`. */
 export function applyLang(doc: Document, lang: Lang): void {
@@ -77,7 +77,7 @@ export function mountHeader(nav: HTMLElement, win: Window = window): void {
 }
 
 export function mountLanding(doc: Document): void {
-  applyLang(doc, pickLang(location.search, storedLang(), navigator.languages ?? [navigator.language]));
+  applyLang(doc, visitorLang());
   const nav = doc.querySelector<HTMLElement>('.nav');
   if (nav) mountHeader(nav);
   const orbit = doc.querySelector<HTMLVideoElement>('video.orbit');

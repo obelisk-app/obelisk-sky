@@ -115,16 +115,38 @@ const STORE_KEY = 'obelisk-sky/lang';
 
 const isLang = (v: unknown): v is Lang => typeof v === 'string' && (LANGS as readonly string[]).includes(v);
 
-/** `?lang=` wins, then the remembered choice, then the browser's language. */
-export function pickLang(search: string, stored: string | null, browser: readonly string[]): Lang {
+/** Where Spanish is spoken (obelisk-dex's `LATAM_COUNTRIES`): a visitor from one gets Spanish. */
+export const SPANISH_COUNTRIES = new Set([
+  'AR', 'UY', 'PY', 'BO', 'CL', 'CO', 'VE', 'PE', 'EC', 'MX',
+  'CU', 'CR', 'PA', 'HN', 'SV', 'GT', 'NI', 'DO', 'PR', 'ES',
+]);
+
+/**
+ * `?lang=` wins, then the remembered choice, then Spanish for a visitor from a
+ * Spanish-speaking country (`country`: Cloudflare's guess from the IP, which the
+ * server passes in the `sky-country` cookie), then the browser's language, then
+ * Spanish.
+ */
+export function pickLang(search: string, stored: string | null, browser: readonly string[], country: string | null = null): Lang {
   const q = new URLSearchParams(search).get('lang');
   if (isLang(q)) return q;
   if (isLang(stored)) return stored;
+  if (country && SPANISH_COUNTRIES.has(country.toUpperCase())) return 'es';
   for (const l of browser) {
     const base = l.toLowerCase().split('-')[0];
     if (isLang(base)) return base;
   }
-  return 'en';
+  return 'es';
+}
+
+/** The visitor's country from the `sky-country` cookie (server/index.ts `countryCookie`), or null. */
+export function cookieCountry(cookie: string): string | null {
+  return /(?:^|;\s*)sky-country=([A-Za-z]{2})(?:;|$)/.exec(cookie)?.[1]?.toUpperCase() ?? null;
+}
+
+/** The language for this page: `pickLang` with what the browser knows. */
+export function visitorLang(): Lang {
+  return pickLang(location.search, storedLang(), navigator.languages ?? [navigator.language], cookieCountry(document.cookie));
 }
 
 export function storedLang(): string | null {
