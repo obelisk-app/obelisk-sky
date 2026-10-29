@@ -190,20 +190,31 @@ function head({ lang, title, description, path, alt, ogImage, ogAlt, type = 'web
 </head>`;
 }
 
+// The landing page's own header (client/index.html) in the page's language, its words from
+// src/landing/copy.ts, so the two never drift apart. Its anchors point back at the landing
+// page; the EN | ES pill links to this page in the other language instead of switching in place.
+const LANDING_HEADER = readFileSync(join(CLIENT, 'index.html'), 'utf8').match(/<header class="nav">[\s\S]*?<\/header>/)[0];
+const COPY_SRC = readFileSync(join(CLIENT, 'src', 'landing', 'copy.ts'), 'utf8');
+function landingWords(lang) {
+  const block = lang === 'en' ? COPY_SRC.slice(COPY_SRC.indexOf('const en'), COPY_SRC.indexOf('const es')) : COPY_SRC.slice(COPY_SRC.indexOf('const es'), COPY_SRC.indexOf('export const COPY'));
+  return Object.fromEntries([...block.matchAll(/'([\w.]+)':\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")/g)].map((m) => [m[1], (m[2] ?? m[3]).replace(/\\(.)/g, '$1')]));
+}
+
 function nav(lang, langHref) {
-  const w = WORDS[lang];
+  const words = landingWords(lang);
+  const q = lang === 'en' ? '' : `?lang=${lang}`;
   const pills = LANGS.map((l) => (l === lang
     ? `<a href="${langHref(l)}" hreflang="${l}" aria-current="true">${l.toUpperCase()}</a>`
     : `<a href="${langHref(l)}" hreflang="${l}" lang="${l}">${l.toUpperCase()}</a>`)).join('');
+  const header = LANDING_HEADER
+    .replace(/href="\/guides" data-i18n="nav.guides" data-i18n-href="href.guides"/, `href="${guideUrl(lang)}" aria-current="page" data-i18n="nav.guides"`)
+    .replace(/data-i18n="([\w.]+)">[^<]*</g, (m, key) => (words[key] ? `data-i18n="${key}">${esc(words[key])}<` : m))
+    .replace(/href="#/g, `href="/${q}#`)
+    .replace(/href="\/app"/g, `href="/app${q}"`)
+    .replace(/class="nav-brand" href="\/"/, `class="nav-brand" href="/${q}"`)
+    .replace(/<div class="lang"[\s\S]*?<\/div>/, `<div class="lang" role="group" aria-label="${WORDS[lang].lang}">${pills}</div>`);
   return `<div class="sky" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-  <header class="nav">
-    <a class="nav-brand" href="/${lang === 'en' ? '' : `?lang=${lang}`}"><img src="/brand/sky-mark.svg" alt="" width="36" height="36" /><span>Obelisk <b>Sky</b></span></a>
-    <nav class="nav-links">
-      <a href="${guideUrl(lang)}">${w.guides}</a>
-    </nav>
-    <div class="lang" role="group" aria-label="${w.lang}">${pills}</div>
-    <a class="btn small" href="/app${lang === 'en' ? '' : `?lang=${lang}`}">${w.enter}</a>
-  </header>`;
+  ${header}`;
 }
 
 function foot(lang) {
@@ -232,8 +243,11 @@ function foot(lang) {
 
 function card(g, lang) {
   const hero = asset(g.fm.hero, lang, `${lang}/${g.slug} hero`);
-  const pic = hero?.kind === 'clip' ? hero.poster : hero?.small ?? hero?.src;
-  return `<li><a class="g-card" href="${guideUrl(lang, g.slug)}"><img src="${pic}" alt="" width="640" height="360" loading="lazy" decoding="async" /><span class="g-card-body"><b>${esc(g.fm.title)}</b><span>${esc(g.fm.description)}</span><small>${WORDS[lang].read(g.minutes)}</small></span></a></li>`;
+  // A clip plays in its card (guides.ts, as the articles' clips do); its small poster shows until then.
+  const media = hero?.kind === 'clip'
+    ? `<video muted loop playsinline disablepictureinpicture preload="none" poster="${hero.cardPoster}" width="640" height="360" aria-hidden="true"><source src="${hero.card}" type="video/mp4" /></video>`
+    : `<img src="${hero?.small ?? hero?.src}" alt="" width="640" height="360" loading="lazy" decoding="async" />`;
+  return `<li><a class="g-card" href="${guideUrl(lang, g.slug)}">${media}<span class="g-card-body"><b>${esc(g.fm.title)}</b><span>${esc(g.fm.description)}</span><small>${WORDS[lang].read(g.minutes)}</small></span></a></li>`;
 }
 
 const ORG = { '@type': 'Organization', name: 'Obelisk', url: 'https://obelisk.ar', logo: abs('/brand/sky-mark.svg') };

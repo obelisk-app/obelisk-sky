@@ -1,33 +1,39 @@
 {
   "bridge-arrival": {
-    "sig": "55d5ac21",
+    "sig": "62dd4908",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 8,
     "src": "/media/guides/bridge-arrival.017339ba.mp4",
-    "poster": "/media/guides/bridge-arrival-poster.4629225e.webp"
+    "card": "/media/guides/bridge-arrival-card.d28740cb.mp4",
+    "poster": "/media/guides/bridge-arrival-poster.4629225e.webp",
+    "cardPoster": "/media/guides/bridge-arrival-card-poster.221ec766.webp"
   },
   "cafe-close": {
-    "sig": "f4a6ca37",
+    "sig": "de503334",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 8,
     "src": "/media/guides/cafe-close.d0f020aa.mp4",
-    "poster": "/media/guides/cafe-close-poster.4514cbaf.webp"
+    "card": "/media/guides/cafe-close-card.e211be52.mp4",
+    "poster": "/media/guides/cafe-close-poster.4514cbaf.webp",
+    "cardPoster": "/media/guides/cafe-close-card-poster.4812fe51.webp"
   },
   "campfire-sunset": {
-    "sig": "9edc6b32",
+    "sig": "12d26560",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 8,
     "src": "/media/guides/campfire-sunset.48926439.mp4",
-    "poster": "/media/guides/campfire-sunset-poster.d8ef32eb.webp"
+    "card": "/media/guides/campfire-sunset-card.44c2055c.mp4",
+    "poster": "/media/guides/campfire-sunset-poster.d8ef32eb.webp",
+    "cardPoster": "/media/guides/campfire-sunset-card-poster.a3e93f23.webp"
   },
   "channels": {
-    "sig": "2a2ba0aa",
+    "sig": "d75d42b1",
     "kind": "shot",
     "perLang": false,
     "en": {
@@ -38,7 +44,7 @@
     }
   },
   "controls": {
-    "sig": "66af8ee4",
+    "sig": "1b4519d8",
     "kind": "shot",
     "perLang": true,
     "en": {
@@ -55,34 +61,40 @@
     }
   },
   "dance-front": {
-    "sig": "348d1486",
+    "sig": "e7cdb202",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 8,
     "src": "/media/guides/dance-front.a3109bb1.mp4",
-    "poster": "/media/guides/dance-front-poster.4c7c8496.webp"
+    "card": "/media/guides/dance-front-card.66d11256.mp4",
+    "poster": "/media/guides/dance-front-poster.4c7c8496.webp",
+    "cardPoster": "/media/guides/dance-front-card-poster.571cf12e.webp"
   },
   "first-person": {
-    "sig": "120bb9b0",
+    "sig": "52470079",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 3.5,
     "src": "/media/guides/first-person.c6e44c7a.mp4",
-    "poster": "/media/guides/first-person-poster.dfb3378f.webp"
+    "card": "/media/guides/first-person-card.f43d9d34.mp4",
+    "poster": "/media/guides/first-person-poster.dfb3378f.webp",
+    "cardPoster": "/media/guides/first-person-card-poster.2b257162.webp"
   },
   "game-table": {
-    "sig": "500888d9",
+    "sig": "237f00bd",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 3.5,
     "src": "/media/guides/game-table.f6a855e6.mp4",
-    "poster": "/media/guides/game-table-poster.dc285366.webp"
+    "card": "/media/guides/game-table-card.0e87518e.mp4",
+    "poster": "/media/guides/game-table-poster.dc285366.webp",
+    "cardPoster": "/media/guides/game-table-card-poster.cf783da5.webp"
   },
   "guest-chat": {
-    "sig": "7600f957",
+    "sig": "2eeca48f",
     "kind": "shot",
     "perLang": false,
     "en": {
@@ -93,7 +105,7 @@
     }
   },
   "guest-island": {
-    "sig": "99089aa4",
+    "sig": "55fb269f",
     "kind": "shot",
     "perLang": true,
     "en": {
@@ -110,34 +122,40 @@
     }
   },
   "island-night": {
-    "sig": "e02c5f78",
+    "sig": "340df100",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 8,
     "src": "/media/guides/island-night.5ec6b60a.mp4",
-    "poster": "/media/guides/island-night-poster.72875334.webp"
+    "card": "/media/guides/island-night-card.e9095400.mp4",
+    "poster": "/media/guides/island-night-poster.72875334.webp",
+    "cardPoster": "/media/guides/island-night-card-poster.a5a379c8.webp"
   },
   "island-orbit": {
-    "sig": "87fd8f63",
+    "sig": "8613d8bf",
     "kind": "clip",
     "width": 720,
     "height": 720,
     "seconds": 8,
     "src": "/media/guides/island-orbit.cd622575.mp4",
-    "poster": "/media/guides/island-orbit-poster.8e06e34f.webp"
+    "card": "/media/guides/island-orbit-card.4d13460e.mp4",
+    "poster": "/media/guides/island-orbit-poster.8e06e34f.webp",
+    "cardPoster": "/media/guides/island-orbit-card-poster.1d8c101a.webp"
   },
   "lacrypta-front": {
-    "sig": "5d779c08",
+    "sig": "01d561b9",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 8,
     "src": "/media/guides/lacrypta-front.8d607123.mp4",
-    "poster": "/media/guides/lacrypta-front-poster.d244e524.webp"
+    "card": "/media/guides/lacrypta-front-card.39f01024.mp4",
+    "poster": "/media/guides/lacrypta-front-poster.d244e524.webp",
+    "cardPoster": "/media/guides/lacrypta-front-card-poster.70a39f8a.webp"
   },
   "landmarks": {
-    "sig": "698c3dc8",
+    "sig": "fe5cf481",
     "kind": "shot",
     "perLang": false,
     "en": {
@@ -148,7 +166,7 @@
     }
   },
   "login": {
-    "sig": "cd808249",
+    "sig": "37f319f6",
     "kind": "shot",
     "perLang": true,
     "en": {
@@ -165,7 +183,7 @@
     }
   },
   "look-creator": {
-    "sig": "611471ec",
+    "sig": "0643c55c",
     "kind": "shot",
     "perLang": false,
     "en": {
@@ -176,16 +194,18 @@
     }
   },
   "look-editor": {
-    "sig": "ad3080f2",
+    "sig": "794c57eb",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 10,
     "src": "/media/guides/look-editor.637410e3.mp4",
-    "poster": "/media/guides/look-editor-poster.70ed3793.webp"
+    "card": "/media/guides/look-editor-card.8a20e4b5.mp4",
+    "poster": "/media/guides/look-editor-poster.70ed3793.webp",
+    "cardPoster": "/media/guides/look-editor-card-poster.0f342c8c.webp"
   },
   "mate-bench": {
-    "sig": "33ac4073",
+    "sig": "a66c0908",
     "kind": "shot",
     "perLang": false,
     "en": {
@@ -196,16 +216,18 @@
     }
   },
   "mate-faces": {
-    "sig": "61c6bdab",
+    "sig": "4f7c8df0",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 8,
     "src": "/media/guides/mate-faces.cbcb2272.mp4",
-    "poster": "/media/guides/mate-faces-poster.dc4fb67e.webp"
+    "card": "/media/guides/mate-faces-card.e531ee4c.mp4",
+    "poster": "/media/guides/mate-faces-poster.dc4fb67e.webp",
+    "cardPoster": "/media/guides/mate-faces-card-poster.e2bb079f.webp"
   },
   "minimap": {
-    "sig": "69976bdd",
+    "sig": "cf5f6080",
     "kind": "shot",
     "perLang": false,
     "en": {
@@ -216,7 +238,7 @@
     }
   },
   "nostrich": {
-    "sig": "b2c7b917",
+    "sig": "2aabfc9b",
     "kind": "shot",
     "perLang": false,
     "en": {
@@ -227,34 +249,40 @@
     }
   },
   "park-pullups": {
-    "sig": "0c3d5d1b",
+    "sig": "407eb1bc",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 8,
     "src": "/media/guides/park-pullups.2d001249.mp4",
-    "poster": "/media/guides/park-pullups-poster.d6dcd47d.webp"
+    "card": "/media/guides/park-pullups-card.c592bb5a.mp4",
+    "poster": "/media/guides/park-pullups-poster.d6dcd47d.webp",
+    "cardPoster": "/media/guides/park-pullups-card-poster.b985c78e.webp"
   },
   "parrilla-dusk": {
-    "sig": "5767e3cd",
+    "sig": "75ee6aa1",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 8,
     "src": "/media/guides/parrilla-dusk.974e60d8.mp4",
-    "poster": "/media/guides/parrilla-dusk-poster.8e5d4864.webp"
+    "card": "/media/guides/parrilla-dusk-card.4f4e846a.mp4",
+    "poster": "/media/guides/parrilla-dusk-poster.8e5d4864.webp",
+    "cardPoster": "/media/guides/parrilla-dusk-card-poster.30ee73ef.webp"
   },
   "pets": {
-    "sig": "412cfe60",
+    "sig": "f2587db2",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 4,
     "src": "/media/guides/pets.fe4aa3d9.mp4",
-    "poster": "/media/guides/pets-poster.ff316223.webp"
+    "card": "/media/guides/pets-card.bb5055bd.mp4",
+    "poster": "/media/guides/pets-poster.ff316223.webp",
+    "cardPoster": "/media/guides/pets-card-poster.503ddab8.webp"
   },
   "phone": {
-    "sig": "9faf0901",
+    "sig": "c8d5df91",
     "kind": "shot",
     "perLang": true,
     "en": {
@@ -271,43 +299,51 @@
     }
   },
   "plaza-meetup": {
-    "sig": "1de02e9e",
+    "sig": "5029a0c1",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 8,
     "src": "/media/guides/plaza-meetup.42d3b4c1.mp4",
-    "poster": "/media/guides/plaza-meetup-poster.d88f5a8a.webp"
+    "card": "/media/guides/plaza-meetup-card.deaf7c5e.mp4",
+    "poster": "/media/guides/plaza-meetup-poster.d88f5a8a.webp",
+    "cardPoster": "/media/guides/plaza-meetup-card-poster.e66e61f3.webp"
   },
   "ride": {
-    "sig": "a684cfc1",
+    "sig": "52f87363",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 3,
     "src": "/media/guides/ride.9704a728.mp4",
-    "poster": "/media/guides/ride-poster.0dfa2bd2.webp"
+    "card": "/media/guides/ride-card.35cf73c0.mp4",
+    "poster": "/media/guides/ride-poster.0dfa2bd2.webp",
+    "cardPoster": "/media/guides/ride-card-poster.696da171.webp"
   },
   "swim": {
-    "sig": "76541661",
+    "sig": "3e676649",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 3.5,
     "src": "/media/guides/swim.6550a614.mp4",
-    "poster": "/media/guides/swim-poster.92bfa539.webp"
+    "card": "/media/guides/swim-card.46065f77.mp4",
+    "poster": "/media/guides/swim-poster.92bfa539.webp",
+    "cardPoster": "/media/guides/swim-card-poster.8ee7e059.webp"
   },
   "theater": {
-    "sig": "f5b8cc51",
+    "sig": "1b55d521",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 3.5,
     "src": "/media/guides/theater.f7d33a45.mp4",
-    "poster": "/media/guides/theater-poster.823e960b.webp"
+    "card": "/media/guides/theater-card.45cb23f3.mp4",
+    "poster": "/media/guides/theater-poster.823e960b.webp",
+    "cardPoster": "/media/guides/theater-card-poster.501d1d07.webp"
   },
   "village": {
-    "sig": "d72ef4a9",
+    "sig": "4607e712",
     "kind": "shot",
     "perLang": false,
     "en": {
@@ -318,7 +354,7 @@
     }
   },
   "voice-note": {
-    "sig": "b38a5117",
+    "sig": "539ba0d0",
     "kind": "shot",
     "perLang": false,
     "en": {
@@ -329,12 +365,14 @@
     }
   },
   "zaps": {
-    "sig": "6ce6531c",
+    "sig": "71746a8e",
     "kind": "clip",
     "width": 1280,
     "height": 720,
     "seconds": 5,
     "src": "/media/guides/zaps.6fb291d9.mp4",
-    "poster": "/media/guides/zaps-poster.f7d795b0.webp"
+    "card": "/media/guides/zaps-card.59f20fad.mp4",
+    "poster": "/media/guides/zaps-poster.f7d795b0.webp",
+    "cardPoster": "/media/guides/zaps-card-poster.7581cd16.webp"
   }
 }

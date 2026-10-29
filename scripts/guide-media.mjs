@@ -1,6 +1,7 @@
 // The guides' pictures and clips (content/guides/media.json) encoded for the site:
 // client/public/media/guides/<name>[-<lang>]-<width>.<hash>.webp for pictures,
-// <name>.<hash>.mp4 plus its first frame as the poster for clips. Names carry a
+// <name>.<hash>.mp4 plus its first frame as the poster for clips, and a 640 px copy of both
+// for the guide cards (<name>-card.<hash>.mp4). Names carry a
 // hash of the bytes, so Cloudflare can keep them a year (server cacheControl /media/).
 // The result goes to content/guides/media.lock.json, which scripts/build-guides.mjs reads;
 // an entry whose source and settings haven't changed is kept as it is, so the guides
@@ -21,7 +22,7 @@ const OUT = join(ROOT, 'client', 'public', 'media', 'guides');
 const MANIFEST = join(ROOT, 'content', 'guides', 'media.json');
 const LOCK = join(ROOT, 'content', 'guides', 'media.lock.json');
 const LANGS = ['en', 'es'];
-const CLIP_WIDTH = 1280, CLIP_FPS = 30, SHOT_WIDTHS = [1280, 640];
+const CLIP_WIDTH = 1280, CARD_WIDTH = 640, CLIP_FPS = 30, SHOT_WIDTHS = [1280, 640];
 
 const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
 const lock = existsSync(LOCK) ? JSON.parse(readFileSync(LOCK, 'utf8')) : {};
@@ -40,7 +41,7 @@ function signature(entry) {
     const st = statSync(f);
     return st.isDirectory() ? `${f}:${readdirSync(f).length}` : `${f}:${st.size}:${Math.round(st.mtimeMs)}`;
   });
-  return hash8(JSON.stringify({ ...entry, alt: undefined, files, CLIP_WIDTH, CLIP_FPS, SHOT_WIDTHS }));
+  return hash8(JSON.stringify({ ...entry, alt: undefined, files, CLIP_WIDTH, CARD_WIDTH, CLIP_FPS, SHOT_WIDTHS }));
 }
 /** Writes `buf` as <base>.<hash>.<ext>, dropping that base's older versions. */
 function put(base, ext, buf) {
@@ -81,6 +82,10 @@ function encodeClip(name, entry) {
   execFileSync('ffmpeg', ['-v', 'error', '-y', ...input, '-an',
     '-vf', `fps=${CLIP_FPS},scale='min(${CLIP_WIDTH},iw)':-2:flags=lanczos`,
     '-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', '27', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', mp4]);
+  // The guide cards' loop: the same clip, smaller.
+  const card = join(tmp, 'card.mp4');
+  execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', mp4, '-an', '-vf', `scale=${CARD_WIDTH}:-2:flags=lanczos`,
+    '-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', '28', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', card]);
   const poster = join(tmp, 'poster.png');
   execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', mp4, '-frames:v', '1', poster]);
   const probe = JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height:format=duration', '-of', 'json', mp4], { encoding: 'utf8' }));
@@ -90,9 +95,11 @@ function encodeClip(name, entry) {
     height: probe.streams[0].height,
     seconds: Math.round(Number(probe.format.duration) * 10) / 10,
     src: put(name, 'mp4', readFileSync(mp4)),
+    card: put(`${name}-card`, 'mp4', readFileSync(card)),
   };
-  return sharp(poster).webp({ quality: 80 }).toBuffer().then((buf) => {
+  return sharp(poster).webp({ quality: 80 }).toBuffer().then(async (buf) => {
     out.poster = put(`${name}-poster`, 'webp', buf);
+    out.cardPoster = put(`${name}-card-poster`, 'webp', await sharp(poster).resize({ width: CARD_WIDTH }).webp({ quality: 80 }).toBuffer());
     rmSync(tmp, { recursive: true, force: true });
     return out;
   });
