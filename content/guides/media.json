@@ -82,8 +82,16 @@
     "alt": { "en": "The guest island seen whole, with the banner offering to log in with Nostr.", "es": "La isla de invitados entera, con el aviso para entrar con Nostr." }
   },
   "login": {
-    "kind": "shot", "src": "videos/obelisk-sky-guides/captures/login-{lang}.png", "crop": [405, 30, 450, 730],
-    "alt": { "en": "Connect to Nostr: browser extension, remote signer, create a new account or paste a private key.", "es": "Conectar con Nostr: extensión del navegador, firmante remoto, crear una cuenta nueva o pegar una clave privada." }
+    "kind": "shot", "src": "videos/obelisk-sky-guides/captures/login-{lang}.png", "crop": [420, 102, 440, 596],
+    "alt": { "en": "Connect to Nostr: Create a new account first, then, under I already have an account, a private key or key file and a remote signer.", "es": "Conectate a Nostr: primero Crear una cuenta nueva y, debajo de Ya tengo una cuenta, clave privada o archivo de clave y firmador remoto." }
+  },
+  "new-key": {
+    "kind": "shot", "src": "videos/obelisk-sky-guides/captures/newkey-{lang}.png",
+    "alt": { "en": "Your new key: the nsec, Copy nsec, and the button to download your key file, which Continue waits for.", "es": "Tu clave nueva: la nsec, Copiar nsec y el botón para descargar tu archivo de clave, que Continuar espera." }
+  },
+  "key-file": {
+    "kind": "shot", "src": "videos/obelisk-sky-guides/captures/keyfile-{lang}.png",
+    "alt": { "en": "Logging in with a key: paste the nsec, or Upload key file to use the .txt saved when the account was made.", "es": "Entrar con una clave: pegá la nsec o tocá Subir archivo de clave para usar el .txt que guardaste al crear la cuenta." }
   },
   "controls": {
     "kind": "shot", "src": "videos/obelisk-sky-guides/captures/help-{lang}.png", "crop": [365, 20, 550, 740],

@@ -291,6 +291,12 @@ body.sky-login .nui-modal .nui-method-button { background: #ffffff; border-color
 body.sky-login .nui-modal .nui-method-button:hover,
 body.sky-login .nui-modal .nui-method-button:focus-visible { background: #eef7ff; border-color: #8fd3ff; }
 body.sky-login .nui-modal .nui-method-icon { background: #e3f2ff; border-color: #c4e2fa; color: #1e6fb8; }
+/* "Create a new account" leads (the SDK's create-first layout): the lime button. */
+body.sky-login .nui-modal .nui-method-button.nui-method-primary { background: var(--green); border-color: #9fe03c; }
+body.sky-login .nui-modal .nui-method-button.nui-method-primary:hover,
+body.sky-login .nui-modal .nui-method-button.nui-method-primary:focus-visible { background: #c6ff6b; border-color: #8fd33a; }
+body.sky-login .nui-modal .nui-method-primary .nui-method-icon { background: rgba(255, 255, 255, 0.6); border-color: transparent; color: var(--ink); }
+body.sky-login .nui-modal .nui-key-download[data-done="true"] { background: #f2fbe6; border-color: #a9dd6c; color: var(--ink); }
 body.sky-login .nui-modal .nui-no-extension-cta { background: #f2fbe6; border-color: #d9efbf; }
 body.sky-login .nui-modal .nui-no-extension-cta:hover { background: #e9f8d6; border-color: #a9dd6c; }
 body.sky-login .nui-modal .nui-back { color: #1e6fb8; background: #e3f2ff; border-color: #c4e2fa; }

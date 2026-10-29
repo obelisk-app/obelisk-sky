@@ -12,7 +12,7 @@ howTo:
   totalTime: PT5M
   steps:
     - { name: Look around as a guest, anchor: look-around-as-a-guest, text: Open sky.obelisk.ar and press Enter the island. Without logging in you land on the guest island and can walk around right away. }
-    - { name: Log in with Nostr, anchor: log-in-with-nostr, text: 'Press Log in at the top right and pick a browser extension, a remote signer, a new account or a private key.' }
+    - { name: Log in with Nostr, anchor: log-in-with-nostr, text: 'Press Log in at the top right. New here? Create a new account and download your key file. Already have one? Use your browser extension, your private key or its key file, or a remote signer.' }
     - { name: Join with an invite link, anchor: join-with-an-invite-link, text: 'If the relay is invite-only, open the invite link someone sent you. It brings you in with your key, or a new one made on the spot.' }
     - { name: Learn the controls, anchor: learn-the-controls, text: 'Walk with WASD or by clicking the ground, drag to turn the camera, press E to sit and N for the minimap. The ? button shows every key.' }
 ---
@@ -37,14 +37,29 @@ The guest island is a way to look around. Its conversations are scripted example
 
 ## Log in with Nostr
 
-Press **Log in** at the top right. Obelisk Sky uses your Nostr identity, so there's no email and no password. Pick whichever fits you:
+Press **Log in** at the top right. Obelisk Sky uses your Nostr identity, so there's no email and no password. The login puts the new account first, and everything for an account you already have underneath.
 
-- **Browser extension** (NIP-07): Alby, nos2x, Flamingo or the nostr-wot extension. The safest choice on a computer.
-- **Remote signer** (NIP-46): a "bunker" such as Amber on Android or nsec.app. Your key lives in another app and Sky asks it to sign.
-- **Create a new account**: a fresh key made on this device. Sky walks you through saving a backup and picking a name and a picture.
-- **Paste a private key**: an `nsec` or 64-character hex key. It works, but a signer is safer.
+<Shot name="login" caption="The login: the same as obelisk.ar's, so one account works in both." maxWidth={440} />
 
-<Shot name="login" caption="The login: the same Nostr login as obelisk.ar, so the same account works in both." maxWidth={460} />
+### New to Nostr: create an account
+
+Press **Create a new account**. Sky makes your key right there on your device and shows you the private part, the `nsec`. Press **Download your key file** to save it as a small `.txt`. **Continue** stays off until you've saved it, because that file is your account: there's no "forgot my password" on Nostr. Then pick a name and a picture, and you're in.
+
+<Shot name="new-key" caption="Your new key. Continue waits until the key file is saved." maxWidth={420} />
+
+<Callout>
+Keep the key file somewhere safe and private, like a password manager or a USB stick. Anyone who has it can use your account.
+</Callout>
+
+### I already have an account
+
+Under **I already have an account**:
+
+- **Browser extension** (NIP-07): Alby, nos2x, Flamingo or the nostr-wot extension. It only appears when Sky finds one installed in your browser. It's the safest way in on a computer.
+- **Private key or key file**: paste your `nsec`, or press **Upload key file** and pick the `.txt` you saved when you created the account. Sky reads the key from it.
+- **Remote signer** (NIP-46): a "bunker" such as Amber on Android or nsec.app. Your key stays in that app, and Sky asks it to sign.
+
+<Shot name="key-file" caption="Back in with your key: paste the nsec, or upload the key file." maxWidth={420} />
 
 Once you're in, you appear on the island of the relay you picked. The default is the Obelisk Public Relay (`public.obelisk.ar`). The relay pill at the top left switches to any other NIP-29 relay, so any community can have its own island.
 

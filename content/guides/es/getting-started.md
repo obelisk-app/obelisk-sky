@@ -12,7 +12,7 @@ howTo:
   totalTime: PT5M
   steps:
     - { name: Recorrelo como invitado, anchor: recorrelo-como-invitado, text: Abrí sky.obelisk.ar y tocá Entrar a la isla. Sin ingresar caés en la isla de invitados y ya podés caminar. }
-    - { name: Ingresá con Nostr, anchor: ingresa-con-nostr, text: 'Tocá Ingresar arriba a la derecha y elegí una extensión del navegador, un firmante remoto, una cuenta nueva o una clave privada.' }
+    - { name: Ingresá con Nostr, anchor: ingresa-con-nostr, text: 'Tocá Ingresar arriba a la derecha. ¿Sos nuevo? Creá una cuenta nueva y descargá tu archivo de clave. ¿Ya tenés una? Usá tu extensión del navegador, tu clave privada o su archivo, o un firmador remoto.' }
     - { name: Entrá con un link de invitación, anchor: entra-con-un-link-de-invitacion, text: 'Si el relay es solo con invitación, abrí el link que te mandaron. Te deja entrar con tu clave, o con una nueva creada en el momento.' }
     - { name: Aprendé los controles, anchor: aprende-los-controles, text: 'Caminá con WASD o haciendo clic en el suelo, arrastrá para girar la cámara, E para sentarte y N para el minimapa. El botón ? muestra todas las teclas.' }
 ---
@@ -37,14 +37,29 @@ La isla de invitados es para conocer. Sus conversaciones son ejemplos armados. I
 
 ## Ingresá con Nostr
 
-Tocá **Ingresar** arriba a la derecha. Obelisk Sky usa tu identidad de Nostr: sin mail y sin contraseña. Elegí la que te quede mejor:
+Tocá **Ingresar** arriba a la derecha. Obelisk Sky usa tu identidad de Nostr: sin mail y sin contraseña. El ingreso muestra primero la cuenta nueva y, abajo, todo lo que sirve si ya tenés una.
 
-- **Extensión del navegador** (NIP-07): Alby, nos2x, Flamingo o la extensión de nostr-wot. Lo más seguro en una compu.
-- **Firmante remoto** (NIP-46): un "bunker" como Amber en Android o nsec.app. Tu clave vive en otra app y Sky le pide que firme.
-- **Crear una cuenta nueva**: una clave nueva hecha en este dispositivo. Sky te acompaña a guardar un respaldo y elegir nombre y foto.
-- **Pegar una clave privada**: una `nsec` o una clave hex de 64 caracteres. Funciona, pero un firmante es más seguro.
+<Shot name="login" caption="El ingreso: el mismo de obelisk.ar, así que una cuenta sirve en los dos." maxWidth={440} />
 
-<Shot name="login" caption="El ingreso: el mismo de obelisk.ar, así que la misma cuenta sirve en los dos." maxWidth={460} />
+### Si sos nuevo en Nostr: creá una cuenta
+
+Tocá **Crear una cuenta nueva**. Sky crea tu clave ahí mismo, en tu dispositivo, y te muestra la parte privada, la `nsec`. Tocá **Descargá tu archivo de clave** para guardarla en un `.txt` chiquito. **Continuar** no se habilita hasta que lo guardes, porque ese archivo es tu cuenta: en Nostr no existe el "me olvidé la contraseña". Después elegís nombre y foto, y listo.
+
+<Shot name="new-key" caption="Tu clave nueva. Continuar espera a que guardes el archivo de clave." maxWidth={420} />
+
+<Callout>
+Guardá el archivo de clave en un lugar seguro y privado, como un gestor de contraseñas o un pendrive. Quien lo tenga puede usar tu cuenta.
+</Callout>
+
+### Ya tengo una cuenta
+
+Debajo de **Ya tengo una cuenta**:
+
+- **Extensión del navegador** (NIP-07): Alby, nos2x, Flamingo o la extensión de nostr-wot. Solo aparece cuando Sky encuentra una instalada en tu navegador. Es lo más seguro en una compu.
+- **Clave privada o archivo de clave**: pegá tu `nsec`, o tocá **Subir archivo de clave** y elegí el `.txt` que guardaste al crear la cuenta. Sky saca la clave de ahí.
+- **Firmador remoto** (NIP-46): un "bunker" como Amber en Android o nsec.app. Tu clave queda en esa app y Sky le pide que firme.
+
+<Shot name="key-file" caption="Volver a entrar con tu clave: pegá la nsec o subí el archivo de clave." maxWidth={420} />
 
 Una vez adentro, aparecés en la isla del relay que elegiste. El de siempre es el Obelisk Public Relay (`public.obelisk.ar`). La píldora del relay, arriba a la izquierda, cambia a cualquier otro relay NIP-29, así que cada comunidad puede tener su propia isla.
 
