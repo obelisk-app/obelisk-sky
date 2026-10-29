@@ -1,0 +1,132 @@
+{
+  "$comment": "Every picture and clip the guides use, by name. `src` is relative to the obelisk-media checkout (OBELISK_MEDIA, default ../obelisk-media), or to this repo when it starts with `sky:`. A clip is an .mp4 (`start`/`seconds` trim it) or a folder of PNG frames (`frames` at `fps`, from `start` seconds in); its poster is its first frame. scripts/guide-media.mjs encodes them into client/public/media/guides and records the result in media.lock.json.",
+  "island-orbit": {
+    "kind": "clip", "src": "sky:client/public/landing/island-orbit.mp4", "start": 0, "seconds": 8,
+    "alt": { "en": "The floating island turning slowly: houses round the green obelisk, a river, bridges and a running track.", "es": "La isla flotante girando despacio: casas alrededor del obelisco verde, un río, puentes y una pista de atletismo." }
+  },
+  "bridge-arrival": {
+    "kind": "clip", "src": "videos/obelisk-sky-source-library/renders/bridge-arrival-720-24fps.mp4", "start": 1, "seconds": 8,
+    "alt": { "en": "People crossing an arched wooden bridge into the village.", "es": "Gente cruzando un puente de madera en arco hacia el pueblo." }
+  },
+  "plaza-meetup": {
+    "kind": "clip", "src": "videos/obelisk-sky-source-library/renders/plaza-meetup-720-24fps.mp4", "start": 1, "seconds": 8,
+    "alt": { "en": "Characters meeting on the plaza at the foot of the obelisk.", "es": "Personajes encontrándose en la plaza, al pie del obelisco." }
+  },
+  "mate-faces": {
+    "kind": "clip", "src": "videos/obelisk-sky-source-library/renders/mate-faces-720-24fps.mp4", "start": 1, "seconds": 8,
+    "alt": { "en": "Three people on a bench passing a mate around.", "es": "Tres personas en un banco pasándose el mate." }
+  },
+  "cafe-close": {
+    "kind": "clip", "src": "videos/obelisk-sky-source-library/renders/cafe-close-720-24fps.mp4", "start": 1, "seconds": 8,
+    "alt": { "en": "People sitting at the café's tables with coffee and laptops.", "es": "Gente sentada en las mesas del café, con café y notebooks." }
+  },
+  "campfire-sunset": {
+    "kind": "clip", "src": "videos/obelisk-sky-source-library/renders/campfire-sunset-720-24fps.mp4", "start": 1, "seconds": 8,
+    "alt": { "en": "A circle of people round the campfire at sunset.", "es": "Una ronda de gente alrededor del fogón al atardecer." }
+  },
+  "parrilla-dusk": {
+    "kind": "clip", "src": "videos/obelisk-sky-source-library/renders/parrilla-dusk-720-24fps.mp4", "start": 1, "seconds": 8,
+    "alt": { "en": "Asado on the parrilla at dusk, with people at the table.", "es": "Asado en la parrilla al anochecer, con gente en la mesa." }
+  },
+  "park-pullups": {
+    "kind": "clip", "src": "videos/obelisk-sky-source-library/renders/park-pullups-720-24fps.mp4", "start": 1, "seconds": 8,
+    "alt": { "en": "Characters doing pull-ups and dips at the calisthenics park.", "es": "Personajes haciendo dominadas y fondos en el parque de calistenia." }
+  },
+  "dance-front": {
+    "kind": "clip", "src": "videos/obelisk-sky-source-library/renders/dance-front-720-24fps.mp4", "start": 1, "seconds": 8,
+    "alt": { "en": "A group dancing together on the plaza.", "es": "Un grupo bailando junto en la plaza." }
+  },
+  "lacrypta-front": {
+    "kind": "clip", "src": "videos/obelisk-sky-source-library/renders/lacrypta-front-720-24fps.mp4", "start": 1, "seconds": 8,
+    "alt": { "en": "The front of La Crypta's house in the village.", "es": "El frente de la casa de La Crypta en el pueblo." }
+  },
+  "island-night": {
+    "kind": "clip", "src": "videos/obelisk-sky-source-library/renders/island-night-720-24fps.mp4", "start": 1, "seconds": 8,
+    "alt": { "en": "The island at night, windows and street lamps lit.", "es": "La isla de noche, con las ventanas y los faroles prendidos." }
+  },
+  "look-editor": {
+    "kind": "clip", "src": "videos/obelisk-sky-showcase/captures/look/look.mp4", "start": 4.5, "seconds": 10,
+    "alt": { "en": "The look editor: picking hair, an outfit, a hat and a pet, then saving.", "es": "El editor de aspecto: eligiendo pelo, ropa, sombrero y mascota, y guardando." }
+  },
+  "ride": {
+    "kind": "clip", "src": "videos/obelisk-sky-showcase/reel/captures/ride/frames", "frames": true, "fps": 60, "start": 1,
+    "alt": { "en": "Two people galloping across the plaza on purple nostriches.", "es": "Dos personas galopando por la plaza sobre ñandúes violetas." }
+  },
+  "swim": {
+    "kind": "clip", "src": "videos/obelisk-sky-showcase/reel/captures/swim/frames", "frames": true, "fps": 60,
+    "alt": { "en": "Two people swimming in the river under a wooden bridge.", "es": "Dos personas nadando en el río, debajo de un puente de madera." }
+  },
+  "first-person": {
+    "kind": "clip", "src": "videos/obelisk-sky-showcase/reel/captures/pov/frames", "frames": true, "fps": 60,
+    "alt": { "en": "First-person view walking up to the nostr-wot HQ, hands in front.", "es": "Vista en primera persona caminando hacia la sede de nostr-wot, con las manos adelante." }
+  },
+  "pets": {
+    "kind": "clip", "src": "videos/obelisk-sky-showcase/reel/captures/pets/frames", "frames": true, "fps": 60,
+    "alt": { "en": "People walking on the plaza with their pets following them.", "es": "Gente caminando por la plaza con sus mascotas atrás." }
+  },
+  "zaps": {
+    "kind": "clip", "src": "videos/obelisk-sky-showcase/reel/captures/zap/frames", "frames": true, "fps": 60,
+    "alt": { "en": "A zap flying from one person to another over the village.", "es": "Un zap volando de una persona a otra sobre el pueblo." }
+  },
+  "theater": {
+    "kind": "clip", "src": "videos/obelisk-sky-showcase/reel/captures/theater/frames", "frames": true, "fps": 60,
+    "alt": { "en": "People in the theater's red seats watching the big screen.", "es": "Gente en las butacas rojas del cine mirando la pantalla grande." }
+  },
+  "game-table": {
+    "kind": "clip", "src": "videos/obelisk-sky-showcase/reel/captures/game/frames", "frames": true, "fps": 60,
+    "alt": { "en": "Two players at the Chain Reaction table on the grass.", "es": "Dos jugadores en la mesa de Chain Reaction sobre el pasto." }
+  },
+
+  "guest-island": {
+    "kind": "shot", "src": "videos/obelisk-sky-guides/captures/guest-{lang}.png",
+    "alt": { "en": "The guest island seen whole, with the banner offering to log in with Nostr.", "es": "La isla de invitados entera, con el aviso para entrar con Nostr." }
+  },
+  "login": {
+    "kind": "shot", "src": "videos/obelisk-sky-guides/captures/login-{lang}.png", "crop": [405, 30, 450, 730],
+    "alt": { "en": "Connect to Nostr: browser extension, remote signer, create a new account or paste a private key.", "es": "Conectar con Nostr: extensión del navegador, firmante remoto, crear una cuenta nueva o pegar una clave privada." }
+  },
+  "controls": {
+    "kind": "shot", "src": "videos/obelisk-sky-guides/captures/help-{lang}.png", "crop": [365, 20, 550, 740],
+    "alt": { "en": "The How to play panel listing the keys to move and talk.", "es": "El panel Cómo jugar, con las teclas para moverse y hablar." }
+  },
+  "phone": {
+    "kind": "shot", "src": "videos/obelisk-sky-guides/captures/phone-{lang}.png",
+    "alt": { "en": "Sky on a phone held sideways: the joystick on the left, jump and the seat prompt on the right.", "es": "Sky en un celular de costado: el joystick a la izquierda, saltar y el aviso del asiento a la derecha." }
+  },
+  "village": {
+    "kind": "shot", "src": "sky:docs/readme/shots/village.jpg",
+    "alt": { "en": "The village from above, each house labelled with its channel and how busy it is.", "es": "El pueblo desde arriba, cada casa con el cartel de su canal y cuánta gente hay." }
+  },
+  "guest-chat": {
+    "kind": "shot", "src": "sky:docs/readme/shots/chat-night.jpg",
+    "alt": { "en": "The village at night with a channel's chat open on the right.", "es": "El pueblo de noche con el chat de un canal abierto a la derecha." }
+  },
+  "channels": {
+    "kind": "shot", "src": "sky:docs/readme/shots/channels.jpg", "crop": [20, 40, 595, 1320],
+    "alt": { "en": "The channel list: every channel on the relay, with how many people are in each.", "es": "La lista de canales: todos los canales del relay, con cuánta gente hay en cada uno." }
+  },
+  "minimap": {
+    "kind": "shot", "src": "sky:docs/readme/shots/minimap.jpg",
+    "alt": { "en": "The big minimap: every house on the island, click one to walk there.", "es": "El minimapa grande: todas las casas de la isla, tocá una para caminar hasta ahí." }
+  },
+  "voice-note": {
+    "kind": "shot", "src": "sky:docs/readme/shots/voice-note.jpg",
+    "alt": { "en": "A channel's chat with replies, reactions and a voice note.", "es": "El chat de un canal con respuestas, reacciones y un audio." }
+  },
+  "mate-bench": {
+    "kind": "shot", "src": "sky:docs/readme/shots/mate-bench.jpg",
+    "alt": { "en": "Three people sitting on a bench drinking mate.", "es": "Tres personas sentadas en un banco tomando mate." }
+  },
+  "landmarks": {
+    "kind": "shot", "src": "sky:docs/readme/shots/landmarks.jpg",
+    "alt": { "en": "The landmarks: La Crypta, the nostr-wot HQ, the café, the parrilla, Liberture and the theater.", "es": "Los lugares del pueblo: La Crypta, la sede de nostr-wot, el café, la parrilla, Liberture y el cine." }
+  },
+  "look-creator": {
+    "kind": "shot", "src": "sky:docs/readme/shots/look-creator.jpg",
+    "alt": { "en": "The look creator open over the village, with a preview of the character.", "es": "El editor de aspecto abierto sobre el pueblo, con la vista previa del personaje." }
+  },
+  "nostrich": {
+    "kind": "shot", "src": "sky:docs/readme/shots/nostrich.jpg",
+    "alt": { "en": "Riding a nostrich on the running track, with the prompt Press F to get off.", "es": "Andando en ñandú por la pista, con el aviso Apretá F para bajarte." }
+  }
+}

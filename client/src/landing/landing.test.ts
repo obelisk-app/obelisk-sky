@@ -99,14 +99,21 @@ describe('landing copy', () => {
     localStorage.clear();
     vi.restoreAllMocks();
   });
+  it('links the guides in the visitor\'s language', () => {
+    document.documentElement.innerHTML = html.replace(/^<!doctype html>/i, '');
+    applyLang(document, 'es');
+    for (const a of document.querySelectorAll('[data-i18n-href]')) expect(a.getAttribute('href')).toBe('/es/guides');
+    applyLang(document, 'en');
+    for (const a of document.querySelectorAll('[data-i18n-href]')) expect(a.getAttribute('href')).toBe('/guides');
+  });
   it('sends every call to action to the village', () => {
     document.documentElement.innerHTML = html.replace(/^<!doctype html>/i, '');
     for (const k of ['nav.enter', 'hero.enter', 'cta.enter']) expect(document.querySelector(`[data-i18n="${k}"]`)!.getAttribute('href')).toBe('/app');
   });
-  it('links the family at the foot: Obelisk, nostr-wot, Liberture, La Crypta, and the code on GitHub', () => {
+  it('links the guides and the family at the foot: Obelisk, nostr-wot, Liberture, La Crypta, and the code on GitHub', () => {
     document.documentElement.innerHTML = html.replace(/^<!doctype html>/i, '');
     const hrefs = [...document.querySelectorAll('.foot > a')].map((a) => a.getAttribute('href'));
-    expect(hrefs).toEqual(['https://obelisk.ar', 'https://nostr-wot.com', 'https://liberture.com', 'https://lacrypta.ar', GITHUB]);
+    expect(hrefs).toEqual(['/guides', 'https://obelisk.ar', 'https://nostr-wot.com', 'https://liberture.com', 'https://lacrypta.ar', GITHUB]);
   });
   it('draws every feature as its own animated icon, stilled for reduced motion', () => {
     document.documentElement.innerHTML = html.replace(/^<!doctype html>/i, '');

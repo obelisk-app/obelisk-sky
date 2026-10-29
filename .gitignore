@@ -8,3 +8,7 @@ _dl/
 .swc-native-cache/
 .vite/
 .claude/worktrees/
+# The guides' pages and sitemap, built by scripts/build-guides.mjs
+client/guides/
+client/es/
+client/public/sitemap.xml

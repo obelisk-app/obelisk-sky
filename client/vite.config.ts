@@ -1,7 +1,7 @@
 import { defineConfig, type Plugin } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'node:url';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 
 const here = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 const vendor = here('../vendor/obelisk/src');
@@ -20,6 +20,20 @@ export const SHIMS = [
   { find: /^@\/components\/media\/library\/LazyMediaLibraryModal$/, replacement: here('src/shims/chat/LazyMediaLibraryModal.tsx') },
   { find: /^@\//, replacement: `${vendor}/` },
 ];
+
+/** The guides' pages (scripts/build-guides.mjs writes them under client/guides
+ *  and client/es/guides before the build), one input each. */
+function guidePages(): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const top of ['guides', 'es/guides']) {
+    const dir = here(top);
+    if (!existsSync(dir)) continue;
+    for (const f of readdirSync(dir, { recursive: true }) as string[]) {
+      if (f.endsWith('.html')) out[`${top}/${f}`.replace(/\.html$/, '').replace(/[/]/g, '-')] = `${dir}/${f}`;
+    }
+  }
+  return out;
+}
 
 /** NEXT_PUBLIC_TURN_* / FORCE_RELAY from obelisk-dex's build env (they ship
  *  in obelisk.ar's own bundle already); STUN-only if absent. */
@@ -85,7 +99,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 1500,
     rollupOptions: {
       // The landing page at /, the village at /app (server/index.ts routes them).
-      input: { landing: here('index.html'), app: here('app/index.html') },
+      input: { landing: here('index.html'), app: here('app/index.html'), ...guidePages() },
       // Next's "use client" directives mean nothing outside Next.
       onwarn(w, warn) {
         if (w.code === 'MODULE_LEVEL_DIRECTIVE' || w.code === 'SOURCEMAP_ERROR') return;

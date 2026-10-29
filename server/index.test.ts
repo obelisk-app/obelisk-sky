@@ -20,8 +20,8 @@ describe('static host', () => {
     expect(resolveStatic('/landing/nope.mp4')!.fallback).toBe(true);
   });
   it('keeps hashed bundles, models and the landing media a year, and checks pages every time', () => {
-    for (const p of ['/assets/app-x.js', '/models/town/a.glb', '/landing/island-orbit.mp4']) expect(cacheControl(p), p).toMatch(/max-age=31536000, immutable/);
-    for (const p of ['/index.html', '/app/index.html', '/og.jpg', '/sounds/manifest.json']) expect(cacheControl(p), p).toBe('no-cache');
+    for (const p of ['/assets/app-x.js', '/models/town/a.glb', '/landing/island-orbit.mp4', '/media/guides/plaza.1a2b3c4d.mp4']) expect(cacheControl(p), p).toMatch(/max-age=31536000, immutable/);
+    for (const p of ['/index.html', '/app/index.html', '/og.jpg', '/sounds/manifest.json', '/guides/index.html', '/sitemap.xml']) expect(cacheControl(p), p).toBe('no-cache');
   });
   it('answers byte ranges, as Safari needs to play the landing video', () => {
     expect(parseRange('bytes=0-1', 100)).toEqual({ start: 0, end: 1 });
@@ -44,6 +44,23 @@ describe('static host', () => {
     expect(redirectFor('/invite/bad%20code', '')).toBeNull();
     expect(redirectFor('/invite/', '')).toBeNull();
     expect(redirectFor('/app', '?relay=x')).toBeNull();
+  });
+  it('gives each guide one address, without a trailing slash', () => {
+    expect(redirectFor('/guides/', '')).toBe('/guides');
+    expect(redirectFor('/guides/getting-started/', '?x=1')).toBe('/guides/getting-started?x=1');
+    expect(redirectFor('/es/guides/', '')).toBe('/es/guides');
+    expect(redirectFor('/es/', '')).toBe('/?lang=es');
+    expect(redirectFor('/guides', '')).toBeNull();
+    expect(redirectFor('/guides/getting-started', '')).toBeNull();
+  });
+  it('answers a missing guide with a 404 page, not the landing page', () => {
+    for (const p of ['/guides/nope', '/es/guides/nope', '/es/whatever', '/guides/a/b.png']) {
+      const r = resolveStatic(p)!;
+      expect(r.status, p).toBe(404);
+      expect(r.file, p).toMatch(/dist\/client\/guides\/404\.html$/);
+    }
+    expect(resolveStatic('/nowhere')!.status).toBe(200);
+    expect(resolveStatic('/app/x')!.status).toBe(200);
   });
   it('serves no keys and allows only first-party scripts', () => {
     expect(SECURITY_HEADERS['content-security-policy']).toContain("script-src 'self'");
