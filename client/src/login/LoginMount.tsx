@@ -46,7 +46,7 @@ export function openLogin(onDone?: () => void): void {
   // The SDK's own words are English only: swap them while the modal is open.
   if (lang === 'es') { unwatch?.(); unwatch = watchSdk(document.body); }
   const close = () => { root?.render(null); unwatch?.(); unwatch = null; };
-  root.render(<LoginModal onClose={close} onSuccess={() => { close(); onDone?.(); }} headerSlot={SKY_MARK} />);
+  root.render(<LoginModal onClose={close} onSuccess={() => { close(); onDone?.(); }} headerSlot={SKY_MARK} keyFilePrefix="obelisk-sky" />);
 }
 
 /**
