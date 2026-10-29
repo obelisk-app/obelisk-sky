@@ -143,6 +143,23 @@
     "poster": "/media/guides/island-orbit-poster.8e06e34f.webp",
     "cardPoster": "/media/guides/island-orbit-card-poster.1d8c101a.webp"
   },
+  "key-file": {
+    "sig": "dc1ceba7",
+    "kind": "shot",
+    "perLang": true,
+    "en": {
+      "width": 420,
+      "height": 582,
+      "src": "/media/guides/key-file-en-1280.d550638b.webp",
+      "small": "/media/guides/key-file-en-640.d550638b.webp"
+    },
+    "es": {
+      "width": 420,
+      "height": 582,
+      "src": "/media/guides/key-file-es-1280.9a0a9cad.webp",
+      "small": "/media/guides/key-file-es-640.9a0a9cad.webp"
+    }
+  },
   "lacrypta-front": {
     "sig": "01d561b9",
     "kind": "clip",
@@ -166,20 +183,20 @@
     }
   },
   "login": {
-    "sig": "37f319f6",
+    "sig": "dda1b514",
     "kind": "shot",
     "perLang": true,
     "en": {
-      "width": 450,
-      "height": 730,
-      "src": "/media/guides/login-en-1280.6a34c3c7.webp",
-      "small": "/media/guides/login-en-640.6a34c3c7.webp"
+      "width": 440,
+      "height": 596,
+      "src": "/media/guides/login-en-1280.9e4e3c04.webp",
+      "small": "/media/guides/login-en-640.9e4e3c04.webp"
     },
     "es": {
-      "width": 450,
-      "height": 730,
-      "src": "/media/guides/login-es-1280.5a0e1307.webp",
-      "small": "/media/guides/login-es-640.5a0e1307.webp"
+      "width": 440,
+      "height": 596,
+      "src": "/media/guides/login-es-1280.6f4727ca.webp",
+      "small": "/media/guides/login-es-640.6f4727ca.webp"
     }
   },
   "look-creator": {
@@ -235,6 +252,23 @@
       "height": 800,
       "src": "/media/guides/minimap-1280.c6d51f7c.webp",
       "small": "/media/guides/minimap-640.0f2c6b46.webp"
+    }
+  },
+  "new-key": {
+    "sig": "8ca8869e",
+    "kind": "shot",
+    "perLang": true,
+    "en": {
+      "width": 420,
+      "height": 748,
+      "src": "/media/guides/new-key-en-1280.0a91c1b6.webp",
+      "small": "/media/guides/new-key-en-640.0a91c1b6.webp"
+    },
+    "es": {
+      "width": 420,
+      "height": 728,
+      "src": "/media/guides/new-key-es-1280.2a7a1f14.webp",
+      "small": "/media/guides/new-key-es-640.2a7a1f14.webp"
     }
   },
   "nostrich": {
