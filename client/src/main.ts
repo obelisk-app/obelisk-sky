@@ -64,7 +64,7 @@ import { ANONYMOUS_IDENTITY, activeRelay, DEFAULT_GROUP_RELAY, normalizeRelay, p
 import { pageHub } from './nostr/hub';
 import { SessionManager, type LoginArgs, type Session } from './nostr/session';
 import { registerHost } from './shims/host';
-import { captureInvite, createInvite, freshKeyLogin, inviteFor, inviteRelayStart, inviteStatus, inviteWaitingForKey, isStaleClaim, loadInviteStatus, mayInvite, redeemInvite, revokeInvite, skyInviteLink } from './nostr/invite';
+import { captureInvite, createInvite, inviteFor, inviteRelayStart, inviteStatus, inviteWaitingForKey, isStaleClaim, loadInviteStatus, mayInvite, redeemInvite, revokeInvite, skyInviteLink } from './nostr/invite';
 import { renderInvitePanel } from './ui/invitePanel';
 import { editOwnProfile, fetchOwnProfile, initialOf, syncOwnProfile } from './nostr/ownProfile';
 import type { ProfileEditorInitial } from '@/types/session/profile';
@@ -685,16 +685,12 @@ function playEntrance(): void {
 
 void session.restore().then((ok) => {
   if (ok) return;
-  // Came in on a fresh invite with no account: make one and walk in (the key
-  // can be backed up later). Once the invite let any key in, a logged-out
-  // visitor gets the guest island and the login, as anyone does.
-  if (inviteWaitingForKey(activeRelay())) {
-    freshLogin = true;
-    void session.login(freshKeyLogin()).catch(() => { renderAccount(null); startGuest('logged-out'); });
-    return;
-  }
   renderAccount(null);
   startGuest('logged-out');
+  // Came in on a fresh invite with no account: the login opens at "Create a
+  // new account" (its key file saved first), and the session that comes out
+  // of it redeems the invite (session.onChange -> redeemStoredInvite).
+  if (inviteWaitingForKey(activeRelay())) $('login').click();
 }).finally(() => { restoringSession = false; askInviteRelay(); });
 
 // ── relay invites (nostr/invite.ts) ──────────────────────────────────────
@@ -723,7 +719,7 @@ function redeemStoredInvite(s: Session): void {
 /**
  * An invite link for a relay sky doesn't know: ask before going there
  * (obelisk-relay docs/relay-invites.md §6 step 2). Yes adds it to your relays,
- * goes there and, with no account yet, makes one as a known relay's link would.
+ * goes there and, with no account yet, opens the login as a known relay's link would.
  */
 function askInviteRelay(): void {
   const relay = inviteRelayToConfirm;
@@ -740,10 +736,7 @@ function askInviteRelay(): void {
       $('card').hidden = true;
       if (!knownRelays().includes(relay)) prefs.set({ customRelays: [...prefs.get().customRelays, relay] });
       switchRelay(relay);
-      if (!session.current && inviteWaitingForKey(relay)) {
-        freshLogin = true;
-        void session.login(freshKeyLogin()).catch(() => { renderAccount(null); startGuest('logged-out'); });
-      }
+      if (!session.current && inviteWaitingForKey(relay)) $('login').click();
     });
     const stay = el('button', 'pill', `${vw.invite.relayAsk.stay} (${here})`);
     stay.type = 'button';
