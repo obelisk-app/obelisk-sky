@@ -42,4 +42,10 @@ describe('message bubbles', () => {
     expect(bubbleShown(null, 'general')).toBe(false);
     expect(bubbleShown(null, null)).toBe(false);
   });
+
+  it('shows the relay’s general chat to everyone, wherever they are', () => {
+    expect(bubbleShown('bitcoin', 'general', true)).toBe(true);
+    expect(bubbleShown(null, 'general', true)).toBe(true);
+    expect(bubbleShown(null, null, true)).toBe(true);
+  });
 });

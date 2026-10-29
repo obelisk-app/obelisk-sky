@@ -53,6 +53,8 @@ export interface SkyComposerOptions {
   onZap?: (command: string, replyTo: ReplyTarget | null) => string | null;
   /** Everyone mentionable on this relay (asked only while the @-picker is open). */
   people: () => MentionPerson[];
+  /** Escape with nothing left to close in the bar (no picker, emoji sheet or reply): the panel may close (sky's general chat). */
+  onEscape?: () => void;
   inputRef: RefObject<HTMLTextAreaElement | null>;
   maxMentionResults?: number;
 }
@@ -80,7 +82,7 @@ function useBotProfiles(pubkeys: readonly string[]): BotProfiles {
 }
 
 export function useSkyComposer({
-  groupId, relay, replyingTo, setReplyingTo, onSend, onNewGame, onZap, people, inputRef, maxMentionResults = 8,
+  groupId, relay, replyingTo, setReplyingTo, onSend, onNewGame, onZap, people, onEscape, inputRef, maxMentionResults = 8,
 }: SkyComposerOptions) {
   const serverEmojis = useChatStore((s) => s.serverEmojis);
 
@@ -266,7 +268,8 @@ export function useSkyComposer({
       void send();
     } else if (e.key === 'Escape') {
       if (emojiOpen) setEmojiOpen(false);
-      else { setReplyingTo(null); inputRef.current?.blur(); }
+      else if (replyingTo) { setReplyingTo(null); inputRef.current?.blur(); }
+      else { inputRef.current?.blur(); onEscape?.(); }
     }
   }
 

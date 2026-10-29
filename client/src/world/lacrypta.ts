@@ -107,6 +107,8 @@ export const LA_CRYPTA_STAIRS = {
   lift,
 };
 export const LA_CRYPTA_ROOM = ROOM;
+/** The back wall's outer face (house-local z): La Crypta's live screen hangs on it (laCryptaLive.ts). */
+export const LA_CRYPTA_BACK_Z = -D;
 /** The door (local): its centre x, width, sill and height. */
 export const LA_CRYPTA_DOOR = { x: doorX, w: DOOR_W, sill: lift, h: DOOR_H } as const;
 /** Where La Crypta's own account stands (local): on the street right of the

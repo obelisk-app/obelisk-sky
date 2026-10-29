@@ -77,20 +77,44 @@ export const SafeColor = {
 };
 
 /** A light colour grade: a touch more saturation and contrast, soft vignette.
- *  It drops NaN and clamps too, so the cheapest level needs no SafeColor pass. */
-const Grade = {
-  uniforms: { tDiffuse: { value: null }, uSat: { value: 1.08 }, uContrast: { value: 1.04 }, uVignette: { value: 0.22 } },
+ *  It drops NaN and clamps too, so the cheapest level needs no SafeColor pass.
+ *  `uTrip` (0–1, a magic mushroom: world/mushrooms.ts) bends it: the picture
+ *  waves and slowly swirls, its colours split at the edges, saturate and
+ *  turn round the hue wheel, rings of colour breathing out from the middle. */
+export const Grade = {
+  uniforms: { tDiffuse: { value: null }, uSat: { value: 1.08 }, uContrast: { value: 1.04 }, uVignette: { value: 0.22 }, uTrip: { value: 0 }, uTime: { value: 0 } },
   vertexShader: /* glsl */ `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
   fragmentShader: /* glsl */ `
-    uniform sampler2D tDiffuse; uniform float uSat, uContrast, uVignette; varying vec2 vUv;
+    uniform sampler2D tDiffuse; uniform float uSat, uContrast, uVignette, uTrip, uTime; varying vec2 vUv;
+    vec3 hueTurn(vec3 c, float a){
+      const vec3 k = vec3(0.57735);
+      float ca = cos(a);
+      return c * ca + cross(k, c) * sin(a) + k * dot(k, c) * (1.0 - ca);
+    }
     void main(){
-      vec4 c = texture2D(tDiffuse, vUv);
+      vec2 uv = vUv;
+      float r = distance(vUv, vec2(0.5));
+      vec4 c;
+      if (uTrip > 0.001) {
+        uv += uTrip * 0.011 * vec2(sin(uv.y * 13.0 + uTime * 1.7), cos(uv.x * 11.0 + uTime * 1.3));
+        float a = uTrip * 0.09 * sin(uTime * 0.5) * (1.0 - r);
+        uv = vec2(0.5) + mat2(cos(a), -sin(a), sin(a), cos(a)) * (uv - vec2(0.5));
+        vec2 split = (uv - vec2(0.5)) * 0.012 * uTrip;
+        c = texture2D(tDiffuse, uv);
+        c.r = texture2D(tDiffuse, uv + split).r;
+        c.b = texture2D(tDiffuse, uv - split).b;
+      } else c = texture2D(tDiffuse, uv);
       c.rgb = clamp(c.rgb * vec3(greaterThanEqual(c.rgb, vec3(0.0))), 0.0, 8.0);
       float l = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));
-      c.rgb = mix(vec3(l), c.rgb, uSat);
+      c.rgb = mix(vec3(l), c.rgb, uSat + uTrip * 0.8);
+      if (uTrip > 0.001) {
+        c.rgb = mix(c.rgb, max(hueTurn(c.rgb, uTime * 0.7 + r * 5.0), 0.0), uTrip * 0.7);
+        float ring = 0.5 + 0.5 * sin(r * 28.0 - uTime * 2.2);
+        c.rgb += uTrip * 0.06 * ring * (0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + uTime + r * 9.0));
+      }
       c.rgb = (c.rgb - 0.5) * uContrast + 0.5;
-      float v = 1.0 - smoothstep(0.25, 0.85, distance(vUv, vec2(0.5)));
-      c.rgb *= mix(1.0 - uVignette, 1.0, v);
+      float v = 1.0 - smoothstep(0.25, 0.85, r);
+      c.rgb *= mix(1.0 - uVignette * (1.0 + uTrip), 1.0, v);
       gl_FragColor = c;
     }`,
 };
@@ -260,6 +284,12 @@ export class Post {
     this.night = night01;
     this.bloom.strength = 0.25 + night01 * 0.2;
     this.bloom.threshold = 0.9 - night01 * 0.08;
+  }
+
+  /** How strong the trip is (0–1) and the time it moves with (world/mushrooms.ts). */
+  setTrip(level: number, time: number): void {
+    this.grade.uniforms.uTrip.value = level;
+    this.grade.uniforms.uTime.value = time;
   }
 
   render(dt: number): void {

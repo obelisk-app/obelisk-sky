@@ -4,6 +4,7 @@ import { render, screen, cleanup, fireEvent, waitFor, act } from '@testing-libra
 import { nip19, type Event as NostrEvent } from 'nostr-tools';
 import type { RelayHub } from '@nostr-wot/relay/hub';
 import SkyComposer, { type SkyComposerProps } from './SkyComposer';
+import { mountComposer } from './mount';
 import { registerHost } from '../../shims/host';
 import { installVoiceBridge } from '../../shims/bridge';
 import { clearProfiles } from '../../nostr/profileStore';
@@ -168,5 +169,50 @@ describe("SkyComposer (obelisk-dex's message bar)", { timeout: 20_000 }, () => {
     await screen.findByText('Nobody here is called “@nobody”.');
     expect(input.value).toBe('/zap @nobody');
     expect(onSend).not.toHaveBeenCalled();
+  });
+});
+
+describe('Escape in the message bar', { timeout: 20_000 }, () => {
+  it('with nothing left to close, leaves the bar and lets the panel close', () => {
+    const onEscape = vi.fn();
+    const { input } = setup({ onEscape });
+    input.focus();
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(onEscape).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).not.toBe(input);
+  });
+
+  it('drops a reply first, and the panel stays', () => {
+    const onEscape = vi.fn();
+    const { input, setReplyingTo } = setup({ onEscape, replyingTo: { id: 'm1', pubkey: ALICE, content: 'hi' } });
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(setReplyingTo).toHaveBeenCalledWith(null);
+    expect(onEscape).not.toHaveBeenCalled();
+  });
+
+  it('closes the @-picker first, and the panel stays', async () => {
+    const onEscape = vi.fn();
+    const { input, type } = setup({ onEscape });
+    type('@Ali');
+    await screen.findByText('Alice');
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(onEscape).not.toHaveBeenCalled();
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(onEscape).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('the mounted message bar', { timeout: 20_000 }, () => {
+  it('takes a focus asked for before React drew it, on the first mount and on a new channel', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const m = mountComposer(host);
+    const base = { relay: RELAY, operator: null, replyingTo: null, setReplyingTo: () => {}, onSend: async () => null, people: () => [] };
+    act(() => { m.render({ ...base, groupId: 'g1', groupName: 'one' }); m.focus(); });
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Message #one' })));
+    act(() => { m.render({ ...base, groupId: 'g2', groupName: 'two' }); m.focus(); });
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Message #two' })));
+    act(() => m.unmount());
+    host.remove();
   });
 });

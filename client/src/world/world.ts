@@ -49,6 +49,8 @@ import { builtClipName, emoteAnchor, emoteOf, EMOTE_SYNC_M, type EmoteKind } fro
 import { parseHaunts, pickIdle, type PlaceId } from './places';
 import { vw } from '../i18n/village';
 import { YoutubeStage } from './youtubeStage';
+import { LA_CRYPTA_LIVE_SOURCE, LIVE, buildLiveScreen, liveInView, liveOn, liveVolume, type LiveScreen } from './laCryptaLive';
+import { MUSHROOM, MagicMushrooms, Trip, spreadPick, wallSeconds, type MushroomSpot } from './mushrooms';
 import { buildHalloweenCorner, TALK_RADIUS, type HalloweenCorner } from './halloween';
 import { LA_CRYPTA_PUBKEY, halloweenOn } from '../events/halloween';
 import { TOTEM, OcclusionProbe, TotemStage, buildTotemMonitor, totemInView, type TotemMonitor } from './totemMonitor';
@@ -217,6 +219,17 @@ export class World {
   private totemProbe = new OcclusionProbe();
   /** The totem's focus is open (main.ts): its page is there, not on the monitor. */
   private totemFocused = false;
+  /** La Crypta's live screen on the back of its house, and its player while the show is on (world/laCryptaLive.ts). */
+  private live: LiveScreen | null = null;
+  private liveStage: YoutubeStage | null = null;
+  private liveProbe = new OcclusionProbe();
+  /** For a check from the console (`__sky.world().liveForce = true`): true plays the live whatever the day, false never; null: Tuesday evenings. */
+  liveForce: boolean | null = null;
+  /** The magic mushrooms in the grass (world/mushrooms.ts): spots picked by `decorate`, built once the ground is known. */
+  private mushroomSpots: Omit<MushroomSpot, 'y'>[] = [];
+  private mushrooms: MagicMushrooms | null = null;
+  /** Yours, after eating one (post.ts Grade draws it). */
+  readonly trip = new Trip();
   /** LABITCONF's video may sound (main.ts: the Sound switch, after a gesture). */
   stageSound = false;
   /** Furniture the player bumps into but can jump onto (see PlayerController). */
@@ -317,6 +330,7 @@ export class World {
     this.post.setSize(w, h);
     this.stage?.setSize(w, h);
     this.totemStage?.setSize(w, h);
+    this.liveStage?.setSize(w, h);
     this.film?.setSize(w, h);
   }
 
@@ -581,6 +595,8 @@ export class World {
     this.buildSportsGround();
     this.buildLandmarks();
     this.buildTotem();
+    this.buildLaCryptaLive();
+    this.buildMushrooms();
     if (halloweenOn()) this.buildHalloween();
     // Every seat (bench, stool, log, chair) is solid up to its seat height.
     for (const seat of this.seats) {
@@ -726,6 +742,40 @@ export class World {
     this.staticRoot.add(m.group);
     this.solids.push(this.landmarkSolid(s, d.forward, { ...m.solid, x: TOTEM.X + m.solid.x, z: TOTEM.Z + m.solid.z }));
     this.totem = m;
+  }
+
+  /** La Crypta's live screen on the back wall of its house (world/laCryptaLive.ts). */
+  private buildLaCryptaLive(): void {
+    const s = this.landmarkSlots.get('lacrypta');
+    const d = LANDMARKS.find((x) => x.id === 'lacrypta');
+    if (!s || !d || this.live) return;
+    const lv = buildLiveScreen();
+    const at = this.landmarkToWorld(s, d.forward, { x: 0, z: 0 });
+    lv.group.position.set(at.x, 0, at.z);
+    lv.group.rotation.y = s.rot;
+    this.staticRoot.add(lv.group);
+    this.live = lv;
+  }
+
+  /** The magic mushrooms, on the ground at the spots `decorate` picked. */
+  private buildMushrooms(): void {
+    if (this.mushrooms) { this.staticRoot.remove(this.mushrooms.group); this.mushrooms = null; }
+    if (!this.mushroomSpots.length) return;
+    this.mushrooms = new MagicMushrooms(this.mushroomSpots.map((s) => ({ ...s, y: this.groundAt(s) })));
+    this.staticRoot.add(this.mushrooms.group);
+  }
+
+  /** The magic mushroom spot within reach of `p` (main.ts offers E there), or -1. */
+  mushroomNear(p: Vec2): number {
+    return this.mushrooms?.near(p) ?? -1;
+  }
+
+  /** Eat what's at spot `i`: it goes (grows back later) and your trip begins. */
+  eatMushroom(i: number): boolean {
+    const now = wallSeconds();
+    if (!this.mushrooms?.eat(i, now)) return false;
+    this.trip.begin(now);
+    return true;
   }
 
   /** La Crypta's Halloween sign, lanterns and the aura its account stands in (world/halloween.ts). */
@@ -1369,6 +1419,8 @@ export class World {
     const plan = this.plan;
     const props = new PropBatch();
     const r = rng(plan.seed + 77);
+    const trees: Vec2[] = [];
+    const openMushrooms: { p: Vec2; model: string; rot: number }[] = [];
     const used = new Set(this.usedSlots().map((s) => s.index));
     const occupied = (p: Vec2, pad: number) =>
       dist(p, plan.plaza.c) < plan.plaza.r + 0.6 + pad
@@ -1394,6 +1446,7 @@ export class World {
       const pool = nearMountain ? TREE_MODELS.filter((t) => t.includes('pine') || t.includes('cone')) : TREE_MODELS;
       const t = pool[Math.floor(r() * pool.length)];
       props.add(t, p.x, 0, p.z, r() * 6.28, 0.9 + r() * 0.7);
+      trees.push(p);
       this.blockAround(p, 0.2);
       if (r() < 0.25) props.add(BUSHES[Math.floor(r() * BUSHES.length)], p.x + (r() - 0.5) * 0.9, 0, p.z + (r() - 0.5) * 0.9, r() * 6.28, 0.8 + r() * 0.5);
     }
@@ -1409,9 +1462,23 @@ export class World {
         const f = FLOWERS[Math.floor(fbm2(p.x * 0.3, p.z * 0.3) * 3 + 3) % FLOWERS.length];
         props.add(f, p.x, 0, p.z, r() * 6.28, 0.9 + r() * 0.6);
       } else if (k < 0.88) props.add(ROCKS[Math.floor(r() * ROCKS.length)], p.x, -0.02, p.z, r() * 6.28, 0.35 + r() * 0.4);
-      else if (k < 0.94) props.add(r() < 0.5 ? 'nature/mushroom_red' : 'nature/mushroom_redGroup', p.x, 0, p.z, r() * 6.28, 0.7);
+      else if (k < 0.94) {
+        // A few become magic ones (world/mushrooms.ts), from rolls of their own so the rest of the island stays where it was.
+        const model = r() < 0.5 ? 'nature/mushroom_red' : 'nature/mushroom_redGroup';
+        const rot = r() * 6.28;
+        // In the open (no tree's canopy over it), where the camera sees them: picked after the loop.
+        if (trees.every((t) => dist(t, p) > 1.2)) openMushrooms.push({ p, model, rot });
+        else props.add(model, p.x, 0, p.z, rot, 0.7);
+      }
       else props.add(BUSHES[Math.floor(r() * BUSHES.length)], p.x, 0, p.z, r() * 6.28, 0.8 + r() * 0.4);
     }
+    // A few of those in the open become magic ones, spread over the island; the rest stay ordinary.
+    const magic = new Set(spreadPick(openMushrooms.map((o) => o.p), MUSHROOM.MAX, rng(plan.seed + 4207)));
+    this.mushroomSpots = [];
+    openMushrooms.forEach((o, i) => {
+      if (magic.has(i)) this.mushroomSpots.push({ x: o.p.x, z: o.p.z, rot: o.rot });
+      else props.add(o.model, o.p.x, 0, o.p.z, o.rot, 0.7);
+    });
     // Pond: lilies and reeds; rocks along the rim of the island top.
     for (let i = 0; i < 9; i++) {
       const a = r() * 6.28, d = r() * (plan.pond.r - 0.4);
@@ -1542,7 +1609,8 @@ export class World {
 
   /** Local preferences → the scene (see prefs.ts). */
   applyPrefs(p: Prefs): void {
-    this.post.configure({ quality: p.quality, resolution: p.resolution, shadows: p.shadows, ambientOcclusion: p.ambientOcclusion, bloom: p.bloom, tiltShift: p.tiltShift });
+    // The tilt-shift is part of the look, not a setting (off only on "low", in post.ts).
+    this.post.configure({ quality: p.quality, resolution: p.resolution, shadows: p.shadows, ambientOcclusion: p.ambientOcclusion, bloom: p.bloom, tiltShift: true });
     this.sky.override = p.timeOfDay as TimeOverride;
     this.overlay.showSigns = p.signs;
     this.overlay.showBubbles = p.bubbles;
@@ -2281,6 +2349,28 @@ export class World {
     // What can stand between the camera and the screen: houses, landmarks, the obelisk.
     const clear = on && this.totemProbe.clear(dt, this.camera, this.totem.screen, [this.buildingRoot, ...[...this.landmarks.values()].map((b) => b.group), this.obelisk.group]);
     this.totemStage.update(this.camera, on, clear);
+  }
+
+  /** La Crypta's live plays over the back-wall screen on the show's night while the camera is near enough; it shows when nothing
+   *  hides the screen, and sounds for you behind the house. */
+  private updateLaCryptaLive(dt: number): void {
+    if (!this.live) return;
+    const screen = this.live.screen;
+    const at = new THREE.Vector3().setFromMatrixPosition(screen.matrixWorld);
+    const on = (this.liveForce ?? liveOn()) && liveInView(this.camera.position.distanceTo(at), !!this.liveStage?.playing);
+    if (!this.liveStage) {
+      if (!on) return;
+      const parent = this.canvas.parentElement;
+      if (!parent) return;
+      this.liveStage = new YoutubeStage(parent, this.canvas, screen, LIVE.W, LIVE.H, LA_CRYPTA_LIVE_SOURCE, 'lacrypta-live');
+      this.liveStage.setSize(this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
+    }
+    const clear = on && this.liveProbe.clear(dt, this.camera, screen, [this.buildingRoot, ...[...this.landmarks.values()].map((b) => b.group), this.obelisk.group], LIVE.W, LIVE.H);
+    const me = this.playerPk ? this.people.get(this.playerPk) : null;
+    const l = me ? this.toLandmarkLocal('lacrypta', me.pos) : null;
+    const volume = l ? liveVolume(l) : 0;
+    this.liveStage.setSound(this.stageSound && volume > 0, volume);
+    this.liveStage.update(this.camera, on, dt, clear);
   }
 
   /** main.ts opens (or closes) the totem's focus: one page at a time, so the monitor's goes meanwhile. */
@@ -3420,6 +3510,7 @@ export class World {
       this.post.render(dt);
       this.updateStage(dt);
       this.updateTotem(dt);
+      this.updateLaCryptaLive(dt);
       this.updateFilm();
     }
     return dt;
@@ -3455,6 +3546,12 @@ export class World {
       this.fireflies.rotation.y = this.elapsed * 0.01;
     }
     this.post.setNight(night01);
+    this.mushrooms?.setNight(night01);
+    // The trip and the regrowth run on the wall clock: the world's own stops with the frames
+    // (a hidden tab, Watch mode) and crawls on a slow device, which kept the trip on for minutes.
+    const now = wallSeconds();
+    this.mushrooms?.update(now);
+    this.post.setTrip(this.trip.level(now), this.elapsed);
 
     for (const p of this.pets.values()) p.update(dt, (q) => this.groundAt(q));
     this.updateRounds(dt);

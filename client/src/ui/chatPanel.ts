@@ -77,6 +77,8 @@ export class ChatPanel {
   onClose?: () => void;
   /** The header's ‹ (back to the channel list); hidden while unset. */
   onBack?: () => void;
+  /** Escape in the message bar with nothing left to close there (main.ts: the general chat closes). */
+  onEscape?: () => void;
   private back: HTMLButtonElement;
 
   constructor(parent: HTMLElement, private deps: ChatPanelDeps) {
@@ -97,13 +99,11 @@ export class ChatPanel {
     const min = button('chat-min', vw.minimise);
     min.textContent = '–';
     min.addEventListener('click', () => this.setMinimised(!this.minimised));
-    const games = button('chat-min chat-games', vw.gameHere);
-    games.textContent = vw.game;
-    games.addEventListener('click', () => { if (this.group) this.deps.newGame?.(this.group.id); });
     const x = button('chat-min chat-close', vw.close);
     x.textContent = '×';
     x.addEventListener('click', () => { this.close(); this.onClose?.(); });
-    head.append(this.back, titles, games, min, x);
+    // Games start from the message bar (/play), not a header button.
+    head.append(this.back, titles, min, x);
     head.addEventListener('dblclick', () => this.setMinimised(!this.minimised));
     this.list = div('chat-list');
     this.list.addEventListener('scroll', () => this.onScroll(), { passive: true });
@@ -223,6 +223,7 @@ export class ChatPanel {
       // null is "opened": only a missing handler is an error.
       onZap: (command, to) => (this.deps.zap ? this.deps.zap(g.id, command, to) : 'Zaps aren’t available here.'),
       people: () => this.deps.people?.(g.id) ?? [],
+      onEscape: () => this.onEscape?.(),
     });
   }
 

@@ -74,8 +74,13 @@ These dex features don't exist, so they aren't listed here: message editing, pin
   launch a short game inside Sky, with keyboard/touch controls, score, restart
   and a clear way back to the village. Choose the first game during design;
   the existing decorative cabinets are the starting point, not a finished game.
+- **An arcade building just for playing.** A building of its own, kept for
+  games: walk in to find the game tables and cabinets (Chain Reaction, the
+  arcade game above) and play there, instead of starting a match in a
+  channel's chat. Games start from `/play` in a channel's message bar for now;
+  the chat header's Game button was removed (2026-10-28) ahead of this.
 
-Requested 2026-10-26; planned, not implemented by this roadmap update.
+Requested 2026-10-26 (the arcade building 2026-10-28); planned, not implemented by this roadmap update.
 
 ## Calls
 

@@ -4,6 +4,7 @@ import { renderContent } from './ui/content';
 import { openPings as listPings, pingReason, pingTitle, type PingCursors, type PingReason } from './nostr/pings';
 import type { ServerMsg, WireGroup, WireMessage } from './nostr/wire';
 import { channelsOnly, forumThreads, homeOf } from './nostr/forum';
+import { pickGeneralChat } from './nostr/generalChat';
 import { hexToNpub } from '@nostr-wot/data';
 import { Feed, type FeedAccess } from './nostr/feed';
 import { deletionTemplate, joinTemplate, messageTemplate, publishToGroup, publishSigned, reactionTemplate } from './nostr/publish';
@@ -153,7 +154,6 @@ function applyPrefs(p: Prefs): void {
   const btn = (act: string) => document.querySelector<HTMLButtonElement>(`.controls [data-act="${act}"]`);
   btn('director')?.classList.toggle('on', p.autoDirector);
   btn('signs')?.classList.toggle('on', p.signs);
-  btn('tilt')?.classList.toggle('on', p.tiltShift);
   const time = btn('time');
   if (time) { time.classList.toggle('on', p.timeOfDay !== 'auto'); time.title = `${SETTINGS_WORDS[lang].time}: ${SETTINGS_WORDS[lang].time_[p.timeOfDay]}`; }
   const snd = btn('sound');
@@ -282,9 +282,9 @@ world.hooks = {
     addFeed(pk, groupId, text, to);
     sound.blip(pk);
   },
-  // Messages are seen and heard only at the speaker's place (ui/livePlaces.ts).
-  // Replaying History you asked for the past: every bubble. Live, only what's said where you are.
-  hears: (pk, groupId) => player.history || bubbleShown(place, speakerPlace(isLivePk(pk), standingPlace(pk), groupId)),
+  // Messages are seen and heard only at the speaker's place (ui/livePlaces.ts),
+  // but the relay's general chat everywhere. Replaying History you asked for the past: every bubble.
+  hears: (pk, groupId) => player.history || bubbleShown(place, speakerPlace(isLivePk(pk), standingPlace(pk), groupId), groupId === generalChatId()),
   onPersonClick: (pk) => showPerson(pk),
   onGroupClick: (id) => {
     // Something for you there (the "@"): open the chat at it and go.
@@ -1243,6 +1243,7 @@ function toggleSeat(): void {
   if (!controller || !world.playerPk) return;
   if (toggleTraining()) return;
   if (world.isSeated(world.playerPk)) { standPlayer(); return; }
+  if (eatMushroom()) return;
   const seat = world.nearestFreeSeat(controller.pos, 1.8);
   if (seat) sitOn(seat);
   else if (atTotem()) enterTotem();
@@ -1303,6 +1304,21 @@ function showTickets(focus = true): void {
   if (focus) world.cam.focus(world.personAnchor(LA_CRYPTA_PUBKEY), 6);
 }
 
+/** On foot by a magic mushroom (world/mushrooms.ts): the spot E eats, or -1. */
+function mushroomHere(): number {
+  const pk = world.playerPk;
+  if (!controller || !pk || world.ridingOf(pk) !== null || world.isSeated(pk) || world.training(pk)) return -1;
+  return world.mushroomNear(controller.pos);
+}
+
+/** E by a magic mushroom: eat it, and the trip begins (yours alone; nothing is sent). */
+function eatMushroom(): boolean {
+  const i = mushroomHere();
+  if (i < 0 || !world.eatMushroom(i)) return false;
+  toast(vw.tripBegins);
+  return true;
+}
+
 /** On foot in front of the totem monitor (E watches it, after training and seats). */
 function atTotem(): boolean {
   const pk = world.playerPk;
@@ -1344,6 +1360,11 @@ function seatHintCompute(hint: { hidden: boolean; textContent: string }): void {
     hint.textContent = touch
       ? vw.doExercise(EX_LABEL[st.kinds[0]])
       : st.kinds.map((k, i) => `${i === 0 ? 'E' : String(i + 1)}: ${EX_LABEL[k]}`).join(' · ');
+    return;
+  }
+  if (mushroomHere() >= 0) {
+    hint.hidden = false;
+    hint.textContent = vw.eatMushroom(touch);
     return;
   }
   const seated = world.isSeated(pk);
@@ -1448,11 +1469,15 @@ window.addEventListener('keydown', (e) => {
   if (e.key === '?' || (e.key === '/' && e.shiftKey)) openControlsGuide($('app'));
   if (e.key.toLowerCase() === 'v' && world.playerPk) toggleFirstPerson();
   if (e.key.toLowerCase() === 'c' && chatHint) openHintedChat();
+  // T: the relay's general chat, ready to type in (not over a dialog; the "t" isn't typed into it).
+  if (e.key.toLowerCase() === 't' && !e.ctrlKey && !e.metaKey && !e.altKey && !dialogShowing() && openGeneralChat()) e.preventDefault();
   if (e.key.toLowerCase() === 'm' && nearPk) { e.preventDefault(); openDm(nearPk); }
   // N: the minimap on or off.
   if (e.key.toLowerCase() === 'n' && !e.ctrlKey && !e.metaKey) prefs.set({ minimap: !prefs.get().minimap });
   // Esc releases the mouse first (the browser does that); a second Esc leaves first person.
   if (e.key === 'Escape' && world.cam.firstPerson && !document.pointerLockElement) toggleFirstPerson();
+  // Esc closes the general chat T opened (a card, the menu or first person go first).
+  if (e.key === 'Escape' && !world.cam.firstPerson && $('card').hidden && !document.body.classList.contains('menu-open') && !dialogShowing()) closeGeneralChat();
 });
 
 // ── presence, channels and members (the left drawer) ─────────────────────
@@ -1532,6 +1557,39 @@ const renderTabs = (): void => {
 $('tab-channels').addEventListener('click', () => { side.toggle('channels'); renderTabs(); });
 $('tab-members').addEventListener('click', () => { side.toggle('members'); renderTabs(); });
 side.onToggle = renderTabs;
+
+/** The relay's general chat (nostr/generalChat.ts): T opens it, and its messages show wherever you stand. */
+function generalChatId(): string | null {
+  return pickGeneralChat(groups, isGuest() ? EMPTY_LAYOUT : themes?.layout ?? EMPTY_LAYOUT);
+}
+
+/** A dialog (settings, the guide, the login, a sheet…) is on screen: keys belong to it. */
+function dialogShowing(): boolean {
+  return [...document.querySelectorAll('[role="dialog"]')].some((d) => d.getClientRects().length > 0);
+}
+
+/** T: the general chat where the chat sits, its message bar focused, wherever you are (the camera stays). */
+function openGeneralChat(): boolean {
+  const id = generalChatId();
+  const g = id ? groups.find((x) => x.id === id) : undefined;
+  if (!g) return false;
+  if (document.body.classList.contains('channels-open')) { side.close(); renderTabs(); }
+  if (dmPanel.isOpen) dmPanel.close();
+  chat.el.hidden = false;
+  if (chat.groupId !== g.id) chat.open(g, 'user');
+  chat.setMinimised(false);
+  chatHint = null;
+  chat.focusComposer();
+  return true;
+}
+
+/** Esc: the general chat closes as its × would (from its message bar once nothing is left to close there). */
+function closeGeneralChat(): boolean {
+  if (chat.el.hidden || !chat.groupId || chat.groupId !== generalChatId()) return false;
+  chat.close();
+  chat.onClose?.();
+  return true;
+}
 
 /** Open a channel from a list: the camera goes to its house and its chat
  *  opens on the right, fully usable, wherever your character is. */
@@ -1771,6 +1829,7 @@ function openZap(groupId: string, recipient: string, messageId: string | null, s
 
 // Closed with ×: the button offers it again while you're still in its yard.
 chat.onClose = () => { if (place) chatHint = place; };
+chat.onEscape = () => { closeGeneralChat(); };
 
 
 // ── mentions and replies ─────────────────────────────────────────────────
@@ -3214,7 +3273,7 @@ document.addEventListener('pointerdown', (e) => {
   const t = e.target as Element;
   if (!t.closest('.controls') && !t.closest('#menu-btn')) setMenu(false);
 });
-const MENU_TOGGLES = new Set(['director', 'time', 'signs', 'tilt', 'sound']);
+const MENU_TOGGLES = new Set(['director', 'time', 'signs', 'sound']);
 
 document.querySelectorAll<HTMLButtonElement>('.controls button').forEach((b) => {
   b.addEventListener('click', () => {
@@ -3243,12 +3302,6 @@ document.querySelectorAll<HTMLButtonElement>('.controls button').forEach((b) => 
       case 'signs':
         prefs.set({ signs: !prefs.get().signs });
         break;
-      case 'tilt': {
-        const on = !prefs.get().tiltShift;
-        prefs.set({ tiltShift: on });
-        toast(on ? vw.tiltOn : vw.tiltOff);
-        break;
-      }
       case 'sound':
         prefs.set({ sound: !prefs.get().sound });
         break;

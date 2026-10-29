@@ -69,15 +69,15 @@ export class OcclusionProbe {
   private eye = new THREE.Vector3();
   private dir = new THREE.Vector3();
 
-  /** `dt` since the last call; `occluders`: what may stand in front (buildings, landmarks, the obelisk). */
-  clear(dt: number, camera: THREE.Camera, screen: THREE.Object3D, occluders: THREE.Object3D[]): boolean {
+  /** `dt` since the last call; `occluders`: what may stand in front (buildings, landmarks, the obelisk); `w` × `h`: the screen's size. */
+  clear(dt: number, camera: THREE.Camera, screen: THREE.Object3D, occluders: THREE.Object3D[], w: number = TOTEM.W, h: number = TOTEM.H): boolean {
     this.wait -= dt;
     if (this.wait > 0) return this.last;
     this.wait = TOTEM.PROBE_S;
     this.eye.setFromMatrixPosition(camera.matrixWorld);
     // Sprites (glows) need the camera to be hit at all; they're light, not walls, so they never count.
     this.raycaster.camera = camera;
-    const hw = TOTEM.W * 0.47, hh = TOTEM.H * 0.45;
+    const hw = w * 0.47, hh = h * 0.45;
     this.last = [[0, 0], [-hw, -hh], [hw, -hh], [-hw, hh], [hw, hh]].every(([x, y]) => {
       const p = new THREE.Vector3(x, y, 0).applyMatrix4(screen.matrixWorld);
       const d = this.dir.copy(p).sub(this.eye).length();

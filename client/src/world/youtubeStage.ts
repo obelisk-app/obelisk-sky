@@ -1,4 +1,5 @@
-// LABITCONF's stage plays its video while you're inside the hall. A YouTube
+// LABITCONF's stage plays its video while you're inside the hall (and La
+// Crypta's back wall plays its live show, laCryptaLive.ts, through the same class). A YouTube
 // player can't become a WebGL texture (cross-origin iframe), so the embed is
 // a real <iframe> placed in 3D exactly over the LED wall (world/domScreen.ts).
 // It is created when you walk in, looping, and removed when you walk out, so
@@ -15,7 +16,7 @@ export const LABITCONF_VIDEO = 'UniEraIBJZQ';
 /** The iframe's size in CSS pixels (16:9); the 3D object is scaled to the wall. */
 const PX_W = 1280, PX_H = 720;
 
-const YT_ORIGIN = 'https://www.youtube-nocookie.com';
+export const YT_ORIGIN = 'https://www.youtube-nocookie.com';
 
 /** The embed: autoplay (muted, so it may), looped (YouTube loops a single video only through `playlist`), no controls, driven by messages. */
 export function embedUrl(id: string = LABITCONF_VIDEO, origin?: string): string {
@@ -28,15 +29,24 @@ export function embedUrl(id: string = LABITCONF_VIDEO, origin?: string): string 
   return `${YT_ORIGIN}/embed/${id}?${q}`;
 }
 
+/** What a stage plays: the embed's address (given the page's origin) and the iframe's title. */
+export interface StageSource {
+  url: (origin?: string) => string;
+  title: string;
+}
+
+export const LABITCONF_SOURCE: StageSource = { url: (origin) => embedUrl(LABITCONF_VIDEO, origin), title: 'LABITCONF' };
+
 export class YoutubeStage {
   private layer: DomScreen;
   private iframe: HTMLIFrameElement | null = null;
   private sound = false;
+  private volume = 100;
   /** Seconds left to keep telling a fresh player whether to sound (it ignores messages until ready). */
   private tell = 0;
 
-  constructor(parent: HTMLElement, after: Element | null, screen: THREE.Object3D, width: number, height: number, private video = LABITCONF_VIDEO) {
-    this.layer = new DomScreen(parent, after, screen, width, height, 'stage-video', PX_W);
+  constructor(parent: HTMLElement, after: Element | null, screen: THREE.Object3D, width: number, height: number, private source = LABITCONF_SOURCE, className = 'stage-video') {
+    this.layer = new DomScreen(parent, after, screen, width, height, className, PX_W);
   }
 
   /** Is the video's iframe in the page (you're inside)? */
@@ -44,10 +54,11 @@ export class YoutubeStage {
     return !!this.iframe;
   }
 
-  /** Sound on (the Sound switch, and the page has had a gesture): unmuted at full volume; off: muted. */
-  setSound(on: boolean): void {
-    if (on === this.sound) return;
+  /** Sound on (the Sound switch, and the page has had a gesture): unmuted at `volume` (0–100); off: muted. */
+  setSound(on: boolean, volume = 100): void {
+    if (on === this.sound && (!on || volume === this.volume)) return;
     this.sound = on;
+    this.volume = volume;
     this.tell = 6;
     this.command();
   }
@@ -56,7 +67,7 @@ export class YoutubeStage {
     const w = this.iframe?.contentWindow;
     if (!w) return;
     const send = (func: string, args: unknown[] = []) => w.postMessage(JSON.stringify({ event: 'command', func, args }), YT_ORIGIN);
-    if (this.sound) { send('unMute'); send('setVolume', [100]); } else send('mute');
+    if (this.sound) { send('unMute'); send('setVolume', [this.volume]); } else send('mute');
     send('playVideo');
   }
 
@@ -64,13 +75,14 @@ export class YoutubeStage {
     this.layer.setSize(w, h);
   }
 
-  /** Once a frame, after the world drew: `inside` starts or stops the video, the camera places it. */
-  update(camera: THREE.PerspectiveCamera, inside: boolean, dt = 0): void {
+  /** Once a frame, after the world drew: `inside` starts or stops the video, the camera places it; `show` false hides the layer
+   *  (something stands in front) while the video goes on. */
+  update(camera: THREE.PerspectiveCamera, inside: boolean, dt = 0, show = true): void {
     if (inside && !this.iframe) {
       const f = document.createElement('iframe');
-      f.src = embedUrl(this.video, typeof location !== 'undefined' ? location.origin : undefined);
+      f.src = this.source.url(typeof location !== 'undefined' ? location.origin : undefined);
       f.addEventListener('load', () => { this.tell = 6; this.command(); });
-      f.title = 'LABITCONF';
+      f.title = this.source.title;
       f.allow = 'autoplay; encrypted-media; picture-in-picture';
       f.referrerPolicy = 'strict-origin-when-cross-origin';
       f.style.cssText = `width:${PX_W}px;height:${PX_H}px;border:0;pointer-events:none;display:block`;
@@ -87,7 +99,7 @@ export class YoutubeStage {
       this.tell -= dt;
       if (Math.ceil(this.tell) !== before) this.command();
     }
-    this.layer.update(camera, inside);
+    this.layer.update(camera, inside && show);
   }
 
   dispose(): void {

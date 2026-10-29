@@ -25,6 +25,7 @@ const DESKTOP_EN: { title: string; rows: Row[] }[] = [
     title: 'Talk',
     rows: [
       { keys: ['Walk in'], text: 'Stand in front of a building to open its channel' },
+      { keys: ['T'], text: 'Open the general chat: everyone sees it, wherever they are; Esc closes it' },
       { keys: ['Enter'], text: 'Type a message in the channel you are in' },
       { keys: ['Click'], text: 'Click a speech bubble to reply; you walk over to them' },
       { keys: ['Click'], text: 'Click a sign or building to walk to that channel' },
@@ -38,7 +39,7 @@ const DESKTOP_EN: { title: string; rows: Row[] }[] = [
       { keys: ['F'], text: 'Ride a nostrich: walk up to one (they run from runners), F to climb on, run to gallop; F again to get off' },
       { keys: ['G'], text: 'Emotes: dance, sit in the lotus pose, nod, fold your arms… then 1–9 or 0 to pick; walk off to stop' },
       { keys: ['Join call'], text: 'In a voice channel’s pavilion, join the call' },
-      { keys: ['Game'], text: 'In a channel, start a game; click a table to play' },
+      { keys: ['/play'], text: 'Type it in a channel to start a game; click a table to play' },
       { keys: ['Your name'], text: 'Top right: change your look and your pet' },
     ],
   },
@@ -92,6 +93,7 @@ const DESKTOP_ES: { title: string; rows: Row[] }[] = [
     title: 'Hablar',
     rows: [
       { keys: ['Acercate'], text: 'Parate frente a una casa para abrir su canal' },
+      { keys: ['T'], text: 'Abrí el chat general: lo ve todo el mundo, esté donde esté; Esc lo cierra' },
       { keys: ['Enter'], text: 'Escribí un mensaje en el canal donde estás' },
       { keys: ['Clic'], text: 'Hacé clic en un globo para responder; caminás hasta esa persona' },
       { keys: ['Clic'], text: 'Hacé clic en un cartel o una casa para ir a ese canal' },
@@ -105,7 +107,7 @@ const DESKTOP_ES: { title: string; rows: Row[] }[] = [
       { keys: ['F'], text: 'Montá un nostrich: acercate despacio (huyen de los que corren), F para subirte, corré para galopar; F otra vez para bajarte' },
       { keys: ['G'], text: 'Gestos: bailar, la postura del loto, asentir, cruzarte de brazos… después 1–9 o 0 para elegir; caminá para parar' },
       { keys: ['Join call'], text: 'En la fogata de un canal de voz, sumate a la llamada' },
-      { keys: ['Juego'], text: 'En un canal, empezá un juego; hacé clic en una mesa para jugar' },
+      { keys: ['/play'], text: 'Escribilo en un canal para empezar un juego; hacé clic en una mesa para jugar' },
       { keys: ['Tu nombre'], text: 'Arriba a la derecha: cambiá tu look y tu mascota' },
     ],
   },

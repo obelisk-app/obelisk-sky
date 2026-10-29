@@ -52,6 +52,17 @@ async function bar(p: ChatPanel): Promise<HTMLTextAreaElement> {
   }, { timeout: 15_000 });
 }
 
+describe('ChatPanel header', () => {
+  it('has back, minimise and close only: games start from /play in the bar', () => {
+    const newGame = vi.fn();
+    const p = panel(vi.fn(async () => null), { newGame });
+    const head = p.el.querySelector('.chat-head')!;
+    expect(head.querySelector('.chat-games')).toBeNull();
+    expect([...head.querySelectorAll('button')].map((b) => b.textContent)).toEqual(['‹', '–', '×']);
+    p.el.remove();
+  });
+});
+
 describe('ChatPanel message bar', { timeout: 30_000 }, () => {
   it("sends through deps.send with the reply and the bar's tags", async () => {
     const send = vi.fn<ChatPanelDeps['send']>(async () => null);

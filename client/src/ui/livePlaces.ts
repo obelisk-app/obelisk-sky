@@ -32,7 +32,8 @@ export function speakerPlace(live: boolean, standing: string | null, postedIn: s
   return live ? standing : postedIn;
 }
 
-/** Show the bubble only to someone at the same place as the speaker (nowhere matches nothing). */
-export function bubbleShown(yourPlace: string | null, speakerAt: string | null): boolean {
-  return !!yourPlace && yourPlace === speakerAt;
+/** Show the bubble only to someone at the same place as the speaker (nowhere matches nothing); the relay's general chat (`general`)
+ *  to everyone, wherever they are. */
+export function bubbleShown(yourPlace: string | null, speakerAt: string | null, general = false): boolean {
+  return general || (!!yourPlace && yourPlace === speakerAt);
 }

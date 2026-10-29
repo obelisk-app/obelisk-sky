@@ -36,8 +36,8 @@ describe('prefs', () => {
     expect(store.get()).toEqual(DEFAULT_PREFS);
     let seen = 0;
     store.onChange(() => seen++);
-    store.set({ quality: 'ultra', tiltShift: false });
-    expect(new PrefsStore(s).get()).toMatchObject({ quality: 'ultra', tiltShift: false });
+    store.set({ quality: 'ultra', bloom: false });
+    expect(new PrefsStore(s).get()).toMatchObject({ quality: 'ultra', bloom: false });
     store.reset();
     expect(store.get()).toEqual(DEFAULT_PREFS);
     expect(s.getItem(PREFS_KEY)).toBeNull();

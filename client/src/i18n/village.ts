@@ -58,10 +58,10 @@ const en = {
   ride: (touch: boolean): string => (touch ? '🐦 Ride' : 'Press F to ride the nostrich'),
   // The totem monitor on LABITCONF's lawn (world/totemMonitor.ts): E in front of it opens its focus
   watchTotem: (touch: boolean): string => (touch ? '📺 Watch the totemcillo' : 'Press E to watch the totemcillo'),
+  eatMushroom: (touch: boolean): string => (touch ? '🍄 Eat the mushroom' : 'Press E to eat the mushroom'),
+  tripBegins: 'Something feels… different 🍄',
   gotThere: (name: string) => `${name} got there first.`,
   chatHint: (name: string, touch: boolean): string => (touch ? `💬 Open the ${name} chat` : `💬 Press C to open the ${name} chat`),
-  tiltOn: 'Toy-town view on: the edges blur so the island looks like a tiny model',
-  tiltOff: 'Toy-town view off: the whole picture is sharp',
 
   // Private messages and calls
   dmLogin: 'Log in to send private messages.',
@@ -307,8 +307,6 @@ const en = {
 
   // The chat panel
   minimise: 'Minimise',
-  gameHere: 'Start a game here',
-  game: 'Game',
   membersOnly: 'This channel is members-only.',
   notSent: (reason: string) => `Not sent: ${reason}`,
   requestJoin: 'Request to join',
@@ -466,10 +464,10 @@ const es: VillageWords = {
   getOff: (touch) => (touch ? 'Bajarte' : 'Apretá F para bajarte'),
   ride: (touch) => (touch ? '🐦 Montar' : 'Apretá F para montar el nostrich'),
   watchTotem: (touch) => (touch ? '📺 Mirar el totemcillo' : 'Apretá E para mirar el totemcillo'),
+  eatMushroom: (touch) => (touch ? '🍄 Comer el hongo' : 'Apretá E para comer el hongo'),
+  tripBegins: 'Algo se siente… distinto 🍄',
   gotThere: (name) => `${name} llegó primero.`,
   chatHint: (name, touch) => (touch ? `💬 Abrir el chat de ${name}` : `💬 Apretá C para abrir el chat de ${name}`),
-  tiltOn: 'Vista maqueta activada: los bordes se desenfocan y la isla parece una miniatura',
-  tiltOff: 'Vista maqueta desactivada: toda la imagen se ve nítida',
 
   dmLogin: 'Ingresá para mandar mensajes privados.',
   dmPresence: { online: 'en línea', afk: 'ausente (AFK)', offline: 'desconectado' },
@@ -707,8 +705,6 @@ const es: VillageWords = {
   nobodyWrote: 'Nadie escribió nada en ese momento. Probá un tramo sombreado.',
 
   minimise: 'Minimizar',
-  gameHere: 'Empezar un juego acá',
-  game: 'Juego',
   membersOnly: 'Este canal es solo para miembros.',
   notSent: (reason) => `No se envió: ${reason}`,
   requestJoin: 'Pedir para sumarme',

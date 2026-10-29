@@ -9,8 +9,8 @@ const EN = {
   title: 'Settings', sub: 'Saved in this browser only.',
   language: 'Language · Idioma',
   graphics: 'Graphics', quality: 'Quality', renderingAt: 'Rendering at:', resolution: 'Resolution', shadows: 'Shadows',
-  ao: 'Ambient occlusion', aoHint: '(soft contact shadows)', bloom: 'Glow (bloom)', tilt: 'Toy-town view',
-  tiltHint: '(blurs the top and bottom so the island looks like a tiny model)', grass: 'Grass',
+  ao: 'Ambient occlusion', aoHint: '(soft contact shadows)', bloom: 'Glow (bloom)',
+  grass: 'Grass',
   world: 'World', time: 'Time of day', signs: 'Channel signs', bubbles: 'Speech bubbles', feed: 'Message feed', feedHint: '(bottom left)',
   minimap: 'Minimap', minimapHint: '(top left; N shows or hides it)', minimapRotate: 'Turn the minimap with the camera',
   share: 'Share my movement live', shareHint: '(others see you walk)',
@@ -31,8 +31,8 @@ const ES: typeof EN = {
   title: 'Ajustes', sub: 'Se guardan solo en este navegador.',
   language: 'Idioma · Language',
   graphics: 'Gráficos', quality: 'Calidad', renderingAt: 'Dibujando en:', resolution: 'Resolución', shadows: 'Sombras',
-  ao: 'Oclusión ambiental', aoHint: '(sombras suaves de contacto)', bloom: 'Brillo (bloom)', tilt: 'Vista maqueta',
-  tiltHint: '(desenfoca arriba y abajo para que la isla parezca una miniatura)', grass: 'Pasto',
+  ao: 'Oclusión ambiental', aoHint: '(sombras suaves de contacto)', bloom: 'Brillo (bloom)',
+  grass: 'Pasto',
   world: 'Mundo', time: 'Hora del día', signs: 'Carteles de los canales', bubbles: 'Globos de diálogo', feed: 'Mensajes', feedHint: '(abajo a la izquierda)',
   minimap: 'Minimapa', minimapHint: '(arriba a la izquierda; N lo muestra u oculta)', minimapRotate: 'Girar el minimapa con la cámara',
   share: 'Compartir mis movimientos en vivo', shareHint: '(los demás te ven caminar)',
@@ -171,7 +171,6 @@ export function openSettings(parent: HTMLElement, store: PrefsStore, currentLeve
   row(w.shadows, toggle('shadows'));
   row(w.ao, toggle('ambientOcclusion'), w.aoHint);
   row(w.bloom, toggle('bloom'));
-  row(w.tilt, toggle('tiltShift'), w.tiltHint);
   row(w.grass, toggle('grass'));
 
   section(w.world);

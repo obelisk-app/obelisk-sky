@@ -17,7 +17,6 @@ export interface Prefs {
   shadows: boolean;
   ambientOcclusion: boolean;
   bloom: boolean;
-  tiltShift: boolean;
   grass: boolean;
   // World
   timeOfDay: TimePref;
@@ -61,7 +60,6 @@ export const DEFAULT_PREFS: Prefs = {
   shadows: true,
   ambientOcclusion: true,
   bloom: true,
-  tiltShift: true,
   grass: true,
   timeOfDay: 'auto',
   signs: true,
@@ -104,7 +102,6 @@ export function normalizePrefs(raw: unknown): Prefs {
     shadows: bool(r.shadows, d.shadows),
     ambientOcclusion: bool(r.ambientOcclusion, d.ambientOcclusion),
     bloom: bool(r.bloom, d.bloom),
-    tiltShift: bool(r.tiltShift, d.tiltShift),
     grass: bool(r.grass, d.grass),
     timeOfDay: oneOf(TIMES, r.timeOfDay, d.timeOfDay),
     signs: bool(r.signs, d.signs),

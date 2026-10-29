@@ -44,6 +44,8 @@ export interface SkyComposerProps {
   onNewGame?: () => void;
   onZap?: (command: string, replyTo: ReplyTarget | null) => string | null;
   people: () => MentionPerson[];
+  /** Escape with nothing left to close in the bar: the panel may close (sky's general chat). */
+  onEscape?: () => void;
   /** Filled with the textarea, so the panel can focus it. */
   inputRef?: { current: HTMLTextAreaElement | null };
 }
