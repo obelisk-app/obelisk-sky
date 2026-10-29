@@ -21,6 +21,7 @@ const EN = {
   footsteps: 'Footsteps', footstepsHint: '(walking and running)', emoteMusic: 'Emote music', emoteMusicHint: '(heard near people dancing)',
   placeMusic: 'Music at places', placeMusicHint: '(the parrilla, the campfires)',
   reset: 'Reset to defaults', done: 'Done',
+  account: 'Account', invite: 'Invite people', inviteHint: '(links that let new people into a relay)', inviteOpen: 'Open',
   quality_: { auto: 'Automatic (adapts to your device)', low: 'Low', medium: 'Medium', high: 'High', ultra: 'Ultra' } as Record<Prefs['quality'], string>,
   chatOpen_: { auto: 'Open it automatically', ask: 'Show a button to open it', off: 'Do nothing' } as Record<Prefs['chatOpen'], string>,
   time_: { auto: 'Buenos Aires time', day: 'Always day', sunset: 'Always sunset', night: 'Always night' } as Record<Prefs['timeOfDay'], string>,
@@ -42,6 +43,7 @@ const ES: typeof EN = {
   footsteps: 'Pasos', footstepsHint: '(al caminar y correr)', emoteMusic: 'Música de los gestos', emoteMusicHint: '(se oye cerca de quien baila)',
   placeMusic: 'Música en los lugares', placeMusicHint: '(la parrilla, los fogones)',
   reset: 'Volver a lo predeterminado', done: 'Listo',
+  account: 'Cuenta', invite: 'Invitar personas', inviteHint: '(enlaces que dejan entrar personas nuevas a un relay)', inviteOpen: 'Abrir',
   quality_: { auto: 'Automática (se adapta a tu equipo)', low: 'Baja', medium: 'Media', high: 'Alta', ultra: 'Ultra' },
   chatOpen_: { auto: 'Abrirlo solo', ask: 'Mostrar un botón para abrirlo', off: 'No hacer nada' },
   time_: { auto: 'Hora de Buenos Aires', day: 'Siempre de día', sunset: 'Siempre atardecer', night: 'Siempre de noche' },
@@ -52,8 +54,13 @@ export const SETTINGS_WORDS: Record<Lang, typeof EN> = { en: EN, es: ES };
 /** Each language by its own name, the same on every screen. */
 export const LANG_NAMES: Record<Lang, string> = { en: 'English', es: 'Español' };
 
+/** What settings can open besides the prefs: `invite`, "Invite people", given only to an admitted account. */
+export interface SettingsLinks {
+  invite?: () => void;
+}
+
 /** `onLang`: a language was picked (by default it is remembered and the page reloads into it). */
-export function openSettings(parent: HTMLElement, store: PrefsStore, currentLevel: () => string, l: Lang = lang, onLang: (l: Lang) => void = switchLang): void {
+export function openSettings(parent: HTMLElement, store: PrefsStore, currentLevel: () => string, l: Lang = lang, onLang: (l: Lang) => void = switchLang, links: SettingsLinks = {}): void {
   const w = SETTINGS_WORDS[l];
   parent.querySelector('.settings')?.remove();
   const el = document.createElement('div');
@@ -141,6 +148,19 @@ export function openSettings(parent: HTMLElement, store: PrefsStore, currentLeve
   langSel.addEventListener('change', () => { if (langSel.value !== l) onLang(langSel.value as Lang); });
   row(w.language, langSel);
 
+  // Invite people, where people look for it too (also in the account menu).
+  if (links.invite) {
+    const open = links.invite;
+    section(w.account);
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pill settings-invite';
+    b.dataset.act = 'invite';
+    b.textContent = w.inviteOpen;
+    b.addEventListener('click', (e) => { e.preventDefault(); close(); open(); });
+    row(w.invite, b, w.inviteHint);
+  }
+
   section(w.graphics);
   const levelHint = document.createElement('small');
   row(w.quality, select('quality', QUALITIES, w.quality_));
@@ -187,7 +207,7 @@ export function openSettings(parent: HTMLElement, store: PrefsStore, currentLeve
   reset.type = 'button';
   reset.className = 'account-btn';
   reset.textContent = w.reset;
-  reset.addEventListener('click', () => { store.reset(); openSettings(parent, store, currentLevel, l, onLang); });
+  reset.addEventListener('click', () => { store.reset(); openSettings(parent, store, currentLevel, l, onLang, links); });
   const done = document.createElement('button');
   done.type = 'button';
   done.className = 'account-btn primary';

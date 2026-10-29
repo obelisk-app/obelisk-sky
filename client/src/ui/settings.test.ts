@@ -35,6 +35,18 @@ describe('settings in the village’s language', () => {
     expect(sel.value).toBe('es');
     expect(sel.closest('label')!.textContent).toContain('Idioma');
   });
+  it('offers Invite people only when given, closing settings to open it', () => {
+    const root = document.createElement('div');
+    openSettings(root, new PrefsStore(), () => 'medium', 'en', () => {});
+    expect(root.querySelector('[data-act="invite"]')).toBeNull();
+    const invite = vi.fn();
+    openSettings(root, new PrefsStore(), () => 'medium', 'en', () => {}, { invite });
+    const btn = root.querySelector<HTMLButtonElement>('[data-act="invite"]')!;
+    expect(btn.closest('label')!.textContent).toContain('Invite people');
+    btn.click();
+    expect(invite).toHaveBeenCalledOnce();
+    expect(root.querySelector('.settings')).toBeNull();
+  });
 });
 
 describe('the look editor in the village’s language', () => {

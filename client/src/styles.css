@@ -1063,18 +1063,46 @@ body.menu-open .controls button[hidden] { display: none; }
 .account-menu-item { border: 0; background: none; color: var(--white); text-align: left; padding: 9px 12px; border-radius: 9px; font: 600 13px var(--sans); cursor: pointer; white-space: nowrap; }
 .account-menu-item:hover, .account-menu-item:focus-visible { background: rgba(255, 255, 255, 0.08); color: var(--green); outline: none; }
 
-/* ── "Invite people" (ui/invitePanel.ts): the settings' dark rows, one per live link ── */
+/* ── "Invite people" (ui/invitePanel.ts): relay picker, allowance meter, form, the settings' dark rows per link ── */
+.invite-relay-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0 10px; font: 600 12.5px var(--sans); color: var(--muted); }
+.invite-relay-row .themes-select { max-width: 70%; }
 .invite-panel { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
-.invite-quota { font: 12.5px/1.45 var(--sans); color: var(--muted); }
+.invite-panel .about { margin-bottom: 0; }
+.invite-quota, .invite-by { font: 12.5px/1.45 var(--sans); color: var(--muted); }
+.invite-error { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.invite-meter { display: flex; align-items: center; gap: 10px; font: 600 12px var(--sans); color: var(--white); }
+.invite-meter-bar { flex: 1; height: 6px; border-radius: 999px; background: #262626; overflow: hidden; }
+.invite-meter-fill { height: 100%; background: var(--green); border-radius: 999px; }
+.invite-form { display: flex; flex-direction: column; gap: 8px; background: #0f0f0f; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+.invite-field { display: flex; align-items: center; justify-content: space-between; gap: 10px; font: 500 12.5px var(--sans); color: var(--white); }
+.invite-field input { width: 55%; background: #171717; color: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font: 13px var(--sans); }
+.invite-field input[type="number"] { width: 72px; }
 .invite-create { align-self: flex-start; }
-.invite-create:disabled { opacity: 0.55; cursor: default; }
+.invite-form :disabled { opacity: 0.55; cursor: default; }
+.invite-fresh { display: flex; flex-direction: column; gap: 8px; border: 1px solid rgba(180, 249, 83, 0.5); border-radius: 12px; padding: 10px 12px; background: rgba(180, 249, 83, 0.06); }
+.invite-fresh-link { width: 100%; box-sizing: border-box; background: #0f0f0f; color: var(--green); border: 1px solid var(--border); border-radius: 8px; padding: 7px 8px; font: 600 12.5px var(--mono); }
 .invite-codes { display: flex; flex-direction: column; gap: 8px; }
-.invite-code { display: flex; align-items: center; gap: 10px; background: #0f0f0f; border: 1px solid var(--border); border-radius: 12px; padding: 10px 10px 10px 12px; min-width: 0; }
-.invite-code-info { flex: 1; min-width: 0; }
-.invite-code code { display: block; font: 600 13.5px var(--mono); color: var(--green); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.invite-code { display: flex; flex-direction: column; gap: 8px; background: #0f0f0f; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+.invite-code.past { opacity: 0.8; }
+.invite-code-info { min-width: 0; }
+.invite-code-label { font: 600 13px var(--sans); color: var(--white); margin-bottom: 2px; overflow-wrap: anywhere; }
+.invite-code code { display: block; font: 600 12px var(--mono); color: var(--green); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .invite-code-use { font: 500 11.5px var(--sans); color: var(--muted); margin-top: 3px; }
-.invite-code .pill { flex: none; background: #262626; }
-.invite-code .pill:hover { background: #333; }
+.invite-joined { display: flex; flex-direction: column; gap: 3px; font: 12px var(--sans); }
+.invite-joined-title { font: 600 11px var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.invite-joined-none { color: var(--muted); }
+.invite-person { display: flex; gap: 8px; align-items: baseline; color: var(--white); min-width: 0; }
+.invite-person-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.invite-person-at { color: var(--muted); font-size: 11px; }
+.invite-person.removed .invite-person-name { text-decoration: line-through; color: var(--muted); }
+.invite-person-removed { color: #f87171; font-size: 11px; }
+.invite-code-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.invite-code .pill, .invite-fresh .pill { background: #262626; padding: 6px 12px; }
+.invite-code .pill:hover, .invite-fresh .pill:hover { background: #333; }
+.invite-code .pill.danger, .invite-off:hover { color: #fca5a5; border-color: rgba(248, 113, 113, 0.5); }
+.invite-confirm { display: flex; flex-direction: column; gap: 8px; font: 12.5px/1.45 var(--sans); color: var(--white); }
+.invite-past summary { cursor: pointer; font: 600 12.5px var(--sans); color: var(--muted); margin-bottom: 8px; }
+.settings-invite { flex: none; }
 
 /* ── the profile editor (profile/ProfilePanel.tsx, SkyProfileForm.tsx): a cloud card in sky's palette ── */
 .profile-host { position: relative; z-index: 60; }
