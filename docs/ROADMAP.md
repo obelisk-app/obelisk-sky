@@ -42,9 +42,9 @@ These dex features don't exist, so they aren't listed here: message editing, pin
 | Edit the relay's custom emoji | `components/admin/relay-emoji/RelayEmojiAdminModal.tsx` | partial: uses the set |
 | Edit the channel layout (categories, order) | `modals/layout/ManageLayoutModal.tsx` | partial: reads it; `ui/themeEditor.ts` edits only sky's districts |
 | Relay branding and settings | `modals/relay/RelayBrandingModal.tsx`, `RelaySettingsModal.tsx` | partial: reads branding (`nostr/branding.ts`) |
-| Relay access and joining | `modals/relay/RelayAccessModal.tsx`, `services/relay/relay-invite.ts` | partial: a join request (kind 9021) from the chat; relay invite links (`nostr/invite.ts`) let a new key in |
+| Relay access and joining | `modals/relay/RelayAccessModal.tsx`, `services/relay/relay-invite.ts` | partial: a join request (kind 9021) from the chat; relay invite links (`nostr/invite.ts`, `docs/relay-invites.md`) let a new key in, an unknown relay only after you confirm |
 | Channel menu (mute, notification level, follow, mark read, copy link) | `components/chat/channel/ChannelContextMenu.tsx` | missing |
-| Invite links, relay share links | `panes/channel/CopyInviteLinkButton.tsx`, `app/[locale]/r/[code]`, `app/[locale]/invite/[code]` | partial: relay invite links (`/invite/<code>`, Invite people in the account menu); channel and relay share links missing |
+| Invite links, relay share links | `panes/channel/CopyInviteLinkButton.tsx`, `app/[locale]/r/[code]`, `app/[locale]/invite/[code]` | partial: relay invite links (`/invite/<code>`; Invite people in the account menu and settings: relay picker, allowance, who joined, turn off); channel and relay share links missing |
 
 ## Social / Nostr
 

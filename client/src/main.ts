@@ -63,7 +63,7 @@ import { ANONYMOUS_IDENTITY, activeRelay, DEFAULT_GROUP_RELAY, normalizeRelay, p
 import { pageHub } from './nostr/hub';
 import { SessionManager, type LoginArgs, type Session } from './nostr/session';
 import { registerHost } from './shims/host';
-import { captureInvite, createInvite, freshKeyLogin, inviteFor, inviteStatus, inviteWaitingForKey, redeemInvite, skyInviteLink } from './nostr/invite';
+import { captureInvite, createInvite, freshKeyLogin, inviteFor, inviteRelayStart, inviteStatus, inviteWaitingForKey, isStaleClaim, loadInviteStatus, mayInvite, redeemInvite, revokeInvite, skyInviteLink } from './nostr/invite';
 import { renderInvitePanel } from './ui/invitePanel';
 import { editOwnProfile, fetchOwnProfile, initialOf, syncOwnProfile } from './nostr/ownProfile';
 import type { ProfileEditorInitial } from '@/types/session/profile';
@@ -184,9 +184,20 @@ prefs.onChange(applyPrefs);
 // ── relays (one village per relay) ───────────────────────────────────────
 
 // An invite link (`/invite/<code>` → `/app?invite=`): keep the code, drop it from the address.
-captureInvite(location.href, (u) => history.replaceState(null, '', u));
+const inviteRelay = captureInvite(location.href, (u) => history.replaceState(null, '', u));
 const urlRelay = normalizeRelay(new URLSearchParams(location.search).get('relay') ?? '');
-setActiveRelay(urlRelay ?? (prefs.get().relay || DEFAULT_GROUP_RELAY));
+const savedRelay = prefs.get().relay || DEFAULT_GROUP_RELAY;
+// Its relay is gone to by itself only when sky knows it; an unknown one is
+// asked about first (`askInviteRelay`, after the session is restored).
+const inviteStart = inviteRelayStart(inviteRelay, urlRelay, [...SUGGESTED_RELAYS, ...prefs.get().customRelays, savedRelay], savedRelay);
+let inviteRelayToConfirm = inviteStart.confirm;
+if (inviteRelayToConfirm) {
+  // Keep the unknown relay out of the address too, or a reload would go there unasked.
+  const u = new URL(location.href);
+  u.searchParams.delete('relay');
+  history.replaceState(null, '', u.pathname + u.search + u.hash);
+}
+setActiveRelay(inviteStart.relay);
 
 function knownRelays(): string[] {
   return [...new Set([...SUGGESTED_RELAYS, ...prefs.get().customRelays, activeRelay()])];
@@ -466,6 +477,7 @@ async function saveThemes(cfg: ThemeConfig): Promise<string | null> {
 function startFeed(): void {
   // Back from the guest island (a login, a relay switch): the real village.
   setGuest(null);
+  refreshInviteMenu();
   feed?.stop();
   themes?.stop();
   themes = new ThemeStore(hub, activeRelay());
@@ -543,6 +555,7 @@ function startGuest(why: GuestReason): void {
   stopTheater();
   world.syncClaims([]);
   setGuest(why, me);
+  refreshInviteMenu();
   if (world.cam.firstPerson) toggleFirstPerson();
   world.setPlayer(null);
   controller = null;
@@ -610,9 +623,10 @@ function startReadState(): void {
 session.onChange((s) => {
   sessionGen++;
   if (s) redeemStoredInvite(s);
-  refreshInviteMenu();
   // Logged in: off the guest island (startFeed below opens the real village).
   if (s) setGuest(null);
+  // After the guest flag is cleared, or a fresh login would read as a guest and hide it.
+  refreshInviteMenu();
   ownKind0 = s && signupKind0?.pubkey === s.pubkey ? signupKind0 : null;
   signupKind0 = null;
   if (newAccount && newAccount !== s?.pubkey) newAccount = null;
@@ -681,7 +695,7 @@ void session.restore().then((ok) => {
   }
   renderAccount(null);
   startGuest('logged-out');
-}).finally(() => { restoringSession = false; });
+}).finally(() => { restoringSession = false; askInviteRelay(); });
 
 // ── relay invites (nostr/invite.ts) ──────────────────────────────────────
 
@@ -698,10 +712,52 @@ function redeemStoredInvite(s: Session): void {
     if (session.current !== s || activeRelay() !== relay) return;
     if (out.status === 'admitted') { toast(vw.invite.welcome); startReadState(); startFeed(); refreshInviteMenu(); }
     else if (out.status === 'dead') toast(vw.invite.dead[out.reason] ?? vw.invite.deadTitle);
-  }).catch(() => invitesTried.delete(attempt));
+    // Not dead, not in (already retried once): say so; the next session or relay change tries again.
+    else toast(isStaleClaim(out.reason) ? vw.invite.stale : vw.invite.notYet);
+  }).catch(() => {
+    invitesTried.delete(attempt);
+    if (session.current === s && activeRelay() === relay) toast(vw.invite.notYet);
+  });
 }
 
-/** Show "Invite people" in the account menu only to accounts this relay lets invite. */
+/**
+ * An invite link for a relay sky doesn't know: ask before going there
+ * (obelisk-relay docs/relay-invites.md §6 step 2). Yes adds it to your relays,
+ * goes there and, with no account yet, makes one as a known relay's link would.
+ */
+function askInviteRelay(): void {
+  const relay = inviteRelayToConfirm;
+  inviteRelayToConfirm = null;
+  if (!relay) return;
+  const host = relay.replace(/^wss?:\/\//, '').replace(/\/$/, '');
+  const here = activeRelay().replace(/^wss?:\/\//, '').replace(/\/$/, '');
+  openCard((body) => {
+    const actions = el('div', 'actions');
+    const go = el('button', 'pill primary', vw.invite.relayAsk.go(host));
+    go.type = 'button';
+    go.dataset.testid = 'invite-relay-go';
+    go.addEventListener('click', () => {
+      $('card').hidden = true;
+      if (!knownRelays().includes(relay)) prefs.set({ customRelays: [...prefs.get().customRelays, relay] });
+      switchRelay(relay);
+      if (!session.current && inviteWaitingForKey(relay)) {
+        freshLogin = true;
+        void session.login(freshKeyLogin()).catch(() => { renderAccount(null); startGuest('logged-out'); });
+      }
+    });
+    const stay = el('button', 'pill', `${vw.invite.relayAsk.stay} (${here})`);
+    stay.type = 'button';
+    stay.addEventListener('click', () => { $('card').hidden = true; });
+    actions.append(go, stay);
+    body.append(el('h2', '', vw.invite.relayAsk.title), el('div', 'about', vw.invite.relayAsk.body(host)), actions);
+  });
+}
+
+/**
+ * Show "Invite people" in the account menu to accounts this relay lets invite
+ * (`mayInvite`: a basis, even with the allowance spent, or links of their
+ * own). A failed answer isn't kept: the next refresh asks again.
+ */
 let inviteMenuFor = '';
 function refreshInviteMenu(): void {
   const item = $('account-menu').querySelector('[data-act="invite"]') as HTMLElement;
@@ -712,20 +768,32 @@ function refreshInviteMenu(): void {
   item.hidden = true;
   if (!s || !key) return;
   void inviteStatus((t) => session.sign(t), activeRelay()).then((me) => {
-    if (inviteMenuFor === key) item.hidden = !me?.can_mint;
+    if (inviteMenuFor !== key) return;
+    if (!me) inviteMenuFor = '';
+    item.hidden = !mayInvite(me);
   });
 }
 
+/** Whether settings offers Invite people: any admitted account (the card says who may invite). */
+function canOpenInvites(): boolean {
+  return !!session.current && !isGuest();
+}
+
 function openInvites(): void {
-  const relay = activeRelay();
   const sign = (t: Parameters<typeof session.sign>[0]) => session.sign(t);
   openCard((body) => {
     void renderInvitePanel(body, {
-      relayHost: relay.replace(/^wss?:\/\//, '').replace(/\/$/, ''),
-      load: () => inviteStatus(sign, relay),
-      create: () => createInvite(sign, relay),
-      linkFor: (code) => skyInviteLink(location.origin, code, relay),
-      copy: (text) => void navigator.clipboard?.writeText(text).catch(() => undefined),
+      relays: knownRelays(),
+      relay: activeRelay(),
+      load: (relay) => loadInviteStatus(sign, relay),
+      create: (relay, opts) => createInvite(sign, relay, opts),
+      revoke: (relay, code) => revokeInvite(sign, relay, code),
+      linkFor: (code, relay) => skyInviteLink(location.origin, code, relay),
+      copy: (text) => (navigator.clipboard ? navigator.clipboard.writeText(text).then(() => true, () => false) : Promise.resolve(false)),
+      share: typeof navigator.share === 'function'
+        ? (url, text) => navigator.share({ url, text }).then(() => true, () => false)
+        : null,
+      nameOf: (pk) => world.nameOf(pk),
       toast: (text) => toast(text),
     });
   });
@@ -3188,7 +3256,7 @@ document.querySelectorAll<HTMLButtonElement>('.controls button').forEach((b) => 
         // Pressed again: close it.
         const open = $('app').querySelector('.settings');
         if (open) open.remove();
-        else openSettings($('app'), prefs, () => world.post.level);
+        else openSettings($('app'), prefs, () => world.post.level, undefined, undefined, { invite: canOpenInvites() ? openInvites : undefined });
         break;
       }
       case 'districts':
