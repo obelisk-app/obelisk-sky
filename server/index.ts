@@ -5,6 +5,7 @@
 //
 //   GET /                  landing page (dist/client/index.html)
 //   GET /app               the village (dist/client/app/index.html); old /?relay= links redirect here
+//   GET /guides, /es/guides the guides (dist/client/guides/…/index.html, built by scripts/build-guides.mjs)
 //   GET /healthz           JSON status
 //   GET /api/link-preview  OpenGraph unfurl for chat links (server/linkPreview.ts)
 //   GET /api/avatar        a profile picture whose host sends no CORS (server/avatarProxy.ts)
@@ -38,6 +39,7 @@ const MIME: Record<string, string> = {
   '.stl': 'model/stl',
   '.woff2': 'font/woff2',
   '.txt': 'text/plain; charset=utf-8',
+  '.xml': 'application/xml; charset=utf-8',
   '.mp3': 'audio/mpeg',
   '.ogg': 'audio/ogg',
   '.m4a': 'audio/mp4',
@@ -64,8 +66,10 @@ export const SECURITY_HEADERS = {
     "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://totemcillo.vercel.app; frame-ancestors 'self'",
 };
 
-/** `fallback`: no such file, so a page stands in (never cached for long). */
-export function resolveStatic(pathname: string): { file: string; rel: string; fallback: boolean } | null {
+/** `fallback`: no such file, so a page stands in (never cached for long).
+ *  `status`: 404 for a missing guide, whose page says so (a landing page sent
+ *  as a 200 there would be indexed as the guide). */
+export function resolveStatic(pathname: string): { file: string; rel: string; fallback: boolean; status: number } | null {
   let rel: string;
   try {
     rel = normalize(decodeURIComponent(pathname)).replace(/^(\.\.[/\\])+/, '');
@@ -74,17 +78,25 @@ export function resolveStatic(pathname: string): { file: string; rel: string; fa
   }
   if (rel === '/' || rel === '') rel = '/index.html';
   if (rel === '/app' || rel === '/app/') rel = '/app/index.html';
+  // A page's folder serves its index.html (/guides, /es/guides/<slug>).
+  if (!extname(rel) && existsSync(join(STATIC_DIR, rel, 'index.html'))) rel = join(rel, 'index.html');
   let file = join(STATIC_DIR, rel);
   if (!file.startsWith(STATIC_DIR)) return null;
-  // Unknown paths: the village under /app, the landing page elsewhere.
+  // Unknown paths: the village under /app, a 404 under the guides, the landing page elsewhere.
   const fallback = !existsSync(file) || statSync(file).isDirectory();
+  if (fallback && isGuidePath(rel)) return { file: join(STATIC_DIR, 'guides', '404.html'), rel, fallback, status: 404 };
   if (fallback) file = join(STATIC_DIR, rel.startsWith('/app/') ? 'app/index.html' : 'index.html');
-  return { file, rel, fallback };
+  return { file, rel, fallback, status: 200 };
 }
+
+const isGuidePath = (rel: string) => /^\/(?:es\/)?guides(?:\/|$)/.test(rel) || rel.startsWith('/es/');
 
 /** Links shared before the landing page existed (`/?relay=…`, `/?time=…`)
  *  opened the village: send them to /app with the same query. */
 export function redirectFor(pathname: string, search: string): string | null {
+  // A guide's address has no trailing slash (its canonical); /es alone is the landing page in Spanish.
+  if (pathname === '/es' || pathname === '/es/') return '/?lang=es';
+  if (/^\/(?:es\/)?guides(?:\/[a-z0-9-]+)?\/$/.test(pathname)) return pathname.slice(0, -1) + search;
   // A relay invite link: the village reads `?invite=` and keeps the code
   // (client/src/nostr/invite.ts). The server only rewrites the address.
   const invite = /^\/invite\/([A-Za-z0-9_-]{1,64})\/?$/.exec(pathname);
@@ -100,10 +112,11 @@ export function redirectFor(pathname: string, search: string): string | null {
   return q.has('relay') || q.has('time') ? `/app${search}` : null;
 }
 
-/** Hashed bundles, models and the landing page's media (its URLs carry `?v=`)
- *  are kept a year; everything else is checked every time. */
+/** Hashed bundles, models, the guides' media (hashed names) and the landing
+ *  page's media (its URLs carry `?v=`) are kept a year; everything else is
+ *  checked every time. */
 export function cacheControl(rel: string): string {
-  const immutable = rel.startsWith('/assets/') || rel.startsWith('/models/') || rel.startsWith('/landing/');
+  const immutable = rel.startsWith('/assets/') || rel.startsWith('/models/') || rel.startsWith('/landing/') || rel.startsWith('/media/');
   return immutable ? 'public, max-age=31536000, immutable' : 'no-cache';
 }
 
@@ -135,10 +148,10 @@ function serveStatic(req: IncomingMessage, res: ServerResponse, pathname: string
     'cache-control': hit.fallback ? 'no-cache' : cacheControl(hit.rel),
     'accept-ranges': 'bytes',
   };
-  const range = parseRange(req.headers.range, size);
+  const range = hit.status === 200 ? parseRange(req.headers.range, size) : null;
   if (range === 'unsatisfiable') { res.writeHead(416, { ...headers, 'cache-control': 'no-cache', 'content-range': `bytes */${size}` }).end(); return; }
   if (range) res.writeHead(206, { ...headers, 'content-range': `bytes ${range.start}-${range.end}/${size}`, 'content-length': range.end - range.start + 1 });
-  else res.writeHead(200, { ...headers, 'content-length': size });
+  else res.writeHead(hit.status, { ...headers, 'content-length': size });
   if (req.method === 'HEAD') { res.end(); return; }
   createReadStream(hit.file, range ?? {}).pipe(res);
 }
@@ -163,7 +176,8 @@ const server = createServer((req, res) => {
     return;
   }
   const to = redirectFor(url.pathname, url.search);
-  if (to) { res.writeHead(302, { location: to, 'cache-control': 'no-cache' }).end(); return; }
+  // A guide's address without its trailing slash is the same page for good (301); the rest may change.
+  if (to) { res.writeHead(/^\/(?:es\/)?guides\//.test(url.pathname) ? 301 : 302, { location: to, 'cache-control': 'no-cache' }).end(); return; }
   serveStatic(req, res, url.pathname);
 });
 

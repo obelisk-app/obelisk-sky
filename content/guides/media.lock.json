@@ -1,0 +1,340 @@
+{
+  "bridge-arrival": {
+    "sig": "55d5ac21",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 8,
+    "src": "/media/guides/bridge-arrival.017339ba.mp4",
+    "poster": "/media/guides/bridge-arrival-poster.4629225e.webp"
+  },
+  "cafe-close": {
+    "sig": "f4a6ca37",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 8,
+    "src": "/media/guides/cafe-close.d0f020aa.mp4",
+    "poster": "/media/guides/cafe-close-poster.4514cbaf.webp"
+  },
+  "campfire-sunset": {
+    "sig": "9edc6b32",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 8,
+    "src": "/media/guides/campfire-sunset.48926439.mp4",
+    "poster": "/media/guides/campfire-sunset-poster.d8ef32eb.webp"
+  },
+  "channels": {
+    "sig": "2a2ba0aa",
+    "kind": "shot",
+    "perLang": false,
+    "en": {
+      "width": 595,
+      "height": 1320,
+      "src": "/media/guides/channels-1280.ba568270.webp",
+      "small": "/media/guides/channels-640.ba568270.webp"
+    }
+  },
+  "controls": {
+    "sig": "66af8ee4",
+    "kind": "shot",
+    "perLang": true,
+    "en": {
+      "width": 550,
+      "height": 740,
+      "src": "/media/guides/controls-en-1280.360961bd.webp",
+      "small": "/media/guides/controls-en-640.360961bd.webp"
+    },
+    "es": {
+      "width": 550,
+      "height": 740,
+      "src": "/media/guides/controls-es-1280.515e30a4.webp",
+      "small": "/media/guides/controls-es-640.515e30a4.webp"
+    }
+  },
+  "dance-front": {
+    "sig": "348d1486",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 8,
+    "src": "/media/guides/dance-front.a3109bb1.mp4",
+    "poster": "/media/guides/dance-front-poster.4c7c8496.webp"
+  },
+  "first-person": {
+    "sig": "120bb9b0",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 3.5,
+    "src": "/media/guides/first-person.c6e44c7a.mp4",
+    "poster": "/media/guides/first-person-poster.dfb3378f.webp"
+  },
+  "game-table": {
+    "sig": "500888d9",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 3.5,
+    "src": "/media/guides/game-table.f6a855e6.mp4",
+    "poster": "/media/guides/game-table-poster.dc285366.webp"
+  },
+  "guest-chat": {
+    "sig": "7600f957",
+    "kind": "shot",
+    "perLang": false,
+    "en": {
+      "width": 1280,
+      "height": 800,
+      "src": "/media/guides/guest-chat-1280.5ebe26a9.webp",
+      "small": "/media/guides/guest-chat-640.520d6abe.webp"
+    }
+  },
+  "guest-island": {
+    "sig": "99089aa4",
+    "kind": "shot",
+    "perLang": true,
+    "en": {
+      "width": 1280,
+      "height": 800,
+      "src": "/media/guides/guest-island-en-1280.5e9dc948.webp",
+      "small": "/media/guides/guest-island-en-640.179f9ff5.webp"
+    },
+    "es": {
+      "width": 1280,
+      "height": 800,
+      "src": "/media/guides/guest-island-es-1280.ea9f3daa.webp",
+      "small": "/media/guides/guest-island-es-640.ef5a2ed2.webp"
+    }
+  },
+  "island-night": {
+    "sig": "e02c5f78",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 8,
+    "src": "/media/guides/island-night.5ec6b60a.mp4",
+    "poster": "/media/guides/island-night-poster.72875334.webp"
+  },
+  "island-orbit": {
+    "sig": "87fd8f63",
+    "kind": "clip",
+    "width": 720,
+    "height": 720,
+    "seconds": 8,
+    "src": "/media/guides/island-orbit.cd622575.mp4",
+    "poster": "/media/guides/island-orbit-poster.8e06e34f.webp"
+  },
+  "lacrypta-front": {
+    "sig": "5d779c08",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 8,
+    "src": "/media/guides/lacrypta-front.8d607123.mp4",
+    "poster": "/media/guides/lacrypta-front-poster.d244e524.webp"
+  },
+  "landmarks": {
+    "sig": "698c3dc8",
+    "kind": "shot",
+    "perLang": false,
+    "en": {
+      "width": 1280,
+      "height": 534,
+      "src": "/media/guides/landmarks-1280.6b75c4b2.webp",
+      "small": "/media/guides/landmarks-640.6b023f20.webp"
+    }
+  },
+  "login": {
+    "sig": "cd808249",
+    "kind": "shot",
+    "perLang": true,
+    "en": {
+      "width": 450,
+      "height": 730,
+      "src": "/media/guides/login-en-1280.6a34c3c7.webp",
+      "small": "/media/guides/login-en-640.6a34c3c7.webp"
+    },
+    "es": {
+      "width": 450,
+      "height": 730,
+      "src": "/media/guides/login-es-1280.5a0e1307.webp",
+      "small": "/media/guides/login-es-640.5a0e1307.webp"
+    }
+  },
+  "look-creator": {
+    "sig": "611471ec",
+    "kind": "shot",
+    "perLang": false,
+    "en": {
+      "width": 1280,
+      "height": 860,
+      "src": "/media/guides/look-creator-1280.e6516cac.webp",
+      "small": "/media/guides/look-creator-640.c2ab46d8.webp"
+    }
+  },
+  "look-editor": {
+    "sig": "ad3080f2",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 10,
+    "src": "/media/guides/look-editor.637410e3.mp4",
+    "poster": "/media/guides/look-editor-poster.70ed3793.webp"
+  },
+  "mate-bench": {
+    "sig": "33ac4073",
+    "kind": "shot",
+    "perLang": false,
+    "en": {
+      "width": 1000,
+      "height": 600,
+      "src": "/media/guides/mate-bench-1280.9b1a1c8e.webp",
+      "small": "/media/guides/mate-bench-640.9eea6bd5.webp"
+    }
+  },
+  "mate-faces": {
+    "sig": "61c6bdab",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 8,
+    "src": "/media/guides/mate-faces.cbcb2272.mp4",
+    "poster": "/media/guides/mate-faces-poster.dc4fb67e.webp"
+  },
+  "minimap": {
+    "sig": "69976bdd",
+    "kind": "shot",
+    "perLang": false,
+    "en": {
+      "width": 1280,
+      "height": 800,
+      "src": "/media/guides/minimap-1280.c6d51f7c.webp",
+      "small": "/media/guides/minimap-640.0f2c6b46.webp"
+    }
+  },
+  "nostrich": {
+    "sig": "b2c7b917",
+    "kind": "shot",
+    "perLang": false,
+    "en": {
+      "width": 640,
+      "height": 400,
+      "src": "/media/guides/nostrich-1280.693743de.webp",
+      "small": "/media/guides/nostrich-640.693743de.webp"
+    }
+  },
+  "park-pullups": {
+    "sig": "0c3d5d1b",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 8,
+    "src": "/media/guides/park-pullups.2d001249.mp4",
+    "poster": "/media/guides/park-pullups-poster.d6dcd47d.webp"
+  },
+  "parrilla-dusk": {
+    "sig": "5767e3cd",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 8,
+    "src": "/media/guides/parrilla-dusk.974e60d8.mp4",
+    "poster": "/media/guides/parrilla-dusk-poster.8e5d4864.webp"
+  },
+  "pets": {
+    "sig": "412cfe60",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 4,
+    "src": "/media/guides/pets.fe4aa3d9.mp4",
+    "poster": "/media/guides/pets-poster.ff316223.webp"
+  },
+  "phone": {
+    "sig": "9faf0901",
+    "kind": "shot",
+    "perLang": true,
+    "en": {
+      "width": 1280,
+      "height": 591,
+      "src": "/media/guides/phone-en-1280.d07642b4.webp",
+      "small": "/media/guides/phone-en-640.397e9a1a.webp"
+    },
+    "es": {
+      "width": 1280,
+      "height": 591,
+      "src": "/media/guides/phone-es-1280.d9485e01.webp",
+      "small": "/media/guides/phone-es-640.cec7dc16.webp"
+    }
+  },
+  "plaza-meetup": {
+    "sig": "1de02e9e",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 8,
+    "src": "/media/guides/plaza-meetup.42d3b4c1.mp4",
+    "poster": "/media/guides/plaza-meetup-poster.d88f5a8a.webp"
+  },
+  "ride": {
+    "sig": "a684cfc1",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 3,
+    "src": "/media/guides/ride.9704a728.mp4",
+    "poster": "/media/guides/ride-poster.0dfa2bd2.webp"
+  },
+  "swim": {
+    "sig": "76541661",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 3.5,
+    "src": "/media/guides/swim.6550a614.mp4",
+    "poster": "/media/guides/swim-poster.92bfa539.webp"
+  },
+  "theater": {
+    "sig": "f5b8cc51",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 3.5,
+    "src": "/media/guides/theater.f7d33a45.mp4",
+    "poster": "/media/guides/theater-poster.823e960b.webp"
+  },
+  "village": {
+    "sig": "d72ef4a9",
+    "kind": "shot",
+    "perLang": false,
+    "en": {
+      "width": 900,
+      "height": 540,
+      "src": "/media/guides/village-1280.caf9097d.webp",
+      "small": "/media/guides/village-640.30d4c0b2.webp"
+    }
+  },
+  "voice-note": {
+    "sig": "b38a5117",
+    "kind": "shot",
+    "perLang": false,
+    "en": {
+      "width": 380,
+      "height": 624,
+      "src": "/media/guides/voice-note-1280.b31042e3.webp",
+      "small": "/media/guides/voice-note-640.b31042e3.webp"
+    }
+  },
+  "zaps": {
+    "sig": "6ce6531c",
+    "kind": "clip",
+    "width": 1280,
+    "height": 720,
+    "seconds": 5,
+    "src": "/media/guides/zaps.6fb291d9.mp4",
+    "poster": "/media/guides/zaps-poster.f7d795b0.webp"
+  }
+}

@@ -17,6 +17,11 @@ export function applyLang(doc: Document, lang: Lang): void {
     const glow = el.dataset.glow ?? (el.dataset.glowKey ? words[el.dataset.glowKey as CopyKey] : undefined);
     if (w && glow) glowWord(el, glow);
   }
+  // Links whose page has an address per language (the guides).
+  for (const a of doc.querySelectorAll<HTMLAnchorElement>('[data-i18n-href]')) {
+    const href = words[a.dataset.i18nHref as CopyKey];
+    if (href) a.setAttribute('href', href);
+  }
   for (const b of doc.querySelectorAll<HTMLButtonElement>('[data-lang]')) b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
 }
 

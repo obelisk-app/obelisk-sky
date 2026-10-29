@@ -1,0 +1,93 @@
+/* The guides (/guides, /es/guides; scripts/build-guides.mjs), on top of the landing
+   page's sky, clouds, header, buttons and footer (landing.css). */
+
+/* The EN | ES pill: links here, each language has its own page. */
+.lang a { color: var(--ink-muted); font: 700 12px var(--sans); padding: 6px 10px; border-radius: 999px; text-decoration: none; }
+.lang a[aria-current="true"] { background: var(--ink); color: #fff; }
+.lang a:not([aria-current]):hover { color: var(--ink); }
+
+/* ── article ── */
+.g-article { max-width: 820px; margin: 0 auto; padding: 24px 16px 40px; }
+.g-crumbs { display: flex; gap: 8px; font-size: 14px; font-weight: 600; color: var(--ink-muted); margin-bottom: 18px; }
+.g-crumbs a { text-decoration: none; }
+.g-crumbs a:hover { color: var(--ink); }
+.g-head h1 { font-size: clamp(34px, 5vw, 54px); }
+.g-head .lead { margin: 18px 0 14px; max-width: none; }
+.g-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 28px; font-size: 14px; font-weight: 600; color: var(--ink-muted); }
+
+.g-body {
+  background: var(--card); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 22px;
+  box-shadow: 0 8px 24px rgba(15, 42, 68, 0.06); padding: clamp(22px, 4vw, 44px); font-size: 17.5px; line-height: 1.7;
+}
+.g-body > :first-child { margin-top: 0; }
+.g-body > :last-child { margin-bottom: 0; }
+.g-body h2 { margin: 44px 0 12px; font-size: clamp(24px, 3vw, 30px); letter-spacing: -0.02em; line-height: 1.2; font-weight: 800; scroll-margin-top: 84px; }
+.g-body h3 { margin: 28px 0 8px; font-size: 19px; letter-spacing: -0.01em; scroll-margin-top: 84px; }
+.g-body p, .g-body ul, .g-body ol { margin: 0 0 16px; }
+.g-body li { margin: 4px 0; }
+.g-body li::marker { color: var(--green-ink); font-weight: 700; }
+.g-body a { color: var(--green-ink); font-weight: 600; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.g-body strong { font-weight: 700; }
+.g-body code { font: 600 0.88em ui-monospace, SFMono-Regular, Menlo, monospace; background: rgba(15, 42, 68, 0.07); padding: 2px 6px; border-radius: 6px; }
+.g-body kbd {
+  display: inline-block; min-width: 1.7em; padding: 1px 7px; border-radius: 7px; text-align: center;
+  font: 700 0.82em var(--sans); background: #fff; border: 1px solid rgba(15, 42, 68, 0.18); box-shadow: 0 2px 0 rgba(15, 42, 68, 0.18);
+}
+.g-body table { width: 100%; border-collapse: collapse; margin: 0 0 20px; font-size: 15.5px; }
+.g-body th, .g-body td { text-align: left; padding: 9px 10px; border-bottom: 1px solid rgba(15, 42, 68, 0.1); vertical-align: top; }
+.g-body th { font-weight: 700; color: var(--ink-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Pictures and clips: the porthole's white rim, as rounded frames. */
+.g-fig { margin: 28px auto; }
+.g-fig img, .g-fig video {
+  display: block; width: 100%; height: auto; border-radius: 18px; background: var(--sky);
+  border: 6px solid rgba(255, 255, 255, 0.9); box-shadow: 0 18px 44px rgba(15, 42, 68, 0.18);
+}
+.g-fig.g-tall { max-width: 420px; }
+.g-fig figcaption { margin-top: 10px; text-align: center; font-size: 14.5px; color: var(--ink-muted); line-height: 1.5; }
+.g-hero { margin: 0 0 28px; }
+.g-hero video, .g-hero img { border-width: 8px; border-radius: 26px; box-shadow: 0 30px 80px rgba(15, 42, 68, 0.25); }
+
+.g-callout {
+  margin: 24px 0; padding: 16px 20px; border-radius: 16px; font-size: 16px;
+  background: linear-gradient(150deg, rgba(180, 249, 83, 0.22), rgba(255, 255, 255, 0.6)); border: 1px solid rgba(63, 127, 18, 0.25);
+}
+.g-callout p:last-child { margin-bottom: 0; }
+
+/* ── guide cards (index and "More guides") ── */
+.g-grid { list-style: none; padding: 0; margin: 32px auto 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+.g-card {
+  display: flex; flex-direction: column; height: 100%; text-decoration: none; overflow: hidden;
+  background: var(--card); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 22px;
+  box-shadow: 0 8px 24px rgba(15, 42, 68, 0.06); transition: transform 0.25s, box-shadow 0.25s;
+}
+.g-card:hover { transform: translateY(-4px); box-shadow: 0 16px 36px rgba(15, 42, 68, 0.12); }
+.g-card img { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
+.g-card-body { display: flex; flex-direction: column; gap: 6px; padding: 18px 20px 20px; flex: 1; }
+.g-card-body b { font-size: 19px; letter-spacing: -0.015em; line-height: 1.25; }
+.g-card-body span { color: var(--ink-muted); font-size: 15px; }
+.g-card-body small { margin-top: auto; padding-top: 6px; font-weight: 700; font-size: 13px; color: var(--green-ink); }
+
+.g-index-head { max-width: 820px; margin: 0 auto; padding: 40px 16px 0; text-align: center; }
+.g-index-head .lead { margin: 18px auto 0; }
+.g-index-head .lead a { color: var(--green-ink); font-weight: 700; }
+.g-index { max-width: 1180px; padding: 0 16px 24px; }
+.g-related { max-width: 1180px; margin: 0 auto; padding: 32px 16px 8px; }
+.g-all { text-align: center; margin: 28px 0 0; }
+.g-cta-note { margin: 0; color: var(--ink-muted); max-width: 32em; }
+
+.nav-brand span { white-space: nowrap; }
+@media (max-width: 560px) {
+  .nav-links { display: flex; }
+  .nav-links a { font-size: 14px; }
+  .g-body { padding: 20px 18px; font-size: 16.5px; border-radius: 18px; }
+  .g-fig img, .g-fig video { border-width: 4px; border-radius: 14px; }
+  .g-body table { font-size: 14px; }
+}
+@media (max-width: 420px) {
+  .nav-links { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .g-card { transition: none; }
+  .g-card:hover { transform: none; }
+}
