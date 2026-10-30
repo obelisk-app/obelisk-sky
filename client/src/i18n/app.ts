@@ -31,6 +31,11 @@ const en = {
   // Where the browser can't go full screen (iPhone): turning the phone is the way.
   'rotate.turnTitle': 'Turn your phone sideways',
   'rotate.turnText': 'The village is played in landscape.',
+  // Logged out on a phone held upright: log in first, then turn.
+  'rotate.loginTitle': 'Log in to play',
+  'rotate.loginText': 'Walk the village as yourself. Log in, or make an account in a minute.',
+  'rotate.loginButton': 'Log in or create an account',
+  'rotate.guest': 'Continue as a guest',
   'toast.loginToWalk': 'Log in to walk around as yourself.',
   'ctl.director': 'Auto camera',
   'ctl.director.title': 'Auto-director: follow conversations',
@@ -127,6 +132,10 @@ const es: Record<AppKey, string> = {
   'rotate.hint': 'O girá el teléfono.',
   'rotate.turnTitle': 'Girá el teléfono',
   'rotate.turnText': 'La aldea se juega en horizontal.',
+  'rotate.loginTitle': 'Entrá para jugar',
+  'rotate.loginText': 'Recorré la aldea como vos. Entrá, o creá una cuenta en un minuto.',
+  'rotate.loginButton': 'Entrar o crear una cuenta',
+  'rotate.guest': 'Seguir como invitado',
   'toast.loginToWalk': 'Ingresá para recorrer la aldea con tu personaje.',
   'ctl.director': 'Cámara automática',
   'ctl.director.title': 'Cámara automática: sigue las conversaciones',

@@ -38,5 +38,37 @@ export function initOrientation(card: HTMLElement, doc: Document = document): vo
     }
     return;
   }
-  card.querySelector('button')?.addEventListener('click', () => { void lockLandscape(doc); });
+  card.querySelector('.rotate-go')?.addEventListener('click', () => { void lockLandscape(doc); });
+}
+
+/** What the upright card asks: to log in first, to turn the phone, or nothing (the login is open). */
+export type TiltCard = 'login' | 'tilt' | 'none';
+
+export interface TiltState {
+  /** The login modal is showing, any of its steps. */
+  loginOpen: boolean;
+  /** An account is logged in, or a saved one is still being restored. */
+  loggedIn: boolean;
+  /** "Continue as guest" was picked on the card. */
+  guestChosen: boolean;
+}
+
+export function tiltCardFor(s: TiltState): TiltCard {
+  if (s.loginOpen) return 'none';
+  return s.loggedIn || s.guestChosen ? 'tilt' : 'login';
+}
+
+/** Show the card's side for this state (the CSS still shows it only on a phone held upright). */
+export function setTiltCard(card: HTMLElement, mode: TiltCard, body: HTMLElement = document.body): void {
+  card.dataset.mode = mode === 'login' ? 'login' : 'tilt';
+  card.setAttribute('aria-labelledby', mode === 'login' ? 'rotate-login-title' : 'rotate-title');
+  body.classList.toggle('tilt-wait', mode === 'none');
+}
+
+/** Run `go` now if the phone isn't upright, else once it's turned. */
+export function whenNotUpright(go: () => void, win: Pick<Window, 'matchMedia'> = window): void {
+  const mq = win.matchMedia(PORTRAIT_PHONE);
+  if (!mq.matches) { go(); return; }
+  const turned = () => { if (mq.matches) return; mq.removeEventListener('change', turned); go(); };
+  mq.addEventListener('change', turned);
 }

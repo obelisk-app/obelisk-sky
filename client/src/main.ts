@@ -38,7 +38,7 @@ import { openControlsGuide, maybeShowControlsGuide, isTouch } from './ui/control
 import { obeliskNoteUrl, obeliskProfileUrl } from './ui/obeliskLinks';
 import { onPlaceChange, SETTLE_WALKING } from './ui/chatAuto';
 import { SidePanel } from './ui/sidePanel';
-import { initOrientation, lockLandscape } from './ui/orientation';
+import { initOrientation, lockLandscape, setTiltCard, tiltCardFor, whenNotUpright } from './ui/orientation';
 import { t as tr } from './i18n/app';
 import { wireCard } from './ui/cardSheet';
 import { DmPanel } from './ui/dmPanel';
@@ -350,6 +350,13 @@ const FIRST_STATE_WAIT_MS = 6000;
 const firstState = new FirstState();
 /** The stored session is still being restored (its feed may be about to start). */
 let restoringSession = true;
+/** The login modal is showing (any step); "Continue as a guest" picked on the upright card. */
+let loginOpen = false;
+let guestChosen = false;
+/** A phone held upright: log in first, then turn (ui/orientation.ts). */
+function refreshTilt(): void {
+  setTiltCard($('rotate'), tiltCardFor({ loginOpen, loggedIn: !!session.current || restoringSession, guestChosen }));
+}
 /** Is a first state on its way? A feed is running (or a session is being
  *  restored) and the relay hasn't refused us. A feed of another kind that
  *  sends a snapshot through `handle` counts here too. A snapshot already
@@ -651,6 +658,8 @@ session.onChange((s) => {
   else void loadWallet(s.pubkey);
   if (s && freshLogin) awaitEntry(s);
   else clearTimeout(entryTimer);
+  if (!s) guestChosen = false;
+  refreshTilt();
 });
 
 /** Logged in just now (the modal, not a reload): your entrance is shown. */
@@ -691,7 +700,7 @@ void session.restore().then((ok) => {
   // new account" (its key file saved first), and the session that comes out
   // of it redeems the invite (session.onChange -> redeemStoredInvite).
   if (inviteWaitingForKey(activeRelay())) $('login').click();
-}).finally(() => { restoringSession = false; askInviteRelay(); });
+}).finally(() => { restoringSession = false; refreshTilt(); askInviteRelay(); });
 
 // ── relay invites (nostr/invite.ts) ──────────────────────────────────────
 
@@ -819,8 +828,12 @@ registerHost({
 /** The login module, once loaded (logging out resets it). */
 let loginMount: typeof import('./login/LoginMount') | null = null;
 $('login').addEventListener('click', async () => {
+  // Held from the tap: no card flashes while the module loads.
+  loginOpen = true;
+  refreshTilt();
   loginMount ??= await import('./login/LoginMount');
-  loginMount.openLogin();
+  // Gone (logged in, or closed): logged in, the card asks to turn; closed, to log in again.
+  loginMount.openLogin(undefined, () => { loginOpen = false; refreshTilt(); });
 });
 $('logout').addEventListener('click', () => session.logout());
 $('gate-login').addEventListener('click', () => $('login').click());
@@ -2202,13 +2215,14 @@ function hasOwnLook(pk: string): boolean {
 function maybeWelcome(): void {
   const pk = session.current?.pubkey;
   if (!pk || guestReason() === 'logged-out' || lookAsked(pk)) return;
-  setTimeout(() => {
+  // On a phone held upright the creator waits until it's turned (it's laid out sideways).
+  setTimeout(() => whenNotUpright(() => {
     // Asked meanwhile: a second snapshot (the guest island after a refusal) set its own timer.
     if (hasOwnLook(pk) || session.current?.pubkey !== pk || lookAsked(pk)) return;
     if (document.querySelector('.guide')) { maybeWelcome(); return; }
     try { localStorage.setItem(`${LOOK_ASKED}/${pk}`, '1'); } catch { /* private mode */ }
     openLook(true);
-  }, newAccount === pk ? WELCOME_NEW_MS : 6000);
+  }), newAccount === pk ? WELCOME_NEW_MS : 6000);
 }
 
 // ── games (obelisk-dex tables, kind 2390) ────────────────────────────────
@@ -3148,8 +3162,11 @@ function openCard(build: (body: HTMLElement) => void): void {
 }
 // The × closes it; on a phone the card is a bottom sheet whose grip drags it away.
 wireCard($('card'), () => { $('card').hidden = true; });
-// Phones held upright: a card asks to turn sideways (and can lock it).
+// Phones held upright: a card asks to log in first, then to turn sideways (and can lock it).
 initOrientation($('rotate'));
+$('rotate').querySelector('.rotate-login-go')?.addEventListener('click', () => $('login').click());
+$('rotate').querySelector('.rotate-guest')?.addEventListener('click', () => { guestChosen = true; refreshTilt(); });
+refreshTilt();
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);

@@ -1,18 +1,18 @@
 import Container from '@/components/ui/layout/Container';
-import Card from '@/components/ui/layout/Card';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
 import Link from '@/components/ui/navigation/Link';
 import Reveal from '@/components/ui/animations/Reveal';
 import { LogInIcon } from '@/assets/icons';
+import TourTile from './TourTile';
 import Heading from '@/components/ui/layout/Heading';
 import Text from '@/components/ui/layout/Text';
 
 /**
- * Product preview: desktop + mobile screenshots that link out to the
- * per-device tour pages (/desktop and /mobile). Each card shows a real
- * product screenshot with descriptive alt text for SEO; the CTAs below
- * bounce visitors straight into /app.
+ * Product preview: one tile per device, side by side on md+, each linking to
+ * its tour page (/desktop and /mobile). The top of a tile is a lit stage the
+ * real screenshot rises out of (a browser window, a phone), cropped by the
+ * stage's bottom edge so both tiles keep the same height; the copy sits
+ * below. The CTA under them bounces visitors straight into /app.
  */
 export default function PreviewSection() {
   const t = useTranslations();
@@ -28,78 +28,10 @@ export default function PreviewSection() {
           </Text>
         </div>
 
-        <Container width="5xl" className="space-y-6">
-          {/* Desktop card: image left, content right on lg+ (image on top, content below on small) */}
-          <Card variant="interactive" padding="2xl" asChild>
-            <Link
-              href="/desktop"
-              variant="card"
-              className="group lg:p-8 flex flex-col lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-10 lg:items-center"
-              data-testid="landing-preview-desktop"
-            >
-              <figure className="rounded-xl border border-lc-border overflow-hidden bg-lc-dark">
-                <Image
-                  src="/pictures-for-posts/desktop-channel-chat.png"
-                  alt={t('marketing.landing.preview.desktop.alt')}
-                  width={1470}
-                  height={799}
-                  className="w-full h-auto block transition-transform duration-500 group-hover:scale-[1.015]"
-                  sizes="(max-width: 1024px) 90vw, 600px"
-                />
-              </figure>
-              <div className="mt-6 lg:mt-0 flex flex-col">
-                <span className="self-start inline-flex items-center gap-2 px-3 py-1 rounded-full bg-lc-olive/40 border border-lc-green/20 text-xs font-semibold text-lc-green tracking-wide uppercase">
-                  {t('marketing.landing.preview.desktop.badge')}
-                </span>
-                <Heading as="h3" className="mt-4 text-xl md:text-2xl font-bold text-lc-white">
-                  {t('marketing.landing.preview.desktop.title')}
-                </Heading>
-                <Text as="p" variant="muted" className="mt-2 md:text-base leading-relaxed">
-                  {t('marketing.landing.preview.desktop.desc')}
-                </Text>
-                <span className="mt-6 text-sm font-semibold text-lc-green inline-flex items-center gap-2 group-hover:underline">
-                  {t('marketing.landing.preview.desktop.cta')}
-                  <span aria-hidden="true">→</span>
-                </span>
-              </div>
-            </Link>
-          </Card>
-
-          {/* Mobile card: content left, phone right on lg+ (phone on top, content below on small) */}
-          <Card variant="interactive" padding="2xl" asChild>
-            <Link
-              href="/mobile"
-              variant="card"
-              className="group lg:p-8 flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_220px] lg:gap-10 lg:items-center"
-              data-testid="landing-preview-mobile"
-            >
-              <figure className="lg:order-2 mx-auto w-full max-w-[200px] lg:mx-0 lg:max-w-none lg:w-full rounded-[2rem] border border-lc-border overflow-hidden bg-lc-dark">
-                <Image
-                  src="/pictures-for-posts/mobile-channel-chat.png"
-                  alt={t('marketing.landing.preview.mobile.alt')}
-                  width={720}
-                  height={1600}
-                  className="w-full h-auto block transition-transform duration-500 group-hover:scale-[1.015]"
-                  sizes="(max-width: 1024px) 60vw, 220px"
-                />
-              </figure>
-              <div className="lg:order-1 mt-6 lg:mt-0 flex flex-col">
-                <span className="self-start inline-flex items-center gap-2 px-3 py-1 rounded-full bg-lc-olive/40 border border-lc-green/20 text-xs font-semibold text-lc-green tracking-wide uppercase">
-                  {t('marketing.landing.preview.mobile.badge')}
-                </span>
-                <Heading as="h3" className="mt-4 text-xl md:text-2xl font-bold text-lc-white">
-                  {t('marketing.landing.preview.mobile.title')}
-                </Heading>
-                <Text as="p" variant="muted" className="mt-2 md:text-base leading-relaxed">
-                  {t('marketing.landing.preview.mobile.desc')}
-                </Text>
-                <span className="mt-6 text-sm font-semibold text-lc-green inline-flex items-center gap-2 group-hover:underline">
-                  {t('marketing.landing.preview.mobile.cta')}
-                  <span aria-hidden="true">→</span>
-                </span>
-              </div>
-            </Link>
-          </Card>
+        <Container width="5xl" className="grid gap-6 md:grid-cols-2">
+          {(['desktop', 'mobile'] as const).map((device) => (
+            <TourTile key={device} device={device} />
+          ))}
         </Container>
 
         <div className="mt-10 flex justify-center">

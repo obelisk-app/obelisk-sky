@@ -77,7 +77,7 @@ const ES: Record<string, string> = {
   'Publishing': 'Publicando',
   'Save profile and continue': 'Guardar perfil y seguir',
   'Remember on this device': 'Recordar en este dispositivo',
-  'No NIP-07 extension detected. Install Alby, nos2x, or another Nostr signer extension and reload.': 'No encontramos una extensión NIP-07. Instalá Alby, nos2x u otra extensión firmadora de Nostr y recargá.',
+  'No NIP-07 extension detected. Install the Nostr WoT extension (nostr-wot.com/download), Alby, nos2x or another Nostr signer and reload.': 'No encontramos una extensión NIP-07. Instalá la extensión Nostr WoT (nostr-wot.com/download), Alby, nos2x u otra firmadora de Nostr y recargá.',
   'Signing in': 'Entrando',
   'Sign in': 'Entrar',
 };

@@ -30,7 +30,12 @@ let watchingFocus = false;
 /** Stops translating the SDK's words (Spanish only). */
 let unwatch: (() => void) | null = null;
 
-export function openLogin(onDone?: () => void): void {
+/** Told when the modal goes away: logged in, closed, or reset by a logout. */
+let onClosed: (() => void) | null = null;
+function closed(): void { const f = onClosed; onClosed = null; f?.(); }
+
+export function openLogin(onDone?: () => void, onGone?: () => void): void {
+  onClosed = onGone ?? null;
   // The SDK modal portals to <body>, which carries the theme like the app's.
   document.body.setAttribute('data-nui-root', '');
   document.body.setAttribute('data-nui-theme', 'la-crypta');
@@ -45,7 +50,7 @@ export function openLogin(onDone?: () => void): void {
   }
   // The SDK's own words are English only: swap them while the modal is open.
   if (lang === 'es') { unwatch?.(); unwatch = watchSdk(document.body); }
-  const close = () => { root?.render(null); unwatch?.(); unwatch = null; };
+  const close = () => { root?.render(null); unwatch?.(); unwatch = null; closed(); };
   root.render(<LoginModal onClose={close} onSuccess={() => { close(); onDone?.(); }} headerSlot={SKY_MARK} keyFilePrefix="obelisk-sky" />);
 }
 
@@ -59,5 +64,6 @@ export function resetLogin(): void {
   root?.render(null);
   unwatch?.();
   unwatch = null;
+  closed();
   loginSignerStorage.removeItem(SIGNER_STORAGE_KEY_NIP46);
 }

@@ -10,15 +10,17 @@ import FeaturesSection from '@/components/marketing/landing/FeaturesSection';
 import LandingHero from '@/components/marketing/landing/LandingHero';
 import LearnSection from '@/components/marketing/landing/LearnSection';
 import PostQuantumSection from '@/components/marketing/landing/PostQuantumSection';
+import ProductStage from '@/components/marketing/landing/ProductStage';
 import PreviewSection from '@/components/marketing/landing/PreviewSection';
 import RelayPulse from '@/assets/illustrations/marketing/RelayPulse';
-import RoadmapSection from '@/components/marketing/landing/RoadmapSection';
 import SocialSection from '@/components/marketing/landing/SocialSection';
 import StackSection from '@/components/marketing/landing/StackSection';
 import StepsSection from '@/components/marketing/landing/StepsSection';
 import JsonLd from '@/components/seo/JsonLd';
+import { cachedGuideList } from '@/services/guides/cached-guides';
 
 // Sister project (server-backed variant): https://classic.obelisk.ar
+// The roadmap (RoadmapSection) is hidden from the landing and the navbar for now; the section is kept.
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -28,6 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function Page() {
   const locale = await getLocale();
   const t = await getTranslations({ locale });
+  const guides = await cachedGuideList(locale);
   return (
     <>
       <JsonLd data={webApplicationNode(locale, t('seo.site.jsonLd.appDescription'))} />
@@ -35,14 +38,14 @@ export default async function Page() {
         <ShootingStars />
         <div className="relative z-10">
           <LandingHero />
+          <ProductStage />
           <DemoVideoSection />
           <SocialSection />
           <RelayPulse />
           <PreviewSection />
           <FeaturesSection />
           <StepsSection />
-          <RoadmapSection />
-          <LearnSection />
+          <LearnSection guides={guides} />
           <StackSection />
           <CtaSection />
           <FaqSection />

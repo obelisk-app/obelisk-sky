@@ -216,11 +216,20 @@
     </div>
     <div id="toasts" class="toasts" aria-live="polite"></div>
     <div id="rotate" class="rotate" role="dialog" aria-modal="true" aria-labelledby="rotate-title">
-      <div class="rotate-phone" aria-hidden="true"><img src="/brand/sky-mark.svg" alt="" /></div>
-      <div id="rotate-title" class="rotate-title" data-i18n="rotate.title">Play in full screen</div>
-      <div class="rotate-text" data-i18n="rotate.text">Tap the button: the village opens full screen, sideways.</div>
-      <button type="button" class="rotate-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg><span data-i18n="rotate.button">Play in full screen</span></button>
-      <div class="rotate-hint" data-i18n="rotate.hint">Or turn your phone sideways.</div>
+      <div class="rotate-login">
+        <div class="rotate-mark" aria-hidden="true"><img src="/brand/sky-mark.svg" alt="" /></div>
+        <div id="rotate-login-title" class="rotate-title" data-i18n="rotate.loginTitle">Log in to play</div>
+        <div class="rotate-text" data-i18n="rotate.loginText">Walk the village as yourself. Log in, or make an account in a minute.</div>
+        <button type="button" class="rotate-login-go" data-i18n="rotate.loginButton">Log in or create an account</button>
+        <button type="button" class="rotate-guest" data-i18n="rotate.guest">Continue as a guest</button>
+      </div>
+      <div class="rotate-tilt">
+        <div class="rotate-phone" aria-hidden="true"><img src="/brand/sky-mark.svg" alt="" /></div>
+        <div id="rotate-title" class="rotate-title" data-i18n="rotate.title">Play in full screen</div>
+        <div class="rotate-text" data-i18n="rotate.text">Tap the button: the village opens full screen, sideways.</div>
+        <button type="button" class="rotate-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg><span data-i18n="rotate.button">Play in full screen</span></button>
+        <div class="rotate-hint" data-i18n="rotate.hint">Or turn your phone sideways.</div>
+      </div>
     </div>
     <div id="wipe" class="wipe"></div>
   </div>
