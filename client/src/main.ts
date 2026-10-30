@@ -696,10 +696,12 @@ void session.restore().then((ok) => {
   if (ok) return;
   renderAccount(null);
   startGuest('logged-out');
-  // Came in on a fresh invite with no account: the login opens at "Create a
-  // new account" (its key file saved first), and the session that comes out
-  // of it redeems the invite (session.onChange -> redeemStoredInvite).
-  if (inviteWaitingForKey(activeRelay())) $('login').click();
+  // Came in on an invite link (this visit, or a stored one no key has used
+  // yet) with no account: the login opens at "Create a new account" (its key
+  // file saved first), and the session that comes out of it redeems the
+  // invite (session.onChange -> redeemStoredInvite). An unknown relay is
+  // asked about first (askInviteRelay opens the login after "Go").
+  if (!inviteRelayToConfirm && (inviteRelay || inviteWaitingForKey(activeRelay()))) $('login').click();
 }).finally(() => { restoringSession = false; refreshTilt(); askInviteRelay(); });
 
 // ── relay invites (nostr/invite.ts) ──────────────────────────────────────
@@ -745,7 +747,7 @@ function askInviteRelay(): void {
       $('card').hidden = true;
       if (!knownRelays().includes(relay)) prefs.set({ customRelays: [...prefs.get().customRelays, relay] });
       switchRelay(relay);
-      if (!session.current && inviteWaitingForKey(relay)) $('login').click();
+      if (!session.current) $('login').click();
     });
     const stay = el('button', 'pill', `${vw.invite.relayAsk.stay} (${here})`);
     stay.type = 'button';
