@@ -77,6 +77,7 @@ import { parseZapCommand, zapCommandMessage } from './wallet/zapCommand';
 import { EmoteMusic } from './audio/emoteMusic';
 import { PlaceMusic } from './audio/placeMusic';
 import { Minimap, type MapPlace } from './ui/minimap';
+import { enterAction, isControl } from './ui/enterKey';
 import { ALL_MODELS, preload } from './world/assets';
 import { defaultLook, preloadPeople } from './people/people';
 import type { LandmarkId } from './world/landmarks';
@@ -1476,7 +1477,11 @@ window.addEventListener('keydown', (e) => {
   if (isTyping(e.target)) return;
   if (emoteMenu.key(e.key)) { e.preventDefault(); return; }
   if (e.key.toLowerCase() === 'g' && !e.ctrlKey && !e.metaKey && world.playerPk) emoteMenu.toggle();
-  if (e.key === 'Enter' && chat.groupId) { e.preventDefault(); chat.focusComposer(); }
+  // Enter / Return: type in the chat that's open, else open the relay's general chat ready to type in
+  // (issue #6; not over a dialog, and not when Enter is pressing a focused button such as the minimap).
+  const enter = enterAction({ key: e.key, mod: e.ctrlKey || e.metaKey || e.altKey, dialog: e.key === 'Enter' && dialogShowing(), onControl: isControl(e.target), chatOpen: !!chat.groupId && !chat.el.hidden });
+  if (enter === 'focus-chat') { e.preventDefault(); chat.focusComposer(); }
+  else if (enter === 'open-general' && openGeneralChat()) e.preventDefault();
   // E: sit down for a mate on the nearest bench or stool (or stand up).
   if (e.key.toLowerCase() === 'e' && controller && world.playerPk) toggleSeat();
   // F: climb on the nearest nostrich (or get off).
@@ -1486,14 +1491,12 @@ window.addEventListener('keydown', (e) => {
   if (e.key === '?' || (e.key === '/' && e.shiftKey)) openControlsGuide($('app'));
   if (e.key.toLowerCase() === 'v' && world.playerPk) toggleFirstPerson();
   if (e.key.toLowerCase() === 'c' && chatHint) openHintedChat();
-  // T: the relay's general chat, ready to type in (not over a dialog; the "t" isn't typed into it).
-  if (e.key.toLowerCase() === 't' && !e.ctrlKey && !e.metaKey && !e.altKey && !dialogShowing() && openGeneralChat()) e.preventDefault();
   if (e.key.toLowerCase() === 'm' && nearPk) { e.preventDefault(); openDm(nearPk); }
   // N: the minimap on or off.
   if (e.key.toLowerCase() === 'n' && !e.ctrlKey && !e.metaKey) prefs.set({ minimap: !prefs.get().minimap });
   // Esc releases the mouse first (the browser does that); a second Esc leaves first person.
   if (e.key === 'Escape' && world.cam.firstPerson && !document.pointerLockElement) toggleFirstPerson();
-  // Esc closes the general chat T opened (a card, the menu or first person go first).
+  // Esc closes the general chat Enter opened (a card, the menu or first person go first).
   if (e.key === 'Escape' && !world.cam.firstPerson && $('card').hidden && !document.body.classList.contains('menu-open') && !dialogShowing()) closeGeneralChat();
 });
 
@@ -1575,7 +1578,7 @@ $('tab-channels').addEventListener('click', () => { side.toggle('channels'); ren
 $('tab-members').addEventListener('click', () => { side.toggle('members'); renderTabs(); });
 side.onToggle = renderTabs;
 
-/** The relay's general chat (nostr/generalChat.ts): T opens it, and its messages show wherever you stand. */
+/** The relay's general chat (nostr/generalChat.ts): Enter opens it, and its messages show wherever you stand. */
 function generalChatId(): string | null {
   return pickGeneralChat(groups, isGuest() ? EMPTY_LAYOUT : themes?.layout ?? EMPTY_LAYOUT);
 }

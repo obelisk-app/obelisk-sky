@@ -25,8 +25,7 @@ const DESKTOP_EN: { title: string; rows: Row[] }[] = [
     title: 'Talk',
     rows: [
       { keys: ['Walk in'], text: 'Stand in front of a building to open its channel' },
-      { keys: ['T'], text: 'Open the general chat: everyone sees it, wherever they are; Esc closes it' },
-      { keys: ['Enter'], text: 'Type a message in the channel you are in' },
+      { keys: ['Enter'], text: 'Open the general chat (or type in the chat that\'s open): everyone sees it, wherever they are; Esc closes it' },
       { keys: ['Click'], text: 'Click a speech bubble to reply; you walk over to them' },
       { keys: ['Click'], text: 'Click a sign or building to walk to that channel' },
     ],
@@ -93,8 +92,7 @@ const DESKTOP_ES: { title: string; rows: Row[] }[] = [
     title: 'Hablar',
     rows: [
       { keys: ['Acercate'], text: 'Parate frente a una casa para abrir su canal' },
-      { keys: ['T'], text: 'Abrí el chat general: lo ve todo el mundo, esté donde esté; Esc lo cierra' },
-      { keys: ['Enter'], text: 'Escribí un mensaje en el canal donde estás' },
+      { keys: ['Enter'], text: 'Abrí el chat general (o escribí en el chat abierto): lo ve todo el mundo, esté donde esté; Esc lo cierra' },
       { keys: ['Clic'], text: 'Hacé clic en un globo para responder; caminás hasta esa persona' },
       { keys: ['Clic'], text: 'Hacé clic en un cartel o una casa para ir a ese canal' },
     ],
