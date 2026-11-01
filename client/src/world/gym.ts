@@ -3,6 +3,9 @@
 // machines are training stations like the park's (world.ts `stations`), so
 // several people train at once, each on their own machine.
 //
+// A power tower (pull-up bar and dip bars) stands in the front-left corner
+// and a deadlift platform in the front-right, both seen through the glass.
+//
 // It wears openGym's look (github.com/DuarteSantos8/openGym, the self-hosted
 // gym tracker): near-black cladding, lime accents, the lime dumbbell and the
 // "openGym" wordmark over the door, a screen on the back wall with the app's
@@ -36,8 +39,10 @@ export interface GymStation {
   at: Vec2;
   /** Which way the person faces (atan2(dx, dz), local). */
   face: number;
-  /** Bench height (lying), or 0 (standing). */
+  /** Bench height (lying), the bar's height (pull-ups, dips), or 0 (standing). */
   grip: number;
+  /** Parallel bars: half the distance between them. */
+  half?: number;
   kinds: ExerciseKind[];
   /** The bar resting on the machine, hidden while someone lifts it. */
   rest?: THREE.Object3D;
@@ -66,6 +71,10 @@ export function gymLights(night: number): { lamp: number; strip: number; glass: 
 
 /** The bench's height: the person lies on it. */
 export const BENCH_TOP = 0.2;
+/** The pull-up bar and the dip bars, above the hall's floor (as the park's). */
+export const PULL_BAR = 1.09;
+export const DIP_BAR = 0.47;
+export const DIP_HALF = 0.11;
 
 /** openGym's palette (its banner and app icon). */
 export const OPENGYM = { ink: 0x0c0e12, panel: 0x161a21, edge: 0x2b3140, lime: 0xa3e635, green: 0x30d158 } as const;
@@ -194,10 +203,11 @@ export function buildGym(slot: Slot, roofColor: number): GymBuild {
   const pad = mat(0x15161a, { roughness: 0.8 });
   const accent = mat(OPENGYM.lime, { roughness: 0.5 });
 
-  // Bench press: the bench runs front to back, the lifter lies with the feet
-  // toward the door; uprights at the head hold the bar.
+  // Bench press, back right under the app's screen (the bench is low, so the
+  // screen stays in view): the bench runs front to back, the lifter lies with
+  // the feet toward the door; uprights at the head hold the bar.
   {
-    const x = -W / 4 + 0.02, z = -D / 4 + 0.15;
+    const x = W / 4 - 0.02, z = -D / 4 + 0.15;
     const g = new THREE.Group();
     g.position.set(x, F, z);
     group.add(g);
@@ -225,12 +235,12 @@ export function buildGym(slot: Slot, roofColor: number): GymBuild {
     solids.push({ x, z: z - 0.1, hx: 0.12, hz: 0.42, top: F + BENCH_TOP });
     // The lifter's hips sit on the bench's front half; the head toward the uprights.
     // Grip: the bench top above the floor you stand on (the floor is raised ground).
-    stations.push({ at: { x, z: z + 0.12 }, face: 0, grip: BENCH_TOP, kinds: ['benchpress'], rest, approach: { x: x + 0.3, z: z + 0.15 } });
+    stations.push({ at: { x, z: z + 0.12 }, face: 0, grip: BENCH_TOP, kinds: ['benchpress'], rest, approach: { x: x - 0.3, z: z + 0.15 } });
   }
 
-  // Squat rack: four posts and safety bars, facing the mirror.
+  // Squat rack, back left: four posts and safety bars, facing the mirror.
   {
-    const x = W / 4 - 0.02, z = -D / 4 + 0.05;
+    const x = -W / 4 + 0.02, z = -D / 4 + 0.05;
     const g = new THREE.Group();
     g.position.set(x, F, z);
     group.add(g);
@@ -254,7 +264,7 @@ export function buildGym(slot: Slot, roofColor: number): GymBuild {
     rest.position.set(0, 0.58, -0.2);
     g.add(rest);
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) solids.push({ x: x + sx * 0.3, z: z + sz * 0.22, hx: 0.04, hz: 0.04, top: F + 1.0 });
-    stations.push({ at: { x, z: z + 0.02 }, face: Math.PI, grip: 0, kinds: ['squat'], rest, approach: { x, z: z + 0.5 } });
+    stations.push({ at: { x, z: z + 0.02 }, face: Math.PI, grip: 0, kinds: ['squat'], rest, approach: { x: x + 0.34, z: z + 0.36 } });
   }
 
   // Dumbbell rack along the back wall, and a curl spot in front of the mirror.
@@ -275,13 +285,70 @@ export function buildGym(slot: Slot, roofColor: number): GymBuild {
       }
     }
     solids.push({ x: 0, z, hx: W * 0.25, hz: 0.1, top: F + 0.27 });
-    stations.push({ at: { x: 0, z: D / 4 - 0.05 }, face: Math.PI, grip: 0, kinds: ['curl'], approach: { x: 0, z: D / 4 + 0.35 } });
-    // Kettlebells in a corner.
+    // The curl spot: between the bench and the rack, facing the mirror.
+    stations.push({ at: { x: 0, z: 0 }, face: Math.PI, grip: 0, kinds: ['curl'], approach: { x: 0, z: 0.4 } });
+    // Kettlebells in the front-right corner, by the glass.
     const kb = mat(0x2b2e34, { metalness: 0.4, roughness: 0.5 });
     for (let i = 0; i < 3; i++) {
       const k = new THREE.Mesh(new THREE.SphereGeometry(0.045 + i * 0.008, 10, 8), kb);
-      add(k, -W / 2 + 0.2 + i * 0.13, F + 0.05, D / 2 - 0.25);
+      add(k, W / 2 - 0.2 - i * 0.13, F + 0.05, D / 2 - 0.16);
     }
+  }
+
+  // The power tower, front-left: a pull-up bar between two tall posts (the
+  // lifter hangs facing the glass front), and dip bars beside it, running
+  // across the hall.
+  {
+    const pz = D / 2 - 0.42, x0 = -W / 2 + 0.14, x1 = x0 + 0.46;
+    const pullX = (x0 + x1) / 2;
+    for (const px of [x0, x1]) {
+      const post = box(0.045, PULL_BAR + 0.06, 0.045, steel);
+      add(post, px, F + (PULL_BAR + 0.06) / 2, pz);
+      for (const fz of [-0.16, 0.16]) add(box(0.04, 0.03, 0.04, steel), px, F + 0.015, pz + fz);
+      add(box(0.045, 0.03, 0.36, steel), px, F + 0.015, pz);
+      solids.push({ x: px, z: pz, hx: 0.03, hz: 0.03, top: F + PULL_BAR + 0.06 });
+    }
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, x1 - x0 + 0.04, 10), steel);
+    bar.rotation.z = Math.PI / 2;
+    add(bar, pullX, F + PULL_BAR, pz);
+    // Lime grips on the bar, and a lime band on each post.
+    for (const gx of [-0.13, 0.13]) {
+      const g = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.09, 10), accent);
+      g.rotation.z = Math.PI / 2;
+      add(g, pullX + gx, F + PULL_BAR, pz);
+    }
+    for (const px of [x0, x1]) add(box(0.05, 0.05, 0.05, accent), px, F + 0.7, pz);
+    stations.push({ at: { x: pullX, z: pz }, face: 0, grip: PULL_BAR, kinds: ['pullup'], approach: { x: pullX + 0.05, z: pz - 0.32 } });
+
+    // Dip bars: two rails along x, held by short posts at each end. The
+    // lifter faces +x (inward), between the rails.
+    const dz = pz - 0.38, dx0 = -W / 2 + 0.14, dx1 = dx0 + 0.42;
+    for (const s of [-1, 1]) {
+      const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, dx1 - dx0, 10), accent);
+      rail.rotation.z = Math.PI / 2;
+      add(rail, (dx0 + dx1) / 2, F + DIP_BAR, dz + s * DIP_HALF);
+      for (const px of [dx0, dx1]) {
+        add(box(0.035, DIP_BAR, 0.035, steel), px, F + DIP_BAR / 2, dz + s * DIP_HALF);
+        solids.push({ x: px, z: dz + s * DIP_HALF, hx: 0.025, hz: 0.025, top: F + DIP_BAR });
+      }
+    }
+    stations.push({ at: { x: (dx0 + dx1) / 2 + 0.06, z: dz }, face: Math.PI / 2, grip: DIP_BAR, half: DIP_HALF, kinds: ['dip'], approach: { x: dx1 + 0.3, z: dz } });
+  }
+
+  // The deadlift platform, front-right: a wooden centre between black rubber
+  // sides, lime edges, a loaded bar on the floor. The lifter faces the glass.
+  {
+    const x = W / 4 + 0.04, z = D / 2 - 0.5;
+    const PW = 0.62, PD = 0.5;
+    const plat = add(box(PW, 0.008, PD, mat(0x1a1c21, { roughness: 1 })), x, F + 0.004, z);
+    plat.castShadow = false;
+    const wood = add(box(PW * 0.42, 0.01, PD, mat(0xa77b4f, { roughness: 0.8 })), x, F + 0.005, z);
+    wood.castShadow = false;
+    for (const sz of [-1, 1]) add(box(PW, 0.012, 0.02, accent), x, F + 0.006, z + sz * (PD / 2 - 0.01)).castShadow = false;
+    const rest = buildBarbell(0.68, 0.07);
+    rest.position.set(x, F + 0.07, z + 0.11);
+    group.add(rest);
+    stations.push({ at: { x, z: z - 0.02 }, face: 0, grip: 0, kinds: ['deadlift'], rest, approach: { x: x - 0.32, z: z - 0.32 } });
   }
 
   // Open 24 hours: strip lights along the ceiling are always on (they glow,

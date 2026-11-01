@@ -38,7 +38,7 @@ const en = {
   firstPersonKeys: 'First person: click to look with the mouse, WASD to walk, V or Esc to leave.',
   exercise: {
     pullup: 'pull-ups', muscleup: 'muscle-ups', dip: 'dips', pushup: 'push-ups',
-    benchpress: 'bench press', squat: 'squats', curl: 'curls', run: 'laps',
+    benchpress: 'bench press', squat: 'squats', curl: 'curls', deadlift: 'deadlifts', run: 'laps',
   } as Record<string, string>,
   noSeat: 'No free seat nearby. Benches are around the plaza, by the pond and at the campfire.',
   laps: (n: number, touch: boolean) => `Running laps · ${plural(n, 'lap', 'laps')} · ${touch ? 'tap or steer to stop' : 'E or steer to stop'}`,
@@ -130,7 +130,7 @@ const en = {
   },
   opengym: {
     sub: 'Self-hosted gym & body-weight tracker',
-    about: 'Plan your week, log every set and see which muscles you trained. Free, open source, no ads, no subscription: an Android app, or self-host it with Docker. The village gym wears its colours: walk in and press E at the bench, the squat rack or the curls.',
+    about: 'Plan your week, log every set and see which muscles you trained. Free, open source, no ads, no subscription: an Android app, or self-host it with Docker. The village gym wears its colours: walk in and press E at the bench, the squat rack, the deadlift platform, the pull-up bar, the dip bars or the curls.',
   },
   invite: {
     title: 'Invite people',
@@ -325,6 +325,11 @@ const en = {
   uncategorized: 'Uncategorized',
   backToChannels: 'Back to channels',
   minimapOpen: 'Map: click to open it big',
+  /** The map's marks (ui/mapIcons.ts), named on the big map. */
+  mapPlaces: {
+    lacrypta: 'La Crypta', nostrwot: 'Nostr WoT', coffee: 'Café', parrilla: 'Parrilla', liberture: 'Liberture', theater: 'Cinema', labitconf: 'LABITCONF',
+    gym: 'openGym', plaza: 'Plaza', park: 'Calisthenics park', track: 'Running track', pond: 'Pond', campfire: 'Campfire', mill: 'Watermill',
+  },
   showPublications: 'Show publications',
   hidePublications: 'Hide publications',
   backToForum: (name: string) => `Back to ${name}`,
@@ -445,7 +450,7 @@ const es: VillageWords = {
   firstPersonKeys: 'Primera persona: hacé clic para mirar con el mouse, WASD para caminar, V o Esc para salir.',
   exercise: {
     pullup: 'dominadas', muscleup: 'muscle-ups', dip: 'fondos', pushup: 'flexiones',
-    benchpress: 'press de banca', squat: 'sentadillas', curl: 'curls de bíceps', run: 'vueltas',
+    benchpress: 'press de banca', squat: 'sentadillas', curl: 'curls de bíceps', deadlift: 'peso muerto', run: 'vueltas',
   },
   noSeat: 'No hay lugar libre cerca. Hay bancos alrededor de la plaza, junto al estanque y en el fogón.',
   laps: (n, touch) => `Corriendo · ${plural(n, 'vuelta', 'vueltas')} · ${touch ? 'tocá o mové para parar' : 'E o moverte para parar'}`,
@@ -533,7 +538,7 @@ const es: VillageWords = {
   },
   opengym: {
     sub: 'Gimnasio autoalojado y registro de peso',
-    about: 'Planeá tu semana, anotá cada serie y mirá qué músculos entrenaste. Libre, de código abierto, sin publicidad ni suscripción: una app de Android, o alojalo vos con Docker. El gimnasio de la aldea lleva sus colores: entrá y apretá E en el banco, el rack de sentadillas o los curls.',
+    about: 'Planeá tu semana, anotá cada serie y mirá qué músculos entrenaste. Libre, de código abierto, sin publicidad ni suscripción: una app de Android, o alojalo vos con Docker. El gimnasio de la aldea lleva sus colores: entrá y apretá E en el banco, el rack de sentadillas, la plataforma de peso muerto, la barra de dominadas, las paralelas o los curls.',
   },
   invite: {
     title: 'Invitar personas',
@@ -722,6 +727,10 @@ const es: VillageWords = {
   uncategorized: 'Sin categoría',
   backToChannels: 'Volver a los canales',
   minimapOpen: 'Mapa: hacé clic para agrandarlo',
+  mapPlaces: {
+    lacrypta: 'La Crypta', nostrwot: 'Nostr WoT', coffee: 'Café', parrilla: 'Parrilla', liberture: 'Liberture', theater: 'Cine', labitconf: 'LABITCONF',
+    gym: 'openGym', plaza: 'Plaza', park: 'Parque de calistenia', track: 'Pista de atletismo', pond: 'Estanque', campfire: 'Fogón', mill: 'Molino',
+  },
   showPublications: 'Mostrar publicaciones',
   hidePublications: 'Ocultar publicaciones',
   backToForum: (name) => `Volver a ${name}`,

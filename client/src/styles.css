@@ -645,8 +645,17 @@ body.watching .controls, body.watching .feed, body.watching #dock > :not(#callba
 .mm-house .mm-name { font: 700 0.8px var(--sans); fill: var(--ink); stroke: rgba(255, 255, 255, 0.9); stroke-width: 0.22; paint-order: stroke; pointer-events: none; }
 .minimap.big .mm-house { cursor: pointer; }
 .minimap.big .mm-house:hover path { fill: #ffffff; stroke-width: 0.35; }
-.mm-landmark path { fill: var(--lm); stroke: #fff; stroke-width: 0.2; }
-.mm-landmark text { font: 700 1px var(--sans); fill: #fff; }
+/* Landmarks and places (ui/mapIcons.ts): a disc in the place's colour, a pictogram in its ink. */
+.mm-mark .mm-disc { fill: var(--mk); stroke: #fff; stroke-width: 0.2; }
+.mm-mark .mm-fill { fill: var(--ink); }
+.mm-mark .mm-stroke { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.mm-mark .mm-glyph { font: 800 17px var(--sans); fill: var(--ink); }
+.mm-mark .mm-mark-name { font-size: 0.85px; font-weight: 800; }
+.mm-gym .mm-disc { stroke: #a3e635; }
+.minimap.big .mm-mark { cursor: pointer; }
+.minimap.big .mm-mark:hover .mm-disc { stroke-width: 0.35; }
+/* The corner map is zoomed in round you: the houses read as small and quiet under the icons. */
+.minimap:not(.big) .mm-house path { stroke-width: 0.3; }
 .mm-person { fill: #1e6fb8; stroke: #fff; stroke-width: 0.12; }
 .mm-me path { fill: #ff4d2e; stroke: #fff; stroke-width: 0.22; stroke-linejoin: round; }
 /* Out of the way: under the guest banner, and while the members drawer has the corner. */

@@ -162,6 +162,24 @@ describe('gym lifts', () => {
     expect(palmY(up)).toBeGreaterThan(palmY(down) + 0.2);
     expect(palmY(down)).toBeGreaterThan(y(down, 'spine_01') - 0.05); // the bar stays above the chest
   });
+  it('deadlifts hinge at the hips: feet planted, the bar from near the floor to the thighs, in front of the shins', () => {
+    const clip = buildExerciseClip('deadlift', figure(), 0);
+    const top = poseAt(clip, 0), low = poseAt(clip, 1.6);
+    const sole = (f: THREE.Object3D) => Math.min(y(f, 'foot_l'), y(f, 'foot_r'), y(f, 'ball_l'), y(f, 'ball_r'));
+    const rest = sole(figure());
+    for (const f of [top, low]) {
+      expect(sole(f)).toBeCloseTo(rest, 2);
+      expect(Math.abs(pos(f, 'foot_l').z)).toBeLessThan(0.05);
+      // The bar never goes behind the legs.
+      expect((pos(f, 'hand_l').z + pos(f, 'hand_r').z) / 2).toBeGreaterThan(pos(f, 'calf_l').z - 0.05);
+    }
+    // Standing tall at the top: the bar at the thighs, the head well up.
+    expect(palmY(top)).toBeGreaterThan(0.55);
+    expect(palmY(top)).toBeLessThan(0.95);
+    // At the bottom the bar is down by the shins and the head drops.
+    expect(palmY(low)).toBeLessThan(0.45);
+    expect(y(low, 'Head')).toBeLessThan(y(top, 'Head') - 0.35);
+  });
   it('counts reps for every exercise', () => {
     for (const k of Object.keys(EXERCISES) as (keyof typeof EXERCISES)[]) {
       const keys = EXERCISES[k].keys;

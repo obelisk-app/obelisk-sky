@@ -16,7 +16,7 @@
 
 import * as THREE from 'three';
 
-export type ExerciseKind = 'pushup' | 'pullup' | 'muscleup' | 'dip' | 'benchpress' | 'squat' | 'curl';
+export type ExerciseKind = 'pushup' | 'pullup' | 'muscleup' | 'dip' | 'benchpress' | 'squat' | 'curl' | 'deadlift';
 
 type Dir = [number, number, number];
 export interface PoseSpec {
@@ -86,6 +86,15 @@ const SQUAT_LOW: PoseSpec = { pitch: 0.55, hands: BACK_HANDS, aim: merge(BAR_ON_
 // Curls: elbows at the sides, forearms up to the shoulders and down.
 const CURL_DOWN: PoseSpec = { hands: { dir: [0, -1, 0.15], palm: [0, 0.15, 1], curl: 0.85 }, aim: merge(both('upperarm', [0.12, -1, 0.05]), both('lowerarm', [0.06, -1, 0.2]), STRAIGHT_LEGS) };
 const CURL_UP: PoseSpec = { hands: { dir: [0, 0.45, 1], palm: [0, 1, -0.45], curl: 0.85 }, aim: merge(both('upperarm', [0.12, -1, 0.12]), both('lowerarm', [0.05, 0.45, 1]), STRAIGHT_LEGS) };
+
+// Deadlift: the bar from the floor to the hips. At the bottom the body hinges
+// forward (pitch), so the aims are written in the leaning body's frame: there
+// world-down is (0, -cos p, sin p). Arms hang straight down to the bar, thighs
+// go down and a little forward, shins lean the knees over the bar.
+const DL_HANDS_TOP = { dir: [0, -1, 0.05] as Dir, palm: [0, 0.05, -1] as Dir, curl: 0.9 };
+const DL_TOP: PoseSpec = { pitch: 0.04, hands: DL_HANDS_TOP, aim: merge(both('upperarm', [0.1, -1, 0.06]), both('lowerarm', [0.06, -1, 0.1]), STRAIGHT_LEGS) };
+const DL_HANDS_LOW = { dir: [0, -0.455, 0.89] as Dir, palm: [0, -0.87, -0.5] as Dir, curl: 0.9 };
+const DL_LOW: PoseSpec = { pitch: 1.05, hands: DL_HANDS_LOW, aim: merge(both('upperarm', [0.1, -0.455, 0.89]), both('lowerarm', [0.06, -0.455, 0.89]), both('thigh', [0.08, 0.4, 0.92]), both('calf', [0.02, -0.73, 0.68])) };
 
 // The lotus pose (an emote, not an exercise): sitting cross-legged on the
 // ground, knees out to the sides, each shin crossed in front of the other,
@@ -210,6 +219,7 @@ export const EXERCISES: Record<ExerciseKind, { keys: Key[]; grip: 'bar' | 'floor
   pushup: { label: 'Push-ups', grip: 'floor', keys: [{ t: 0, pose: PLANK_UP }, { t: 0.8, pose: PLANK_DOWN }, { t: 1.0, pose: PLANK_DOWN }, { t: 1.8, pose: PLANK_UP }] },
   benchpress: { label: 'Bench press', grip: 'lie', keys: [{ t: 0, pose: PRESS_UP }, { t: 1.1, pose: PRESS_DOWN }, { t: 1.35, pose: PRESS_DOWN }, { t: 2.3, pose: PRESS_UP }, { t: 2.7, pose: PRESS_UP }] },
   squat: { label: 'Squats', grip: 'stand', keys: [{ t: 0, pose: SQUAT_UP }, { t: 1.2, pose: SQUAT_LOW }, { t: 1.4, pose: SQUAT_LOW }, { t: 2.4, pose: SQUAT_UP }, { t: 2.8, pose: SQUAT_UP }] },
+  deadlift: { label: 'Deadlifts', grip: 'stand', keys: [{ t: 0, pose: DL_TOP }, { t: 0.5, pose: DL_TOP }, { t: 1.5, pose: DL_LOW }, { t: 1.75, pose: DL_LOW }, { t: 2.7, pose: DL_TOP }] },
   curl: { label: 'Curls', grip: 'stand', keys: [{ t: 0, pose: CURL_DOWN }, { t: 0.9, pose: CURL_UP }, { t: 1.1, pose: CURL_UP }, { t: 2.0, pose: CURL_DOWN }] },
 };
 

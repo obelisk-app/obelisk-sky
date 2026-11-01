@@ -377,7 +377,7 @@ export class World {
         const moving = findDynamic(gb.group, (mark) => {
           gb.interior.setDoor(1); mark(); gb.interior.setInside(true); mark(); gb.interior.setInside(false); gb.interior.setDoor(0);
         });
-        this.meshesMerged += mergeStatic(gb.group, (m) => moving.has(m) || m.name === 'roof' || m.name === 'gym-glass' || gb.windows.includes(m));
+        this.meshesMerged += mergeStatic(gb.group, (m) => moving.has(m) || m.name === 'roof' || m.name === 'gym-glass' || m.name === 'gym-strip' || gb.windows.includes(m));
         this.setGym(gb, g.id, slot);
       }
       // A house is dozens of little pieces: draw them as a handful (the roof
@@ -838,7 +838,7 @@ export class World {
     if (!b || !id || !slot) return;
     for (const st of b.stations) {
       this.stations.push({
-        pos: this.buildingToWorld(slot, st.at), face: st.face + slot.rot, grip: st.grip, kinds: st.kinds, taken: null,
+        pos: this.buildingToWorld(slot, st.at), face: st.face + slot.rot, grip: st.grip, half: st.half, kinds: st.kinds, taken: null,
         gym: id, approach: this.buildingToWorld(slot, st.approach), rest: st.rest,
       });
     }
@@ -1075,6 +1075,11 @@ export class World {
   }
 
   /** A landmark's slot (for walking there) and where its resident stands. */
+  /** The nearest spot someone can stand on (a map place in the pond, under a roof…), or null. */
+  walkableNear(p: Vec2): Vec2 | null {
+    return this.grid.nearestWalkable(p);
+  }
+
   landmarkSlot(id: LandmarkId): Slot | null {
     return this.landmarkSlots.get(id) ?? null;
   }

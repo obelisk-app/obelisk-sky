@@ -36,7 +36,7 @@ export const DEBOUNCE_MS = 300;
 export type EmoteActivity = `emote:${EmoteKind}`;
 /** `ride`: on a nostrich (remote signers only: everyone else says so in their motion). */
 export type ActivityKind = ExerciseKind | 'sit' | 'run' | 'ride' | EmoteActivity;
-const KINDS: readonly ActivityKind[] = ['pushup', 'pullup', 'muscleup', 'dip', 'benchpress', 'squat', 'curl', 'sit', 'run'];
+const KINDS: readonly ActivityKind[] = ['pushup', 'pullup', 'muscleup', 'dip', 'benchpress', 'squat', 'curl', 'deadlift', 'sit', 'run'];
 
 export interface Activity { spot: string; kind: ActivityKind }
 

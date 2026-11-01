@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { buildGym, gymLights, pickGymChannel, BENCH_TOP, OPENGYM } from './gym';
+import { buildGym, gymLights, pickGymChannel, BENCH_TOP, DIP_BAR, DIP_HALF, OPENGYM, PULL_BAR } from './gym';
 import { trackLap, TRACK_LANES } from './districts';
 import { dist } from './layout';
 
@@ -26,7 +26,7 @@ describe('the gym', () => {
     const slot = { index: 0, pos: { x: 0, z: 0 }, rot: 0, w: 2, d: 2, door: { x: 0, z: 1.2 }, yard: { x: 0, z: 2 } };
     const g = buildGym(slot, 0xff0000);
     const room = g.interior.rooms[0];
-    expect(g.stations.map((s) => s.kinds[0]).sort()).toEqual(['benchpress', 'curl', 'squat']);
+    expect(g.stations.map((s) => s.kinds[0]).sort()).toEqual(['benchpress', 'curl', 'deadlift', 'dip', 'pullup', 'squat']);
     for (const s of g.stations) {
       for (const p of [s.at, s.approach]) {
         expect(p.x).toBeGreaterThan(room.minX);
@@ -36,6 +36,24 @@ describe('the gym', () => {
       }
     }
     expect(g.stations.find((s) => s.kinds[0] === 'benchpress')!.grip).toBe(BENCH_TOP);
+    // The bars sit at the park's heights, the dips' rails a dip's width apart.
+    expect(g.stations.find((s) => s.kinds[0] === 'pullup')!.grip).toBe(PULL_BAR);
+    const dip = g.stations.find((s) => s.kinds[0] === 'dip')!;
+    expect(dip.grip).toBe(DIP_BAR);
+    expect(dip.half).toBe(DIP_HALF);
+    // No muscle-ups: the hall's ceiling is too low to get over the bar.
+    expect(g.stations.flatMap((s) => s.kinds)).not.toContain('muscleup');
+    // Machines keep their distance (a body each), and no one trains or steps on furniture.
+    for (const a of g.stations) for (const b of g.stations) if (a !== b) expect(dist(a.at, b.at)).toBeGreaterThan(0.35);
+    // (The bench presser lies on the bench: only their way on is checked.)
+    for (const s of g.stations) for (const p of s.kinds[0] === 'benchpress' ? [s.approach] : [s.at, s.approach]) {
+      for (const so of g.solids) {
+        const inside = Math.abs(p.x - so.x) < so.hx + 0.04 && Math.abs(p.z - so.z) < so.hz + 0.04;
+        expect(inside).toBe(false);
+      }
+    }
+    // The lifts that take a bar off the floor or a rack have it resting there.
+    expect(g.stations.find((s) => s.kinds[0] === 'deadlift')!.rest).toBeDefined();
     // Outside 0, inside the floor, and no ledge on the way in.
     expect(g.groundAt({ x: 0, z: 3 })).toBe(0);
     const floor = g.groundAt({ x: 0, z: 0 });

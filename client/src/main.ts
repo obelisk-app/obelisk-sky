@@ -58,7 +58,7 @@ import { openRelayModal } from './ui/relayModal';
 import { LoadingScreen, loadAt } from './ui/loading';
 import { FirstState } from './ui/firstState';
 import { installVoiceBridge } from './shims/bridge';
-import { dist, hashStr, ISLAND_R, type Vec2 } from './world/layout';
+import { dist, hashStr, ISLAND_R, type Slot, type Vec2 } from './world/layout';
 import { readBoard } from '@/utils/games/chain-reaction/board-view';
 import { ANONYMOUS_IDENTITY, activeRelay, DEFAULT_GROUP_RELAY, normalizeRelay, publicProfileRelays, setActiveRelay, SUGGESTED_RELAYS } from './nostr/hub';
 import { pageHub } from './nostr/hub';
@@ -76,7 +76,7 @@ import { zapTotal } from './nostr/state';
 import { parseZapCommand, zapCommandMessage } from './wallet/zapCommand';
 import { EmoteMusic } from './audio/emoteMusic';
 import { PlaceMusic } from './audio/placeMusic';
-import { Minimap } from './ui/minimap';
+import { Minimap, type MapPlace } from './ui/minimap';
 import { ALL_MODELS, preload } from './world/assets';
 import { defaultLook, preloadPeople } from './people/people';
 import type { LandmarkId } from './world/landmarks';
@@ -98,8 +98,9 @@ let historySpan: SpanId = '7d';
 const OBELISK_APP = 'https://obelisk.ar/app';
 
 const world = new World($('scene'), $('overlay'));
-// The island in a corner, with the houses, the people and you (ui/minimap.ts); a house on the big map walks you there.
-const minimap = new Minimap($('app'), world.plan, (id) => world.hooks.onGroupClick?.(id));
+// The island round you in a corner, with the houses, the landmarks and places as icons, the people and you
+// (ui/minimap.ts); a house or a place on the big map walks you there.
+const minimap = new Minimap($('app'), world.plan, (id) => world.hooks.onGroupClick?.(id), (place) => goToPlace(place));
 minimap.setShown(false);
 const director = new Director();
 const sound = new Soundscape();
@@ -1166,6 +1167,14 @@ world.hooks.onGroundClick = (p) => {
   world.showWalkTarget(route ? route[route.length - 1] ?? p : p, !!route);
   world.cam.played();
 };
+
+/** A landmark or place picked on the big map: walk to its door (the gym: its card too), or to the spot. */
+function goToPlace(place: MapPlace): void {
+  if (place.id === 'gym' && world.gymChannel) { world.hooks.onGroupClick?.(world.gymChannel); return; }
+  const slot = (world.landmarkSlots as Map<string, Slot>).get(place.id);
+  // A place in the water (the pond) or under a roof: the nearest spot you can stand on.
+  world.hooks.onGroundClick?.(slot ? slot.yard : world.walkableNear(place.pos) ?? place.pos);
+}
 
 /** The chair you clicked: walk there (in through the door if it's inside), then sit. */
 let seatGoal: Seat | null = null;
@@ -2860,6 +2869,7 @@ function updateMinimap(): void {
       return s ? [{ id: g.id, name: g.name, pos: s.pos, unread: unreadShown.get(g.id) ?? 0, ping: pinged.has(g.id) }] : [];
     }),
     landmarks: [...world.landmarkSlots].map(([id, s]) => ({ id, pos: s.pos })),
+    gym: (() => { const id = world.gymChannel, s = id ? world.slotFor(id) : null; return id && s ? { id, pos: s.pos } : null; })(),
     people: [...world.people.values()].filter((c) => c.pk !== me && c.opacity > 0.5 && isLivePk(c.pk)).map((c) => c.pos),
     me: controller ? { pos: controller.pos, heading: controller.heading } : null,
     cameraYaw: world.cameraYaw(),

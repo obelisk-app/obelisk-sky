@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
-import { Minimap, arrowTurn, mapTurn, type MinimapState } from './minimap';
+import { Minimap, arrowTurn, islandPlaces, mapTurn, markName, minimapView, MINIMAP_REACH, type MinimapState } from './minimap';
+import { MAP_MARKS, PLACE_MARKS } from './mapIcons';
+import { LANDMARKS } from '../world/landmarks';
 import { planIsland } from '../world/layout';
 
 const plan = planIsland();
@@ -30,7 +32,9 @@ describe('the minimap', () => {
     expect(m.el.querySelectorAll('.mm-house')).toHaveLength(2);
     expect(m.el.querySelector('[data-house="g1"] .mm-dot')).not.toBeNull();
     expect(m.el.querySelector('[data-house="g2"] .mm-ping')!.textContent).toBe('@');
-    expect(m.el.querySelectorAll('.mm-landmark')).toHaveLength(1);
+    // La Crypta, and the island's own places (plaza, park, track, pond, campfire, mill).
+    expect(m.el.querySelectorAll('.mm-mark')).toHaveLength(1 + islandPlaces(plan).length);
+    expect(m.el.querySelector('.mm-lacrypta .mm-glyph')!.textContent).toBe('₿');
     expect(m.el.querySelectorAll('.mm-person')).toHaveLength(1);
     expect(m.el.querySelector('.mm-me')).not.toBeNull();
     // The loading screen's made-up houses and villagers aren't on it.
@@ -62,5 +66,52 @@ describe('the minimap', () => {
     m.setBig(true);
     m.update(state({ cameraYaw: 0.5 }));
     expect(turned()).toBe('');
+  });
+
+  it('zooms the corner map in round you, and shows the whole island big', () => {
+    const near = minimapView(plan, { x: 4, z: -2 }, false);
+    expect(near.size).toBe(2 * MINIMAP_REACH);
+    expect(near.x + near.size / 2).toBeCloseTo(4);
+    expect(near.y + near.size / 2).toBeCloseTo(-2);
+    const all = minimapView(plan, { x: 4, z: -2 }, true);
+    expect(all.size).toBeGreaterThan(2 * plan.R);
+    const m = new Minimap(document.body, plan, () => {});
+    m.update(state({ me: { pos: { x: 4, z: -2 }, heading: 0 } }));
+    expect(m.el.querySelector('svg')!.getAttribute('viewBox')).toBe(`${(4 - MINIMAP_REACH).toFixed(2)} ${(-2 - MINIMAP_REACH).toFixed(2)} ${(2 * MINIMAP_REACH).toFixed(2)} ${(2 * MINIMAP_REACH).toFixed(2)}`);
+  });
+
+  it('draws the gym as openGym\'s dumbbell instead of a plain house', () => {
+    const m = new Minimap(document.body, plan, () => {});
+    m.update(state({ gym: { id: 'g1', pos: { x: 3, z: 2 } } }));
+    expect(m.el.querySelector('[data-house="g1"]')).toBeNull();
+    expect(m.el.querySelector('.mm-gym .mm-fill')).not.toBeNull();
+  });
+
+  it('names every mark on the big map, and a click on one walks you there', () => {
+    const goPlace = vi.fn();
+    const m = new Minimap(document.body, plan, () => {}, goPlace);
+    m.setBig(true);
+    m.update(state({ gym: { id: 'g1', pos: { x: 3, z: 2 } } }));
+    const names = [...m.el.querySelectorAll('.mm-mark-name')].map((t) => t.textContent);
+    expect(names).toContain('openGym');
+    expect(names).toContain('La Crypta');
+    expect(names).toContain('Pond');
+    m.el.querySelector<SVGGElement>('.mm-gym')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(goPlace).toHaveBeenCalledWith({ id: 'gym', pos: { x: 3, z: 2 } });
+    expect(m.big).toBe(false);
+    // On the corner map a click only opens it big.
+    m.update(state({ gym: { id: 'g1', pos: { x: 3, z: 2 } } }));
+    m.el.querySelector<SVGGElement>('.mm-gym')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(goPlace).toHaveBeenCalledTimes(1);
+    expect(m.big).toBe(true);
+  });
+
+  it('has an icon and a name for every landmark and place', () => {
+    for (const id of [...LANDMARKS.map((d) => d.id), ...PLACE_MARKS]) {
+      const mk = MAP_MARKS[id];
+      expect(mk.color).toMatch(/^#[0-9a-f]{6}$/);
+      expect(mk.glyph || mk.fill || mk.stroke).toBeTruthy();
+      expect(markName(id)).toBeTruthy();
+    }
   });
 });
