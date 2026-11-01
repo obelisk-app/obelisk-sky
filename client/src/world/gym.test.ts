@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { buildGym, gymLights, pickGymChannel, BENCH_TOP, DIP_BAR, DIP_HALF, OPENGYM, PULL_BAR } from './gym';
+import { buildGym, gymLights, gymSlot, pickGymChannel, BENCH_TOP, DIP_BAR, DIP_HALF, GYM_SIZE, OPENGYM, PULL_BAR } from './gym';
+import { planIsland } from './layout';
 import { trackLap, TRACK_LANES } from './districts';
 import { dist } from './layout';
 
@@ -64,6 +65,30 @@ describe('the gym', () => {
       expect(h - last).toBeLessThan(0.02);
       last = h;
     }
+  });
+});
+
+describe('the bigger hall', () => {
+  it('outgrows a 2-wide slot but never reaches a neighbouring house', () => {
+    const plan = planIsland();
+    const halfDiag = (w: number) => (w * Math.SQRT2) / 2;
+    for (const s of plan.slots.filter((x) => x.w >= 2)) {
+      const g = gymSlot(s);
+      expect(g.w).toBe(Math.max(s.w, GYM_SIZE));
+      for (const o of plan.slots) if (o !== s) expect(dist(g.pos, o.pos)).toBeGreaterThan(halfDiag(g.w) + halfDiag(o.w) + 0.3);
+    }
+  });
+  it('keeps every machine and its way on inside the grown hall, a body apart', () => {
+    const slot = { index: 0, pos: { x: 0, z: 0 }, rot: 0, w: 2, d: 2, door: { x: 0, z: 1.2 }, yard: { x: 0, z: 2 } };
+    const g = buildGym(gymSlot(slot), 0);
+    const room = g.interior.rooms[0];
+    for (const s of g.stations) for (const p of [s.at, s.approach]) {
+      expect(p.x).toBeGreaterThan(room.minX);
+      expect(p.x).toBeLessThan(room.maxX);
+      expect(p.z).toBeGreaterThan(room.minZ);
+      expect(p.z).toBeLessThan(room.maxZ);
+    }
+    for (const a of g.stations) for (const b of g.stations) if (a !== b) expect(dist(a.at, b.at)).toBeGreaterThan(0.6);
   });
 });
 

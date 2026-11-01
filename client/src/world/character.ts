@@ -11,6 +11,7 @@
 // feet don't slide.
 
 import * as THREE from 'three';
+import { nameTag, nameTagTexture } from './nameTag';
 import { GRAVITY, JUMP_SPEED, SWIM_SPEEDS } from '../player/controller';
 import { buildPerson, defaultLook, loadLook, peopleClips, MODEL_HEIGHT, setBare, type PersonLook } from '../people/people';
 import { hashStr, type Vec2 } from './layout';
@@ -28,6 +29,8 @@ const RUN_SPEED = 2.4;
 
 /** Badge height above the head bone (world units). */
 const BADGE_ABOVE_HEAD = 0.3;
+/** The online dot or AFK tag: over the name, which sits over the orb. */
+const PRESENCE_ABOVE_BADGE = 0.32;
 
 /** Smooth lift, bite/sip, and return; roasting has a longer resting interval. */
 function propLift(clock: number, roast: boolean): number {
@@ -206,6 +209,9 @@ export class Character {
   private lowerKey = '';
   private upperKey = '';
   readonly badge: THREE.Sprite;
+  /** The name over the orb (as pets wear theirs): a child of the badge, so it rides, fades and hides with it. */
+  readonly nameLabel: THREE.Sprite;
+  private nameShown = '';
   /** Online (a green dot) or away (an AFK tag) beside the badge; none when offline. */
   private presenceMark: THREE.Sprite | null = null;
   private presenceNow: 'online' | 'afk' | 'offline' = 'offline';
@@ -302,6 +308,13 @@ export class Character {
     this.badge.position.y = CHAR_HEIGHT + 0.22;
     this.badge.renderOrder = 5;
     this.root.add(this.badge);
+    this.nameLabel = nameTag(name);
+    // In the badge's frame (scaled 0.32): just over the orb, 0.42 × 0.105 in the world.
+    this.nameLabel.scale.set(0.42 / 0.32, 0.105 / 0.32, 1);
+    this.nameLabel.position.y = (0.16 + 0.06) / 0.32;
+    this.nameLabel.renderOrder = 6;
+    this.nameShown = name;
+    this.badge.add(this.nameLabel);
     this.root.userData.pk = pk;
     this.setLook(this.look);
     this.setOpacity(0);
@@ -388,6 +401,13 @@ export class Character {
 
   setProfile(name: string, avatar: string | null): void {
     this.name = name;
+    if (name !== this.nameShown) {
+      this.nameShown = name;
+      const m = this.nameLabel.material;
+      m.map?.dispose();
+      m.map = nameTagTexture(name);
+      m.needsUpdate = true;
+    }
     this.avatarUrl = avatar;
     const key = `${name}|${avatar ?? ''}|${this.mark ?? ''}`;
     if (key === this.badgeKey) return;
@@ -605,7 +625,19 @@ export class Character {
     }
     this.fade = o;
     (this.badge.material as THREE.SpriteMaterial).opacity = o * (this.presenceNow === 'afk' ? 0.55 : 1);
+    this.nameLabel.material.opacity = (this.badge.material as THREE.SpriteMaterial).opacity;
     this.root.visible = o > 0.01;
+  }
+
+  private fistTmp = new THREE.Vector3();
+  private fistJoint = new THREE.Vector3();
+  /** The centre of a closed hand (world): the middle finger's three joints averaged, else the wrist. */
+  private fistCentre(sd: 'l' | 'r', out: THREE.Vector3): THREE.Vector3 | null {
+    if (!this.bonePosition(`hand_${sd}`, out)) return null;
+    let n = 0;
+    const sum = this.fistTmp.set(0, 0, 0), p = this.fistJoint;
+    for (const j of ['01', '02', '03']) if (this.bonePosition(`middle_${j}_${sd}`, p)) { sum.add(p); n++; }
+    return n ? out.copy(sum.multiplyScalar(1 / n)) : out;
   }
 
   private tmp = new THREE.Vector3();
@@ -745,17 +777,16 @@ export class Character {
       if (h) {
         this.root.worldToLocal(h);
         this.badge.position.set(h.x, h.y + BADGE_ABOVE_HEAD + (this.hat ? 0.06 : 0), h.z);
-        if (this.presenceMark) this.presenceMark.position.set(h.x, this.badge.position.y + (this.presenceNow === 'afk' ? 0.21 : 0.19), h.z);
+        if (this.presenceMark) this.presenceMark.position.set(h.x, this.badge.position.y + PRESENCE_ABOVE_BADGE + (this.presenceNow === 'afk' ? 0.02 : 0), h.z);
       }
     }
 
-    // A barbell sits across both palms, along the line between them.
+    // A barbell sits in both fists, along the line between them: in each, the
+    // middle of the curled middle finger (its three joints), where the bar
+    // the clip was built for is held (anim/exercises.ts grips inside the fingers).
     if (this.model && this.heldBar) {
-      const l = this.bonePosition('hand_l', this.tmp2), r = this.bonePosition('hand_r', this.tmp3);
-      const lk = this.bonePosition('middle_01_l', this.tmp4), rk = this.bonePosition('middle_01_r', this.tmp5);
+      const l = this.fistCentre('l', this.tmp2), r = this.fistCentre('r', this.tmp3);
       if (l && r) {
-        if (lk) l.lerp(lk, 0.6);
-        if (rk) r.lerp(rk, 0.6);
         this.body.worldToLocal(l);
         this.body.worldToLocal(r);
         this.heldBar.position.copy(l).add(r).multiplyScalar(0.5);
@@ -904,11 +935,12 @@ export class Character {
     this.presenceMark?.removeFromParent();
     this.presenceMark = null;
     (this.badge.material as THREE.SpriteMaterial).opacity = this.fade * (p === 'afk' ? 0.55 : 1);
+    this.nameLabel.material.opacity = (this.badge.material as THREE.SpriteMaterial).opacity;
     if (p === 'offline') return;
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: presenceTexture(p), depthWrite: false, transparent: true }));
     s.scale.set(p === 'afk' ? 0.16 : 0.045, p === 'afk' ? 0.06 : 0.045, 1);
     s.renderOrder = 6;
-    s.position.copy(this.badge.position).setY(this.badge.position.y + 0.2);
+    s.position.copy(this.badge.position).setY(this.badge.position.y + PRESENCE_ABOVE_BADGE);
     this.root.add(s);
     this.presenceMark = s;
   }

@@ -3,6 +3,7 @@
 // gets a reaction or a zap. Plus the hats people pick in the creator.
 
 import * as THREE from 'three';
+import { nameTag } from './nameTag';
 import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { loadGltf } from './assets';
 import type { Character } from './character';
@@ -162,28 +163,6 @@ export class Pet {
     this.mixer?.stopAllAction();
     this.root.removeFromParent();
   }
-}
-
-function nameTag(name: string): THREE.Sprite {
-  const c = document.createElement('canvas');
-  c.width = 256;
-  c.height = 64;
-  const g = c.getContext('2d')!;
-  g.font = '600 30px Inter, system-ui, sans-serif';
-  const w = Math.min(240, g.measureText(name).width + 28);
-  g.fillStyle = 'rgba(16,16,20,0.75)';
-  g.beginPath();
-  g.roundRect((256 - w) / 2, 10, w, 44, 22);
-  g.fill();
-  g.fillStyle = '#fafafa';
-  g.textAlign = 'center';
-  g.textBaseline = 'middle';
-  g.fillText(name, 128, 33);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthWrite: false, transparent: true }));
-  s.scale.set(0.5, 0.125, 1);
-  return s;
 }
 
 /** A hat on top of a blocky head. */

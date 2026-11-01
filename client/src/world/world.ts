@@ -24,7 +24,7 @@ import {
 } from './layout';
 import { fbm2 } from './noise';
 import { CALISTHENICS_LAMPS, CALISTHENICS_STATIONS, PARK_MAT, TRACK_LANES, TRACK_TOP, buildArcadeCabinet, buildCalisthenics, buildChoripan, buildCup, buildLaptop, buildPopcorn, buildMate, buildTrack, trackLap } from './districts';
-import { buildBarbell, buildGym, pickGymChannel, type GymBuild } from './gym';
+import { buildBarbell, buildGym, gymSlot, pickGymChannel, type GymBuild } from './gym';
 import { Flock } from './nostrich';
 import { WalkPin } from './walkPin';
 import { buildMarshmallow } from './campfire';
@@ -371,7 +371,8 @@ export class World {
       }
       if (existing) existing.group.removeFromParent();
       const slot = this.plan.slots[this.slotOf.get(g.id)!];
-      const b = gym ? buildGym(slot, buildBuilding(g, slot, tier, district).roofColor) : buildBuilding(g, slot, tier, district);
+      // The gym's hall is bigger than its slot (gymSlot): room for six machines and the people on them.
+      const b = gym ? buildGym(gymSlot(slot), buildBuilding(g, slot, tier, district).roofColor) : buildBuilding(g, slot, tier, district);
       if (gym) {
         const gb = b as GymBuild;
         const moving = findDynamic(gb.group, (mark) => {
@@ -483,7 +484,30 @@ export class World {
   private gridSlots(): Slot[] {
     const held = new Set([...this.landmarkSlots.values()].map((s) => s.index));
     // A voice tree's plot is open ground: only its trunk is in the way (rebuildGrid).
-    return this.usedSlots().filter((s) => !held.has(s.index) && !this.treeAt(s.index));
+    const gym = this.gymFootprint();
+    return this.usedSlots().filter((s) => !held.has(s.index) && !this.treeAt(s.index)).map((s) => (gym && s.index === gym.index ? gym : s));
+  }
+
+  /** The gym's hall as a slot (its slot, grown to the hall's size), or null without a gym. */
+  private gymFootprint(): Slot | null {
+    const slot = this.gym && this.gymId ? this.slotFor(this.gymId) : null;
+    return slot ? gymSlot(slot) : null;
+  }
+
+  /** No grass through the gym's floor where the hall overhangs its slot (the tufts there are hidden). */
+  private clearGrassUnderGym(): void {
+    const foot = this.gymFootprint(), inst = this.grass;
+    if (!foot || !inst) return;
+    const m = new THREE.Matrix4(), p = new THREE.Vector3();
+    let changed = false;
+    for (let i = 0; i < inst.count; i++) {
+      inst.getMatrixAt(i, m);
+      p.setFromMatrixPosition(m);
+      if (!inFootprint({ x: p.x, z: p.z }, foot, 0.1)) continue;
+      inst.setMatrixAt(i, m.makeScale(0, 0, 0));
+      changed = true;
+    }
+    if (changed) { inst.instanceMatrix.needsUpdate = true; inst.computeBoundingSphere(); }
   }
 
   private treeAt(slotIndex: number): Building['tree'] | null {
@@ -836,6 +860,7 @@ export class World {
     this.gym = b;
     this.gymId = b ? id : null;
     if (!b || !id || !slot) return;
+    this.clearGrassUnderGym();
     for (const st of b.stations) {
       this.stations.push({
         pos: this.buildingToWorld(slot, st.at), face: st.face + slot.rot, grip: st.grip, half: st.half, kinds: st.kinds, taken: null,
@@ -1574,6 +1599,7 @@ export class World {
     this.grass = null;
     if (!count) return;
     const blade = grassTuft();
+    const gymFoot = this.gymFootprint();
     const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.85, side: THREE.DoubleSide });
     const inst = new THREE.InstancedMesh(blade, mat, count);
     const r = rng(1234);
@@ -1591,6 +1617,7 @@ export class World {
       if (this.plan.mountains.some((mt) => dist(p, mt.pos) < mt.r)) continue;
       if (this.track && onTrack(p, this.track, 0.1)) continue;
       if (this.plan.slots.some((s) => inFootprint(p, s, 0.1))) continue;
+      if (gymFoot && inFootprint(p, gymFoot, 0.1)) continue;
       if (this.underLandmark(p, 0.1)) continue; // no grass through a landmark's floor
       if (this.onPath(p, 0)) continue;
       if (this.marketAt && dist(p, this.marketAt) < 2.1) continue;
@@ -2132,7 +2159,7 @@ export class World {
     const slot = this.gymId ? this.slotFor(this.gymId) : null;
     if (!machine || !this.gym || !this.gymId || !slot) return false;
     this.reserve(c.pk, machine);
-    const inside = this.buildingToWorld(slot, { x: 0, z: slot.d / 2 - 0.35 });
+    const inside = this.buildingToWorld(slot, { x: 0, z: gymSlot(slot).d / 2 - 0.35 });
     this.walkTo(c, this.doorOf(this.gymId), {
       then: () => c.walk([inside, this.stationApproach(machine)], false, () => {
         this.releasePending(c.pk);
@@ -2684,7 +2711,7 @@ export class World {
     // Gym lifts: the bar comes off the rack and into your hands.
     if (st.gym && kind !== 'pushup' && kind !== 'pullup' && kind !== 'muscleup' && kind !== 'dip') {
       if (st.rest) st.rest.visible = false;
-      c.heldBar = buildBarbell(kind === 'curl' ? 0.34 : 0.68, kind === 'curl' ? 0.045 : 0.07);
+      c.heldBar = buildBarbell(kind === 'curl' ? 0.46 : 0.68, kind === 'curl' ? 0.045 : 0.07);
       c.body.add(c.heldBar);
     }
     this.trainingAt.set(pk, { station: st, kind, since: this.elapsed, wall: Date.now() });

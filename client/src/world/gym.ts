@@ -22,6 +22,14 @@ import type { District } from './layout';
 /** Channel names that are a gym. */
 export const GYM_RE = /\bgym\b|gimnasio|fitness|\bfit\b|crossfit|pesas|weights|musculaci|powerlift|halterof/i;
 
+/** The hall's side (world units): bigger than a 2-wide slot, so six machines and the people on them have room. */
+export const GYM_SIZE = 2.9;
+
+/** The gym's slot grown to the hall's size, about the same centre (slots are spaced so it never meets a neighbour). */
+export function gymSlot(slot: Slot): Slot {
+  return { ...slot, w: Math.max(slot.w, GYM_SIZE), d: Math.max(slot.d, GYM_SIZE) };
+}
+
 /** Which channel gets the gym: one named like a gym (La Crypta's first), else
  *  the first sports-district text channel. Needs a slot two wide or more. */
 export function pickGymChannel(
@@ -322,7 +330,7 @@ export function buildGym(slot: Slot, roofColor: number): GymBuild {
 
     // Dip bars: two rails along x, held by short posts at each end. The
     // lifter faces +x (inward), between the rails.
-    const dz = pz - 0.38, dx0 = -W / 2 + 0.14, dx1 = dx0 + 0.42;
+    const dz = pz - Math.max(0.38, D * 0.24), dx0 = -W / 2 + 0.14, dx1 = dx0 + 0.42;
     for (const s of [-1, 1]) {
       const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, dx1 - dx0, 10), accent);
       rail.rotation.z = Math.PI / 2;

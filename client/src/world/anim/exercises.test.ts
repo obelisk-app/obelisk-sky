@@ -146,6 +146,27 @@ describe('gym lifts', () => {
     }
     expect(y(low, 'pelvis')).toBeLessThan(y(up, 'pelvis') - 0.25);
   });
+  it('squats carry the bar on the upper back: hands about shoulder high, behind the neck, never over the head', () => {
+    const clip = buildExerciseClip('squat', figure(), 0);
+    for (const t of [0, 1.3]) {
+      const f = poseAt(clip, t);
+      const hands = pos(f, 'hand_l').add(pos(f, 'hand_r')).multiplyScalar(0.5);
+      expect(hands.y).toBeLessThan(y(f, 'Head'));
+      expect(hands.y).toBeGreaterThan(y(f, 'spine_01') - 0.15);
+      expect(hands.z).toBeLessThan(pos(f, 'spine_01').z);
+    }
+  });
+  it('bench press holds the bar over the chest, not over the face', () => {
+    const clip = buildExerciseClip('benchpress', figure(), 0.5);
+    for (const t of [0, 1.2]) {
+      const f = poseAt(clip, t);
+      // Along the body, from the pelvis to the head: the hands stop short of the head.
+      const axis = pos(f, 'Head').sub(pos(f, 'pelvis'));
+      const along = (n: string) => pos(f, n).sub(pos(f, 'pelvis')).dot(axis) / axis.lengthSq();
+      expect((along('hand_l') + along('hand_r')) / 2).toBeLessThan(0.9);
+      expect((along('hand_l') + along('hand_r')) / 2).toBeGreaterThan(0.4);
+    }
+  });
   it('curls bring the hands up to the shoulders and back down', () => {
     const clip = buildExerciseClip('curl', figure(), 0);
     expect(palmY(poseAt(clip, 1.0))).toBeGreaterThan(palmY(poseAt(clip, 0)) + 0.25);

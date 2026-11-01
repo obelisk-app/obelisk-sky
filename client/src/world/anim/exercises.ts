@@ -74,17 +74,17 @@ const PLANK_DOWN: PoseSpec = { hands: FLAT, aim: merge(both('upperarm', [0.8, -0
 // go down to the floor beside the bench.
 const PRESS_HANDS = { dir: [0, 0, 1] as Dir, palm: [0, -1, 0] as Dir, curl: 0.85 };
 const BENCH_LEGS = merge(both('thigh', [0.3, -1, -0.1]), both('calf', [0.05, -0.15, -1]));
-const PRESS_UP: PoseSpec = { pitch: -Math.PI / 2, hands: PRESS_HANDS, aim: merge(both('upperarm', [0.35, 0.12, 1]), both('lowerarm', [0.08, 0.04, 1]), BENCH_LEGS) };
-const PRESS_DOWN: PoseSpec = { pitch: -Math.PI / 2, hands: PRESS_HANDS, aim: merge(both('upperarm', [1, 0.12, -0.2]), both('lowerarm', [0.05, 0.06, 1]), BENCH_LEGS) };
+const PRESS_UP: PoseSpec = { pitch: -Math.PI / 2, hands: PRESS_HANDS, aim: merge(both('upperarm', [0.3, -0.2, 1]), both('lowerarm', [0.05, -0.12, 1]), BENCH_LEGS) };
+const PRESS_DOWN: PoseSpec = { pitch: -Math.PI / 2, hands: PRESS_HANDS, aim: merge(both('upperarm', [1, -0.25, -0.2]), both('lowerarm', [0.05, -0.1, 1]), BENCH_LEGS) };
 // Squat: the bar across the upper back, hands just outside the shoulders.
 // Aims pitch with the torso, so the low squat's thighs are written in the
 // leaning body's frame (they end up about level in the world).
-const BAR_ON_BACK = merge(both('upperarm', [1, 0.3, -0.3]), both('lowerarm', [0.05, 1, -0.25]));
-const BACK_HANDS = { dir: [0, 1, 0] as Dir, palm: [0, 0, 1] as Dir, curl: 0.8 };
+const BAR_ON_BACK = merge(both('upperarm', [0.5, -0.8, -0.4]), both('lowerarm', [0, 0.95, -0.08]));
+const BACK_HANDS = { dir: [0, 0.6, -0.8] as Dir, palm: [0, 0.8, 0.6] as Dir, curl: 0.9 };
 const SQUAT_UP: PoseSpec = { pitch: 0.06, hands: BACK_HANDS, aim: merge(BAR_ON_BACK, STRAIGHT_LEGS) };
 const SQUAT_LOW: PoseSpec = { pitch: 0.55, hands: BACK_HANDS, aim: merge(BAR_ON_BACK, both('thigh', [0.18, 0.27, 1]), both('calf', [0, -1.04, 0.22])) };
 // Curls: elbows at the sides, forearms up to the shoulders and down.
-const CURL_DOWN: PoseSpec = { hands: { dir: [0, -1, 0.15], palm: [0, 0.15, 1], curl: 0.85 }, aim: merge(both('upperarm', [0.12, -1, 0.05]), both('lowerarm', [0.06, -1, 0.2]), STRAIGHT_LEGS) };
+const CURL_DOWN: PoseSpec = { hands: { dir: [0, -1, 0.3], palm: [0, 0.3, 1], curl: 0.85 }, aim: merge(both('upperarm', [0.1, -1, 0.12]), both('lowerarm', [0.02, -1, 0.42]), STRAIGHT_LEGS) };
 const CURL_UP: PoseSpec = { hands: { dir: [0, 0.45, 1], palm: [0, 1, -0.45], curl: 0.85 }, aim: merge(both('upperarm', [0.12, -1, 0.12]), both('lowerarm', [0.05, 0.45, 1]), STRAIGHT_LEGS) };
 
 // Deadlift: the bar from the floor to the hips. At the bottom the body hinges
@@ -93,8 +93,8 @@ const CURL_UP: PoseSpec = { hands: { dir: [0, 0.45, 1], palm: [0, 1, -0.45], cur
 // go down and a little forward, shins lean the knees over the bar.
 const DL_HANDS_TOP = { dir: [0, -1, 0.05] as Dir, palm: [0, 0.05, -1] as Dir, curl: 0.9 };
 const DL_TOP: PoseSpec = { pitch: 0.04, hands: DL_HANDS_TOP, aim: merge(both('upperarm', [0.1, -1, 0.06]), both('lowerarm', [0.06, -1, 0.1]), STRAIGHT_LEGS) };
-const DL_HANDS_LOW = { dir: [0, -0.455, 0.89] as Dir, palm: [0, -0.87, -0.5] as Dir, curl: 0.9 };
-const DL_LOW: PoseSpec = { pitch: 1.05, hands: DL_HANDS_LOW, aim: merge(both('upperarm', [0.1, -0.455, 0.89]), both('lowerarm', [0.06, -0.455, 0.89]), both('thigh', [0.08, 0.4, 0.92]), both('calf', [0.02, -0.73, 0.68])) };
+const DL_HANDS_LOW = { dir: [0, -0.33, 0.94] as Dir, palm: [0, -0.94, -0.33] as Dir, curl: 0.9 };
+const DL_LOW: PoseSpec = { pitch: 1.12, hands: DL_HANDS_LOW, aim: merge(both('upperarm', [0.1, -0.33, 0.94]), both('lowerarm', [0.06, -0.33, 0.94]), both('thigh', [0.08, 0.3, 0.95]), both('calf', [0.02, -0.8, 0.6])) };
 
 // The lotus pose (an emote, not an exercise): sitting cross-legged on the
 // ground, knees out to the sides, each shin crossed in front of the other,
