@@ -242,6 +242,26 @@ describe('riding (RIDE_SPEEDS)', () => {
   });
 });
 
+describe('a clicked path never freezes the page', () => {
+  it('ends the step when what is left of it rounds to nothing on a long leg', () => {
+    // left = speed × dt is the smallest number above 0; left / 5 rounds to 0, so the old loop moved
+    // nothing, subtracted nothing and spun forever (the recorder froze right after a click on the map).
+    const g = new NavGrid(30);
+    const c = new PlayerController(() => g, { x: 0, z: 0 });
+    c.path = [{ x: 0, z: 5 }];
+    c.step(Number.MIN_VALUE, { x: 0, y: 0, run: false }, 0);
+    expect(c.path).toHaveLength(1);
+    expect(c.moving).toBe(true);
+  });
+  it('walks any frame length to the end of the path', () => {
+    const g = new NavGrid(30);
+    const c = new PlayerController(() => g, { x: 0, z: 0 });
+    c.path = [{ x: 0, z: 0.7 }, { x: 0.9, z: 1.3 }, { x: 0.9, z: 3 }];
+    for (const dt of [1 / 24, 1 / 30, 1 / 60, 1 / 144, 0.333]) for (let i = 0; i < 4000 && c.path.length; i++) c.step(dt, { x: 0, y: 0, run: false }, 0);
+    expect(c.path).toHaveLength(0);
+  });
+});
+
 describe('stairs (the obelisk\'s plinth)', () => {
   // Two steps 0.16 high round a shaft, all on walkable ground.
   const steps: Solid[] = [

@@ -163,14 +163,18 @@ export class PlayerController {
         const t = this.path[0];
         const d = dist(this.pos, t);
         if (d < 0.05) { this.path.shift(); continue; }
-        const k = Math.min(1, left / d);
+        // Short of the waypoint: this step ends on the way to it. (Subtracting what was walked
+        // could leave a rounding crumb > 0 that moves nothing, and the loop never ended: the page froze.)
+        const reach = left >= d;
+        const k = reach ? 1 : left / d;
         const dx = (t.x - this.pos.x) * k, dz = (t.z - this.pos.z) * k;
         const next = { x: this.pos.x + dx, z: this.pos.z + dz };
         // A path never climbs a wall (the obelisk's shaft): it ends there.
         if (this.floorAt(next, 0.02) > this.height + WALL_HEIGHT) { this.path = []; break; }
         this.pos = next;
         this.heading = Math.atan2(dx, dz);
-        left -= d * k;
+        if (!reach) { left = 0; break; }
+        left -= d;
       }
       this.moving = this.path.length > 0 || left <= 0;
       this.spd = 0;
