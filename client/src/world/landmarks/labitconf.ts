@@ -123,7 +123,7 @@ export function buildLabitconf(): LandmarkBuild & { screen: THREE.Mesh } {
   floor.receiveShadow = true;
   g.add(floor);
 
-  // The sign over the door: the wordmark, white on black with a pink-red glow.
+  // The sign across the facade, centred on it: the wordmark, white on black with a pink-red glow.
   const signTex = canvasTexture(1024, 192, (c) => {
     c.fillStyle = '#0b0b0e';
     c.fillRect(0, 0, 1024, 192);
@@ -137,11 +137,11 @@ export function buildLabitconf(): LandmarkBuild & { screen: THREE.Mesh } {
   });
   const signMat = new THREE.MeshStandardMaterial({ color: 0xffffff, map: signTex, emissive: 0xffffff, emissiveMap: signTex, emissiveIntensity: 0.4 });
   const sign = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.55, 0.05), [black, black, black, black, signMat, black]);
-  sign.position.set(-0.3, H - 0.36, 0.05);
+  sign.position.set(0, H - 0.36, 0.05);
   g.add(sign);
   // A red light strip under it, like the hall's stage glow.
   const glowStrip = new THREE.MeshStandardMaterial({ color: 0x330008, emissive: 0xff2d55, emissiveIntensity: 0.5 });
-  const signStrip = box(3.0, 0.025, 0.03, glowStrip, -0.3, H - 0.66, 0.06);
+  const signStrip = box(3.0, 0.025, 0.03, glowStrip, 0, H - 0.66, 0.06);
   // A poster by the door: the dates-and-crowd banner.
   const posterTex = canvasTexture(192, 288, (c) => {
     const gr = c.createLinearGradient(0, 0, 0, 288);
