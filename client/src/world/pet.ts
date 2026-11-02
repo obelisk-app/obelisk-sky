@@ -49,6 +49,15 @@ export const FLYING_PETS = new Set(['bee', 'parrot']);
 /** How high a flying pet hovers (m), and its gentle bob. */
 export const FLY_HEIGHT = 0.5;
 
+/** How high a pet is off the ground at its own time `t` (s): fliers hover and bob, walkers hop in
+ *  step with their speed, the nostrich none (its legs do the walking). `t` is the pet's clock, the
+ *  frames' `dt` added up, never the page's (a frame-stepped recording or a slow frame would make
+ *  it jump about: the pet flashed up and down). */
+export function petLift(t: number, vel: number, flying: boolean, bird: boolean, phase = 0): number {
+  if (flying) return FLY_HEIGHT + Math.sin(t * 2.6 + phase) * 0.06;
+  return bird ? 0 : Math.abs(Math.sin(t * 9)) * 0.04 * Math.min(1, vel / 1.5);
+}
+
 /** A pet nostrich is long-legged: taller than the cube pets. */
 const NOSTRICH_PET_HEIGHT = 0.5;
 
@@ -63,6 +72,8 @@ export class Pet {
   readonly label: THREE.Sprite;
 
   private hopY = 0;
+  /** The pet's own clock (s), from the frames' `dt`: its hop and hover keep to it. */
+  private clock = 0;
   private motion: PetMotion;
   /** The owner's heading, eased: the heel spot doesn't swing round on a quick turn. */
   private heelYaw: number;
@@ -140,13 +151,10 @@ export class Pet {
     if (this.current && m.anim !== 'idle') this.current.timeScale = m.anim === 'run' ? THREE.MathUtils.clamp(m.vel / 2.6, 0.7, 1.6) : THREE.MathUtils.clamp(m.vel / 0.9, 0.5, 1.8);
     else if (this.current) this.current.timeScale = 1;
     // A little hop in step with its speed; fliers hover and bob instead.
-    const now = performance.now() / 1000;
-    if (FLYING_PETS.has(this.kind)) {
-      this.root.rotation.z = Math.sin(now * 2.1) * 0.08 - m.vel * 0.05;
-      p.y = groundAt(p) + FLY_HEIGHT + Math.sin(now * 2.6 + this.name.length) * 0.06;
-    } else {
-      p.y = groundAt(p) + (this.bird ? 0 : Math.abs(Math.sin(now * 9)) * 0.04 * Math.min(1, m.vel / 1.5));
-    }
+    this.clock += dt;
+    const flying = FLYING_PETS.has(this.kind);
+    if (flying) this.root.rotation.z = Math.sin(this.clock * 2.1) * 0.08 - m.vel * 0.05;
+    p.y = groundAt(p) + petLift(this.clock, m.vel, flying, !!this.bird, this.name.length);
     // The owner jumps: the pet jumps along, a beat later and a bit lower.
     this.hopY = THREE.MathUtils.damp(this.hopY, this.owner.jumpY * 0.6, 14, dt);
     p.y += this.hopY;

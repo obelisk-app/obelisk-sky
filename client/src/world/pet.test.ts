@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { stepPet, type PetMotion } from './pet';
+import { stepPet, petLift, FLY_HEIGHT, type PetMotion } from './pet';
 
 const pet = (): PetMotion => ({ x: 0, z: -1, yaw: 0, vel: 0, anim: 'idle' });
 
@@ -34,5 +34,25 @@ describe('a pet following its owner', () => {
     stepPet(m2, { x: -3, z: 0 }, 1 / 60);
     stepPet(m2, { x: -3, z: 0 }, 1 / 60);
     expect(Math.abs(m2.yaw)).toBeLessThan(Math.PI / 2 * 0.5); // still turning toward −x
+  });
+});
+
+describe('a pet’s hop', () => {
+  it('follows the pet’s own clock: the same frames give the same heights, however long they took', () => {
+    // Two runs of the same 24 fps frames: the hop depends on the summed dt alone.
+    const heights = () => { let t = 0; const out: number[] = []; for (let i = 0; i < 48; i++) { t += 1 / 24; out.push(petLift(t, 0.9, false, false)); } return out; };
+    expect(heights()).toEqual(heights());
+  });
+
+  it('moves smoothly from frame to frame while walking, and stays down standing still', () => {
+    let t = 0, prev = petLift(0, 0.9, false, false), worst = 0;
+    for (let i = 0; i < 240; i++) { t += 1 / 60; const y = petLift(t, 0.9, false, false); worst = Math.max(worst, Math.abs(y - prev)); prev = y; }
+    expect(worst).toBeLessThan(0.006);
+    expect(petLift(1.234, 0, false, false)).toBe(0);
+    expect(petLift(1.234, 2, false, true)).toBe(0); // the nostrich walks on its legs
+  });
+
+  it('keeps a flier hovering near its height', () => {
+    for (let t = 0; t < 5; t += 0.1) expect(Math.abs(petLift(t, 0, true, false, 3) - FLY_HEIGHT)).toBeLessThanOrEqual(0.06);
   });
 });
