@@ -2891,7 +2891,8 @@ function updateMinimap(): void {
     landmarks: [...world.landmarkSlots].map(([id, s]) => ({ id, pos: s.pos })),
     gym: (() => { const id = world.gymChannel, s = id ? world.slotFor(id) : null; return id && s ? { id, pos: s.pos } : null; })(),
     people: [...world.people.values()].filter((c) => c.pk !== me && c.opacity > 0.5 && isLivePk(c.pk)).map((c) => c.pos),
-    me: controller ? { pos: controller.pos, heading: controller.heading } : null,
+    // The arrow points where you look (the camera), not only where you last walked.
+    me: controller ? { pos: controller.pos, heading: world.cameraYaw() } : null,
     cameraYaw: world.cameraYaw(),
   });
 }

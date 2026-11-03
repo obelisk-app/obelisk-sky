@@ -28,7 +28,7 @@ import { buildBarbell, buildGym, gymSlot, pickGymChannel, type GymBuild } from '
 import { Flock } from './nostrich';
 import { WalkPin } from './walkPin';
 import { buildMarshmallow } from './campfire';
-import { findDynamic, mergeStatic, mergeTogether } from './merge';
+import { findDynamic, materialsIn, mergeStatic, mergeToggling, mergeTogether, mergeWithinMoving } from './merge';
 import { chooseLights, lampLevel, lightBudget, LightScan, scanOnChange, STREET_LAMP, type LightSpot } from './lightBudget';
 import { buildObelisk, obeliskShape, plinthSteps, type Obelisk } from './obelisk';
 import { Overlay } from './overlay';
@@ -722,6 +722,11 @@ export class World {
       b.group.position.set(s.pos.x + fwd.x * d.forward, 0, s.pos.z + fwd.z * d.forward);
       b.group.rotation.y = s.rot;
       // Fewer draw calls: merge what never moves (see findDynamic).
+      // Materials its hooks change, and those it hands to World code (the
+      // theater's hall, LABITCONF's screen): never merged by look.
+      const live = materialsIn(b);
+      const nodes = new Set<THREE.Object3D>();
+      const toggles = new Map<THREE.Object3D, string>();
       const moving = findDynamic(b.group, (mark) => {
         for (const t of [0.4, 2.9, 7.3, 13.1]) { b.update?.(0.016, t); mark(); }
         b.setNight(1, 1); mark();
@@ -732,10 +737,15 @@ export class World {
         b.interior?.setInside(false);
         b.interior?.setDoor(0);
         b.setNight(0, 1);
-      });
+      }, { materials: live, nodes, toggles });
       // The theater's screen changes picture and shape on its own, LABITCONF's
       // places its video (youtubeStage.ts): never merged.
-      this.meshesMerged += mergeStatic(b.group, (m) => moving.has(m) || m.name === 'roof' || m.name === 'theater-screen' || m.name === 'labitconf-screen');
+      const fixed = (m: THREE.Mesh) => m.name === 'roof' || m.name === 'theater-screen' || m.name === 'labitconf-screen';
+      this.meshesMerged += mergeStatic(b.group, (m) => moving.has(m) || fixed(m), { live });
+      // And what doesn't move inside the parts that move or hide as a whole (a door, the cutaway),
+      // and the pieces only ever switched on and off together (walls without shadows while you're inside).
+      this.meshesMerged += mergeWithinMoving(nodes, (m) => fixed(m) || toggles.has(m), { live });
+      this.meshesMerged += mergeToggling(toggles, fixed, { live });
       b.group.traverse((o) => { o.userData.landmark = d.id; });
       this.staticRoot.add(b.group);
       this.landmarks.set(d.id, b);

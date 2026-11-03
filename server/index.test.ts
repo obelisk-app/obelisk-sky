@@ -83,6 +83,8 @@ describe('static host', () => {
     expect(SECURITY_HEADERS['content-security-policy']).toMatch(/connect-src[^;]*blob:/);
     expect(SECURITY_HEADERS['content-security-policy']).toMatch(/script-src[^;]*'wasm-unsafe-eval'/);
     expect(SECURITY_HEADERS['content-security-policy']).not.toMatch(/'unsafe-eval'/);
+    // The one third-party script: the beacon Cloudflare Web Analytics injects.
+    expect(SECURITY_HEADERS['content-security-policy']).toMatch(/script-src 'self' 'wasm-unsafe-eval' https:\/\/static\.cloudflareinsights\.com;/);
     // LABITCONF's stage: a YouTube embed, and no other frames.
     expect(SECURITY_HEADERS['content-security-policy']).toMatch(/frame-src https:\/\/www.youtube-nocookie.com/);
   });
