@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { TOTEM_ORIGIN } from '../client/src/world/totemMonitor';
 process.env.NODE_ENV = 'test';
-const { resolveStatic, redirectFor, SECURITY_HEADERS, parseRange, cacheControl, countryCookie } = await import('./index');
+const { resolveStatic, redirectFor, SECURITY_HEADERS, parseRange, cacheControl, pickEncoding, countryCookie } = await import('./index');
 
 describe('static host', () => {
   it('never resolves outside the client build', () => {
@@ -19,9 +19,18 @@ describe('static host', () => {
     // A missing file is a fallback page, never kept a year under an asset's URL.
     expect(resolveStatic('/landing/nope.mp4')!.fallback).toBe(true);
   });
-  it('keeps hashed bundles, models and the landing media a year, and checks pages every time', () => {
-    for (const p of ['/assets/app-x.js', '/models/town/a.glb', '/landing/island-orbit.mp4', '/media/guides/plaza.1a2b3c4d.mp4']) expect(cacheControl(p), p).toMatch(/max-age=31536000, immutable/);
-    for (const p of ['/index.html', '/app/index.html', '/og.jpg', '/sounds/manifest.json', '/guides/index.html', '/sitemap.xml']) expect(cacheControl(p), p).toBe('no-cache');
+  it('keeps hashed bundles, hashed models and the landing media a year, and checks pages every time', () => {
+    for (const p of ['/assets/app-x.js', '/models/town/a.1a2b3c4d.glb', '/models/people/skin-m-light.0f9e8d7c.webp', '/landing/island-orbit.mp4', '/media/guides/plaza.1a2b3c4d.mp4']) expect(cacheControl(p), p).toMatch(/max-age=31536000, immutable/);
+    // A model under its plain name may change under the same URL.
+    for (const p of ['/models/town/a.glb', '/models/town/Textures/colormap.png', '/index.html', '/app/index.html', '/og.jpg', '/sounds/manifest.json', '/guides/index.html', '/sitemap.xml']) expect(cacheControl(p), p).toBe('no-cache');
+  });
+  it('sends the precompressed copy the browser accepts', () => {
+    const has = (...files: string[]) => (f: string) => files.includes(f);
+    expect(pickEncoding('gzip, deflate, br', '/x.glb', has('/x.glb.br', '/x.glb.gz'))).toEqual({ encoding: 'br', file: '/x.glb.br' });
+    expect(pickEncoding('gzip, deflate', '/x.glb', has('/x.glb.br', '/x.glb.gz'))).toEqual({ encoding: 'gzip', file: '/x.glb.gz' });
+    expect(pickEncoding('br;q=0, gzip', '/x.glb', has('/x.glb.br', '/x.glb.gz'))).toEqual({ encoding: 'gzip', file: '/x.glb.gz' });
+    expect(pickEncoding('br', '/x.glb', has('/x.glb.gz'))).toBeNull();
+    expect(pickEncoding(undefined, '/x.glb', has('/x.glb.br'))).toBeNull();
   });
   it('answers byte ranges, as Safari needs to play the landing video', () => {
     expect(parseRange('bytes=0-1', 100)).toEqual({ start: 0, end: 1 });

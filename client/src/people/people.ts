@@ -14,6 +14,7 @@ import * as THREE from 'three';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { modelUrl } from '../world/assetUrl';
 
 export type BodyType = 'm' | 'f';
 export type Outfit = 'peasant' | 'ranger';
@@ -39,8 +40,8 @@ export interface PersonLook {
 /** Height of a grown-up in metres in the source models (UE scale). */
 export const MODEL_HEIGHT = 1.8;
 
-const BASE = '/models/people/';
-const FILES = {
+const url = (file: string) => modelUrl(`people/${file}`);
+export const FILES = {
   body: { m: 'body-m.glb', f: 'body-f.glb' },
   outfit: { 'm-peasant': 'outfit-m-peasant.glb', 'm-ranger': 'outfit-m-ranger.glb', 'f-peasant': 'outfit-f-peasant.glb', 'f-ranger': 'outfit-f-ranger.glb' },
   hair: {
@@ -58,6 +59,8 @@ const textures = new Map<string, THREE.Texture>();
 
 // At most two files decode at once: dozens of 1024² textures decoding in
 // parallel can exhaust a phone's (or a software renderer's) image memory.
+// Downloads are not limited: they all start at once, so a phone's round trips
+// overlap instead of queueing two by two.
 let running = 0;
 const waiting: (() => void)[] = [];
 async function slot<T>(fn: () => Promise<T>): Promise<T> {
@@ -69,7 +72,12 @@ async function slot<T>(fn: () => Promise<T>): Promise<T> {
 function load(file: string): Promise<GLTF> {
   let p = cache.get(file);
   if (!p) {
-    p = slot(() => loader.loadAsync(BASE + file)).then((g) => { done.set(file, g); return g; });
+    const bytes = fetch(url(file)).then((r) => {
+      if (!r.ok) throw new Error(`${file}: HTTP ${r.status}`);
+      return r.arrayBuffer();
+    });
+    bytes.catch(() => {}); // reported through p
+    p = bytes.then((b) => slot(() => loader.parseAsync(b, ''))).then((g) => { done.set(file, g); return g; });
     p.catch(() => cache.delete(file)); // a failed file may be retried
     cache.set(file, p);
   }
@@ -83,8 +91,7 @@ function loadSkin(body: BodyType, tone: 'light' | 'dark'): Promise<THREE.Texture
   const key = `skin-${body}-${tone}.webp`;
   let p = skinLoads.get(key);
   if (!p) {
-    // ?v: Cloudflare cached the first deploy's wrong content type for a year.
-    p = new THREE.TextureLoader().loadAsync(`${BASE}${key}?v=2`).then((t) => {
+    p = new THREE.TextureLoader().loadAsync(url(key)).then((t) => {
       t.flipY = false; // glTF UV convention
       t.colorSpace = THREE.SRGBColorSpace;
       textures.set(key, t);

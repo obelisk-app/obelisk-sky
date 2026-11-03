@@ -12,3 +12,4 @@ _dl/
 client/guides/
 client/es/
 client/public/sitemap.xml
+client/src/generated/

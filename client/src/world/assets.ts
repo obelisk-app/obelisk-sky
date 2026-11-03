@@ -1,18 +1,21 @@
 // glTF loading and cloning. Every model is loaded once, then cloned per use;
 // static props that repeat a lot (trees, flowers, rocks) are instanced by
-// props.ts instead.
+// props.ts instead. URLs carry the file's content hash (assetUrl.ts).
 
 import * as THREE from 'three';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { modelUrl } from './assetUrl';
 
-const loader = new GLTFLoader();
+// Pets are meshopt-compressed (scripts/optimize-models.mjs); town and nature are not.
+const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 const cache = new Map<string, Promise<GLTF>>();
 
 export function loadGltf(path: string): Promise<GLTF> {
   let p = cache.get(path);
   if (!p) {
-    p = loader.loadAsync(`/models/${path}.glb`);
+    p = loader.loadAsync(modelUrl(`${path}.glb`));
+    p.catch(() => cache.delete(path)); // a failed file may be retried
     cache.set(path, p);
   }
   return p;
@@ -44,30 +47,6 @@ export function model(path: string): THREE.Object3D {
     }
   });
   return o;
-}
-
-export function characterClone(): { root: THREE.Object3D; clips: THREE.AnimationClip[] } {
-  const g = loaded.get('chars/character')!;
-  return { root: skeletonClone(g.scene), clips: g.animations };
-}
-
-// Character skins: same mesh, 18 textures.
-export const SKINS = 'abcdefghijklmnopqr'.split('');
-const texLoader = new THREE.TextureLoader();
-const skinCache = new Map<string, THREE.MeshStandardMaterial>();
-
-export function skinMaterial(letter: string, base: THREE.Material): THREE.MeshStandardMaterial {
-  let m = skinCache.get(letter);
-  if (!m) {
-    const tex = texLoader.load(`/models/chars/Textures/texture-${letter}.png`);
-    tex.flipY = false;
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.magFilter = THREE.NearestFilter;
-    m = (base as THREE.MeshStandardMaterial).clone();
-    m.map = tex;
-    skinCache.set(letter, m);
-  }
-  return m;
 }
 
 export const TOWN = [
