@@ -146,8 +146,8 @@ describe('a forum in the channel list', () => {
 });
 
 describe('who is in the village', () => {
-  const channels = (total: number, around: number) => {
-    const { side, host } = panel({ village: () => ({ total, around }) });
+  const channels = (total: number, around: number, skyOnly = true, toggleCount?: () => void) => {
+    const { side, host } = panel({ village: () => ({ total, around, skyOnly }), ...(toggleCount ? { toggleCount } : {}) });
     side.toggle('channels');
     return host.querySelector('.side-village');
   };
@@ -160,4 +160,30 @@ describe('who is in the village', () => {
     expect(channels(3, 0)?.textContent).toBe('3 in the village');
     expect(channels(0, 0)).toBeNull();
   });
+
+  it('counts the whole relay by default, as a switch to Sky only', () => {
+    const toggle = vi.fn();
+    const line = channels(7, 3, false, toggle) as HTMLButtonElement;
+    expect(line.querySelector('.side-village-n')?.textContent).toBe('7 active on the relay');
+    expect(line.querySelector('.side-village-switch')?.textContent).toBe('in Sky only');
+    expect(line.getAttribute('aria-pressed')).toBe('false');
+    line.click();
+    expect(toggle).toHaveBeenCalledOnce();
+  });
+
+  it('shows no switch where the count can only be Sky\'s (the guest island)', () => {
+    const { side, host } = panel({ village: () => ({ total: 2, around: 1, skyOnly: true, canToggle: false }), toggleCount: () => {} });
+    side.toggle('channels');
+    const line = host.querySelector('.side-village');
+    expect(line?.tagName).toBe('DIV');
+    expect(line?.textContent).toBe('2 in the village · 1 around');
+  });
+
+  it('switches back to the whole relay from Sky only, and stays a tap away at 0', () => {
+    const line = channels(0, 0, true, () => {}) as HTMLButtonElement;
+    expect(line.querySelector('.side-village-n')?.textContent).toBe('0 in the village');
+    expect(line.querySelector('.side-village-switch')?.textContent).toBe('whole relay');
+    expect(line.getAttribute('aria-pressed')).toBe('true');
+  });
 });
+

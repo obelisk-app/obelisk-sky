@@ -710,6 +710,9 @@ button.side-section:has(+ *) { cursor: pointer; }
 .side-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .side-here { font: 500 10.5px var(--mono); color: var(--green); }
 .side-village { font: 600 11px var(--mono); color: var(--green); padding: 4px 8px 6px; }
+button.side-village { display: flex; width: 100%; align-items: baseline; justify-content: space-between; gap: 8px; background: none; border: 0; border-radius: 6px; text-align: left; cursor: pointer; }
+button.side-village:hover, button.side-village:focus-visible { background: rgba(180, 249, 83, 0.08); outline: none; }
+.side-village-switch { font-weight: 500; color: var(--muted); text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
 .side-badge { min-width: 18px; padding: 1px 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); font: 700 10.5px var(--mono); text-align: center; }
 .side-badge.ping { background: var(--green); color: #0a0a0a; }
 .side-mini { border: 0; background: none; cursor: pointer; opacity: 0.5; font-size: 13px; padding: 2px; }

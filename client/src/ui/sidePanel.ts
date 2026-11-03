@@ -29,8 +29,10 @@ function writeFolded(ids: Set<string>): void {
 
 export interface SidePanelDeps {
   channels(): ChannelRow[];
-  /** Everyone connected to the village, and how many of them stand at no channel's place. */
-  village?(): { total: number; around: number };
+  /** Who the counts are of (everyone active on the relay, or only people in Sky now), the total, and how many count at no channel. */
+  village?(): { total: number; around: number; skyOnly: boolean; canToggle?: boolean };
+  /** The count line was tapped: switch between the relay-wide and the Sky-only counts. */
+  toggleCount?(): void;
   /** The operator's categories and channel order (obelisk:layout). */
   layout(): ChannelLayout;
   /** The channel the members list starts on (where you stand), else the first. */
@@ -147,12 +149,23 @@ export class SidePanel {
     const sections = channelSections(rows, this.deps.layout());
     this.title.textContent = vw.channelsN(rows.length);
     this.pick.hidden = true;
-    const v = this.deps.village?.() ?? { total: 0, around: 0 };
-    this.show(`c|${v.total}|${v.around}|${[...this.folded].join(',')}|${[...this.forumsFolded].join(',')}|${JSON.stringify(sections)}`, () => {
+    const v = this.deps.village?.() ?? { total: 0, around: 0, skyOnly: false };
+    this.show(`c|${v.skyOnly ? 's' : 'r'}|${v.total}|${v.around}|${[...this.folded].join(',')}|${[...this.forumsFolded].join(',')}|${JSON.stringify(sections)}`, () => {
       if (!rows.length) return [div('side-empty', vw.noChannelsRelay)];
       const out: HTMLElement[] = [];
-      // Everyone connected first; each channel's row then says how many of them stand there.
-      if (v.total) out.push(div('side-village', v.around ? `${vw.villageN(v.total)} · ${vw.aroundN(v.around)}` : vw.villageN(v.total)));
+      // Everyone counted first (the relay's active people, or only Sky's); each channel's row then says how many count there.
+      // The line is a switch between the two, shown even at 0 so the other count stays a tap away.
+      const head = v.skyOnly ? vw.villageN(v.total) : vw.relayActiveN(v.total);
+      const text = v.skyOnly && v.around ? `${head} · ${vw.aroundN(v.around)}` : head;
+      const line = document.createElement('button');
+      line.type = 'button';
+      line.className = 'side-village';
+      line.title = v.skyOnly ? vw.countShowRelay : vw.countShowSky;
+      line.setAttribute('aria-pressed', String(v.skyOnly));
+      line.append(span('side-village-n', text), span('side-village-switch', v.skyOnly ? vw.countSwitchRelay : vw.countSwitchSky));
+      line.addEventListener('click', () => this.deps.toggleCount?.());
+      if (this.deps.toggleCount && v.canToggle !== false) out.push(line);
+      else if (v.total) out.push(div('side-village', text));
       for (const s of sections) {
         const key = s.id ?? '';
         const shut = this.folded.has(key);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { liveTally, speakerPlace, bubbleShown } from './livePlaces';
+import { liveTally, relayTally, speakerPlace, bubbleShown, RELAY_ACTIVE_MS } from './livePlaces';
 
 describe('who is here', () => {
   const yards: Record<string, { x: number; z: number }> = { general: { x: 0, z: 0 }, bitcoin: { x: 10, z: 0 } };
@@ -64,5 +64,44 @@ describe('message bubbles', () => {
     expect(bubbleShown('bitcoin', 'general', true)).toBe(true);
     expect(bubbleShown(null, 'general', true)).toBe(true);
     expect(bubbleShown(null, null, true)).toBe(true);
+  });
+});
+
+describe('everyone active on the relay', () => {
+  const yards: Record<string, { x: number; z: number }> = { general: { x: 0, z: 0 }, bitcoin: { x: 10, z: 0 } };
+  const placeOf = (p: { x: number; z: number }) => {
+    for (const [id, y] of Object.entries(yards)) if (Math.hypot(p.x - y.x, p.z - y.z) < 2.6) return id;
+    return null;
+  };
+  const now = 1_800_000_000;
+  const since = now - RELAY_ACTIVE_MS / 1000;
+
+  it('counts recent writers from any app with the people in Sky, each channel once per person', () => {
+    const posts = [
+      { pubkey: 'ana', created_at: now - 60, channel: 'general' },
+      { pubkey: 'ana', created_at: now - 30, channel: 'general' },
+      { pubkey: 'ana', created_at: now - 20, channel: 'bitcoin' },
+      { pubkey: 'beto', created_at: now - 120, channel: 'bitcoin' },
+      { pubkey: 'old', created_at: since - 1, channel: 'general' },
+    ];
+    const pos = new Map([['me', { x: 0, z: 0 }], ['walker', { x: 50, z: 50 }]]);
+    const t = relayTally(posts, since, ['me', 'walker'], (pk) => pos.get(pk) ?? null, placeOf);
+    expect(t.total).toBe(4); // ana, beto, me, walker; not the old poster
+    expect(t.byPlace.get('general')).toBe(2); // ana wrote there, me stands there
+    expect(t.byPlace.get('bitcoin')).toBe(2); // ana and beto wrote there
+    expect(t.around).toBe(1); // walker: connected, at no place, quiet
+  });
+
+  it('counts someone in Sky who also wrote once in the total', () => {
+    const t = relayTally([{ pubkey: 'me', created_at: now, channel: 'bitcoin' }], since, ['me'], () => ({ x: 0, z: 0 }), placeOf);
+    expect(t.total).toBe(1);
+    expect(t.byPlace.get('general')).toBe(1);
+    expect(t.byPlace.get('bitcoin')).toBe(1);
+    expect(t.around).toBe(0);
+  });
+
+  it('is empty with nobody active', () => {
+    const t = relayTally([], since, [], () => null, placeOf);
+    expect(t).toEqual({ total: 0, byPlace: new Map(), around: 0 });
   });
 });

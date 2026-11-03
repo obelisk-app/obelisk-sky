@@ -37,6 +37,8 @@ export interface Prefs {
   chatOpacity: number; // 0.15 .. 1, the chat panel's background
   /** Walking into a channel's yard: open its chat, offer a button, or nothing. */
   chatOpen: ChatOpenPref;
+  /** The channel list's counts: everyone active on the relay (false, the default) or only people in Sky now (ui/livePlaces.ts). */
+  countSkyOnly: boolean;
   // Sound
   sound: boolean;
   volume: number; // 0 .. 1
@@ -74,6 +76,7 @@ export const DEFAULT_PREFS: Prefs = {
   invertY: false,
   chatOpacity: 0.42,
   chatOpen: 'ask',
+  countSkyOnly: false,
   sound: false,
   volume: 0.6,
   emoteMusic: true,
@@ -116,6 +119,7 @@ export function normalizePrefs(raw: unknown): Prefs {
     invertY: bool(r.invertY, d.invertY),
     chatOpacity: num(r.chatOpacity, d.chatOpacity, 0.15, 1),
     chatOpen: oneOf(CHAT_OPEN_PREFS, r.chatOpen, d.chatOpen),
+    countSkyOnly: bool(r.countSkyOnly, d.countSkyOnly),
     sound: bool(r.sound, d.sound),
     volume: num(r.volume, d.volume, 0, 1),
     emoteMusic: bool(r.emoteMusic, d.emoteMusic),

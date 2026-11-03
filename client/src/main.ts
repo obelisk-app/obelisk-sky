@@ -10,7 +10,7 @@ import { Feed, type FeedAccess } from './nostr/feed';
 import { deletionTemplate, joinTemplate, messageTemplate, publishToGroup, publishSigned, reactionTemplate } from './nostr/publish';
 import type { WireReaction } from './nostr/wire';
 import { FOOT_SPEEDS, JUMP_SPEED, PlayerController, RIDE_SPEEDS, SWIM_SPEEDS, placeAt } from './player/controller';
-import { liveTally, speakerPlace, bubbleShown } from './ui/livePlaces';
+import { liveTally, relayTally, speakerPlace, bubbleShown, RELAY_ACTIVE_MS, type RelayPost } from './ui/livePlaces';
 import { InputState, isTyping, mountJoystick } from './player/input';
 import { ChatPanel } from './ui/chatPanel';
 import { ReadState, countUnread } from './nostr/readstate';
@@ -1533,6 +1533,31 @@ function livePks(): Set<string> {
 function tallyLive() {
   return liveTally(livePks(), (pk) => world.people.get(pk)?.pos ?? null, placeOfPos);
 }
+/** The channel list's counts are Sky-only when you picked that, and always on the guest island (its posts are scripted). */
+function countSkyOnly(): boolean {
+  return prefs.get().countSkyOnly || isGuest();
+}
+/** The relay's messages, each toward the channel row it shows under: a forum's threads count toward the forum. */
+function relayPosts(): RelayPost[] {
+  const rowOf = new Map<string, string>();
+  for (const g of listRows()) {
+    rowOf.set(g.id, g.id);
+    if (g.kind === 'forum') for (const t of forumThreads(g.id, groups, msgsOf)) rowOf.set(t.group.id, g.id);
+  }
+  const out: RelayPost[] = [];
+  for (const e of player.events) {
+    if (e.k !== 'msg') continue;
+    const channel = rowOf.get(e.m.groupId);
+    if (channel) out.push({ pubkey: e.m.pubkey, created_at: e.m.createdAt, channel });
+  }
+  return out;
+}
+/** The channel list's counts: everyone active on the relay (the default), or only the people in Sky now. */
+function tallyCounts() {
+  if (countSkyOnly()) return tallyLive();
+  const since = Math.floor((Date.now() - RELAY_ACTIVE_MS) / 1000);
+  return relayTally(relayPosts(), since, livePks(), (pk) => world.people.get(pk)?.pos ?? null, placeOfPos);
+}
 /** The place (channel) a position is in: the theater's hall, else the nearest yard. */
 function placeOfPos(p: Vec2): string | null {
   return world.inTheater(p) ? theaterChannel() : placeAt(p, world.yards());
@@ -1554,8 +1579,8 @@ function presenceOf(pk: string): Presence {
 const members = new MembersStore(hub, () => themes?.operator ?? null);
 const side = new SidePanel($('app'), {
   channels: () => {
-  // Only people connected right now, where they stand (ui/livePlaces.ts).
-  const counts = tallyLive().byPlace;
+  // Everyone active on the relay lately, or only the people in Sky now (ui/livePlaces.ts).
+  const counts = tallyCounts().byPlace;
   const me = myPk();
   // A thread with a ping for you shows its own "@" under its forum.
   const pingedThreads = new Set(me ? openPings().map((p) => p.m.groupId) : []);
@@ -1572,7 +1597,9 @@ const side = new SidePanel($('app'), {
     } : {}),
   }));
   },
-  village: () => { const t = tallyLive(); return { total: t.total, around: t.around }; },
+  village: () => { const t = tallyCounts(); return { total: t.total, around: t.around, skyOnly: countSkyOnly(), canToggle: !isGuest() }; },
+  // Not on the guest island (no switch is shown there): its counts are Sky's only.
+  toggleCount: () => { if (!isGuest()) { prefs.set({ countSkyOnly: !prefs.get().countSkyOnly }); side.refresh(); } },
   layout: () => (isGuest() ? EMPTY_LAYOUT : themes?.layout ?? EMPTY_LAYOUT),
   defaultChannel: () => place ?? chat.groupId ?? groups[0]?.id ?? null,
   // On the guest island the houses aren't the relay's: no members to ask for.
