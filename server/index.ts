@@ -57,7 +57,9 @@ const MIME: Record<string, string> = {
 // anywhere (img-src https:). Scripts and styles are first-party only, plus
 // Google Fonts for the bubble typefaces. LABITCONF's stage plays a YouTube
 // embed and the totem monitor on its lawn shows totemcillo (frame-src,
-// world/youtubeStage.ts, world/totemMonitor.ts TOTEM_ORIGIN).
+// world/youtubeStage.ts, world/totemMonitor.ts TOTEM_ORIGIN). Cloudflare Web
+// Analytics injects its beacon from static.cloudflareinsights.com (it reports
+// to cloudflareinsights.com, which connect-src's https: covers).
 export const SECURITY_HEADERS = {
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'no-referrer',
@@ -65,7 +67,7 @@ export const SECURITY_HEADERS = {
   'content-security-policy':
     "default-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob:; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; " +
-    "connect-src 'self' wss: https: blob: data:; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; " +
+    "connect-src 'self' wss: https: blob: data:; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; worker-src 'self' blob:; " +
     "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://totemcillo.vercel.app; frame-ancestors 'self'",
 };
 

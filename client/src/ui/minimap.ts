@@ -27,7 +27,7 @@ export interface MinimapState {
   gym?: { id: string; pos: Vec2 } | null;
   /** Everyone else connected and in the village. */
   people: Vec2[];
-  /** You: where you are and which way you face (radians, like Math.atan2(dx, dz)). */
+  /** You: where you are and which way you look, the camera's yaw (radians, like Math.atan2(dx, dz)). */
   me: { pos: Vec2; heading: number } | null;
   /** The camera's yaw (same measure), for the turning map. */
   cameraYaw: number;

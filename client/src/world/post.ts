@@ -239,6 +239,9 @@ export class Post {
     const dpr = Math.min(window.devicePixelRatio || 1, L.pixelRatio);
     const ratio = Math.max(0.5, dpr * this.settings.resolution * (this.level === 'low' ? this.lowScale : 1));
     if (this.renderer.getPixelRatio() !== ratio) this.renderer.setPixelRatio(ratio);
+    // The composer keeps the ratio the renderer had when it was made (1.75 on
+    // a phone): without this, "low" drew the scene at 1.75× and scaled it down.
+    this.composer.setPixelRatio(ratio);
     this.renderer.shadowMap.enabled = this.settings.shadows && this.level !== 'low';
     this.sun.castShadow = this.renderer.shadowMap.enabled;
     const mapSize = this.coarse ? Math.min(L.shadowMap, 1024) : L.shadowMap;
