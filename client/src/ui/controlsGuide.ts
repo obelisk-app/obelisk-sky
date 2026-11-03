@@ -1,5 +1,6 @@
 // "How to play": the controls, from the help button in the bottom bar, and
-// once on first login. Touch screens get the touch version.
+// once on first login on a computer (a phone's controls are on screen, and
+// the panel covered the village). Touch screens get the touch version.
 
 import { pick } from '../i18n/lang';
 
@@ -214,8 +215,9 @@ export function openControlsGuide(parent: HTMLElement): void {
   ok.focus();
 }
 
-/** Show the guide once per browser, the first time someone logs in. */
+/** Show the guide once per browser, the first time someone logs in; never by itself on a touch screen. */
 export function maybeShowControlsGuide(parent: HTMLElement): boolean {
+  if (isTouch()) return false;
   try {
     if (localStorage.getItem(SEEN_KEY) === '1') return false;
     localStorage.setItem(SEEN_KEY, '1');
