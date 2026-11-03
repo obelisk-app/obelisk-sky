@@ -1,10 +1,11 @@
 // Who is really at a place, and whose messages show there.
 //
-// The channel list's "N here" counts only people connected to Obelisk Sky
-// right now and publishing where they stand (live motion or a live
-// activity claim, plus you when logged in), each counted at the one place
-// they stand in. The villagers the director walks over from posts are not
-// people in the village, so they don't count.
+// The channel list counts only people connected to Obelisk Sky right now
+// (live motion or a live activity claim, plus you when logged in): all of
+// them once in "N in the village", then each at the one place they stand in
+// ("N here" on its channel) or "around" when they stand at none. The
+// villagers the director walks over from posts are not people in the
+// village, so they don't count.
 //
 // A message's speech bubble shows only when its speaker is at the same
 // place as you: a connected person by where they really stand, anyone else
@@ -12,19 +13,27 @@
 
 import type { Vec2 } from '../world/layout';
 
-/** For each place, how many connected people stand there. */
-export function hereCounts(
-  people: Iterable<{ pk: string; pos: Vec2 }>,
-  isLive: (pk: string) => boolean,
+/** Everyone connected, once each: the total, how many stand at each place, and how many at none (on the plaza, a road,
+ *  between yards, at a landmark, or not drawn yet). `total` is always the places' sum plus `around`. */
+export interface LiveTally { total: number; byPlace: Map<string, number>; around: number }
+
+export function liveTally(
+  livePks: Iterable<string>,
+  positionOf: (pk: string) => Vec2 | null,
   placeOf: (pos: Vec2) => string | null,
-): Map<string, number> {
-  const out = new Map<string, number>();
-  for (const p of people) {
-    if (!isLive(p.pk)) continue;
-    const at = placeOf(p.pos);
-    if (at) out.set(at, (out.get(at) ?? 0) + 1);
+): LiveTally {
+  const byPlace = new Map<string, number>();
+  const seen = new Set<string>();
+  let around = 0;
+  for (const pk of livePks) {
+    if (seen.has(pk)) continue;
+    seen.add(pk);
+    const pos = positionOf(pk);
+    const at = pos ? placeOf(pos) : null;
+    if (at) byPlace.set(at, (byPlace.get(at) ?? 0) + 1);
+    else around++;
   }
-  return out;
+  return { total: seen.size, byPlace, around };
 }
 
 /** Where a speaker is for their message: a live person where they stand, anyone else at the channel they posted in. */

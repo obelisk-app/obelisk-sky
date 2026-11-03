@@ -144,3 +144,20 @@ describe('a forum in the channel list', () => {
     expect(again.host.querySelectorAll('.side-thread')).toHaveLength(0);
   });
 });
+
+describe('who is in the village', () => {
+  const channels = (total: number, around: number) => {
+    const { side, host } = panel({ village: () => ({ total, around }) });
+    side.toggle('channels');
+    return host.querySelector('.side-village');
+  };
+
+  it('heads the channel list with everyone connected and how many are around', () => {
+    expect(channels(5, 2)?.textContent).toBe('5 in the village · 2 around');
+  });
+
+  it('leaves "around" out when everyone is at a channel, and the line out when nobody is connected', () => {
+    expect(channels(3, 0)?.textContent).toBe('3 in the village');
+    expect(channels(0, 0)).toBeNull();
+  });
+});

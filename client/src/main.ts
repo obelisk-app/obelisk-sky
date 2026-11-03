@@ -10,7 +10,7 @@ import { Feed, type FeedAccess } from './nostr/feed';
 import { deletionTemplate, joinTemplate, messageTemplate, publishToGroup, publishSigned, reactionTemplate } from './nostr/publish';
 import type { WireReaction } from './nostr/wire';
 import { FOOT_SPEEDS, JUMP_SPEED, PlayerController, RIDE_SPEEDS, SWIM_SPEEDS, placeAt } from './player/controller';
-import { hereCounts, speakerPlace, bubbleShown } from './ui/livePlaces';
+import { liveTally, speakerPlace, bubbleShown } from './ui/livePlaces';
 import { InputState, isTyping, mountJoystick } from './player/input';
 import { ChatPanel } from './ui/chatPanel';
 import { ReadState, countUnread } from './nostr/readstate';
@@ -1517,6 +1517,17 @@ function isLivePk(pk: string): boolean {
   if (pk === myPk()) return !isGuest();
   return !!motion.get(pk) || liveClaimers.has(pk);
 }
+/** Everyone connected right now, the same rule as isLivePk: live motion, a live claim, and you (logged in). */
+function livePks(): Set<string> {
+  const out = new Set<string>([...motion.livePks(), ...liveClaimers]);
+  const me = myPk();
+  if (me && !isGuest()) out.add(me);
+  return out;
+}
+/** Who's connected, in total and at each place (ui/livePlaces.ts). */
+function tallyLive() {
+  return liveTally(livePks(), (pk) => world.people.get(pk)?.pos ?? null, placeOfPos);
+}
 /** The place (channel) a position is in: the theater's hall, else the nearest yard. */
 function placeOfPos(p: Vec2): string | null {
   return world.inTheater(p) ? theaterChannel() : placeAt(p, world.yards());
@@ -1539,7 +1550,7 @@ const members = new MembersStore(hub, () => themes?.operator ?? null);
 const side = new SidePanel($('app'), {
   channels: () => {
   // Only people connected right now, where they stand (ui/livePlaces.ts).
-  const counts = hereCounts(world.people.values(), isLivePk, placeOfPos);
+  const counts = tallyLive().byPlace;
   const me = myPk();
   // A thread with a ping for you shows its own "@" under its forum.
   const pingedThreads = new Set(me ? openPings().map((p) => p.m.groupId) : []);
@@ -1556,6 +1567,7 @@ const side = new SidePanel($('app'), {
     } : {}),
   }));
   },
+  village: () => { const t = tallyLive(); return { total: t.total, around: t.around }; },
   layout: () => (isGuest() ? EMPTY_LAYOUT : themes?.layout ?? EMPTY_LAYOUT),
   defaultChannel: () => place ?? chat.groupId ?? groups[0]?.id ?? null,
   // On the guest island the houses aren't the relay's: no members to ask for.

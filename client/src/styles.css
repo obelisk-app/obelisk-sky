@@ -707,6 +707,7 @@ button.side-section:has(+ *) { cursor: pointer; }
 .side-ico { width: 18px; text-align: center; color: var(--muted); font-weight: 700; }
 .side-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .side-here { font: 500 10.5px var(--mono); color: var(--green); }
+.side-village { font: 600 11px var(--mono); color: var(--green); padding: 4px 8px 6px; }
 .side-badge { min-width: 18px; padding: 1px 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); font: 700 10.5px var(--mono); text-align: center; }
 .side-badge.ping { background: var(--green); color: #0a0a0a; }
 .side-mini { border: 0; background: none; cursor: pointer; opacity: 0.5; font-size: 13px; padding: 2px; }

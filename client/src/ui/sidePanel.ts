@@ -29,6 +29,8 @@ function writeFolded(ids: Set<string>): void {
 
 export interface SidePanelDeps {
   channels(): ChannelRow[];
+  /** Everyone connected to the village, and how many of them stand at no channel's place. */
+  village?(): { total: number; around: number };
   /** The operator's categories and channel order (obelisk:layout). */
   layout(): ChannelLayout;
   /** The channel the members list starts on (where you stand), else the first. */
@@ -145,9 +147,12 @@ export class SidePanel {
     const sections = channelSections(rows, this.deps.layout());
     this.title.textContent = vw.channelsN(rows.length);
     this.pick.hidden = true;
-    this.show(`c|${[...this.folded].join(',')}|${[...this.forumsFolded].join(',')}|${JSON.stringify(sections)}`, () => {
+    const v = this.deps.village?.() ?? { total: 0, around: 0 };
+    this.show(`c|${v.total}|${v.around}|${[...this.folded].join(',')}|${[...this.forumsFolded].join(',')}|${JSON.stringify(sections)}`, () => {
       if (!rows.length) return [div('side-empty', vw.noChannelsRelay)];
       const out: HTMLElement[] = [];
+      // Everyone connected first; each channel's row then says how many of them stand there.
+      if (v.total) out.push(div('side-village', v.around ? `${vw.villageN(v.total)} · ${vw.aroundN(v.around)}` : vw.villageN(v.total)));
       for (const s of sections) {
         const key = s.id ?? '';
         const shut = this.folded.has(key);
