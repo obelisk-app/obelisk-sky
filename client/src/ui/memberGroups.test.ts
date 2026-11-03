@@ -1,27 +1,24 @@
 import { describe, it, expect } from 'vitest';
-import { groupMembers, type Rank } from './memberGroups';
+import { listMembers, type Rank } from './memberGroups';
 import type { Presence } from '../nostr/presence';
 
-describe('member list sections', () => {
+describe('the member list', () => {
   const og: Rank = { id: 'og', name: 'OG', tier: 5, color: '#fff', emoji: '⭐' };
   const mod: Rank = { id: 'mod', name: 'Moderator', tier: 9, color: '#f00', emoji: '' };
-  const presence: Record<string, Presence> = { ana: 'online', bob: 'online', cy: 'online', dee: 'afk', eve: 'offline', fin: 'online' };
-  const ranks: Record<string, Rank[]> = { bob: [og], cy: [mod, og], dee: [mod] };
-  const out = groupMembers(Object.keys(presence), new Set(['ana']), (pk) => ranks[pk], (pk) => presence[pk], (pk) => pk);
+  const presence: Record<string, Presence> = { ana: 'online', bob: 'online', cy: 'online', dee: 'afk', eve: 'offline', fin: 'online', gus: 'offline' };
+  const ranks: Record<string, Rank[]> = { bob: [og], cy: [mod, og], dee: [mod], gus: [mod] };
+  const out = listMembers(Object.keys(presence), new Set(['ana']), (pk) => ranks[pk], (pk) => presence[pk], (pk) => pk);
 
-  it('puts admins first, then ranks by tier, then plain online members', () => {
-    expect(out.map((s) => s.key)).toEqual(['admin', 'rank:mod', 'rank:og', 'member', 'afk', 'offline']);
-    expect(out[1].rows.map((r) => r.pk)).toEqual(['cy']);
-    expect(out[1].label).toBe('Moderator');
-    expect(out[2].label).toBe('⭐ OG');
+  it('lists everyone once, connected first, then AFK, then offline', () => {
+    expect(out.map((r) => r.pk)).toEqual(['ana', 'cy', 'bob', 'fin', 'dee', 'gus', 'eve']);
   });
 
-  it('keeps AFK and offline people apart from the online ones, whatever their rank', () => {
-    expect(out.find((s) => s.key === 'afk')!.rows.map((r) => r.pk)).toEqual(['dee']);
-    expect(out.find((s) => s.key === 'offline')!.rows.map((r) => r.pk)).toEqual(['eve']);
+  it('orders by standing within each: admins, then ranks by tier, then names', () => {
+    const online = out.filter((r) => r.presence === 'online');
+    expect(online.map((r) => [r.pk, r.admin, r.rank?.id ?? null])).toEqual([['ana', true, null], ['cy', false, 'mod'], ['bob', false, 'og'], ['fin', false, null]]);
   });
 
-  it('leaves empty sections out', () => {
-    expect(groupMembers(['x'], new Set(), () => undefined, () => 'offline', (p) => p).map((s) => s.key)).toEqual(['offline']);
+  it('keeps the offline people in the list, not folded apart', () => {
+    expect(out.filter((r) => r.presence === 'offline').map((r) => r.pk)).toEqual(['gus', 'eve']);
   });
 });

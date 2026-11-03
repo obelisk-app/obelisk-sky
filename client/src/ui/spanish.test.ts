@@ -27,6 +27,7 @@ describe('the village in Spanish', () => {
       posters: () => [],
       loadRanks: async () => ({}),
       presenceOf: (pk) => (pk === 'p1' ? 'online' : 'offline'),
+      whereIs: (pk) => (pk === 'p1' ? 'dando vueltas' : null),
       profile: (pk) => ({ name: pk, avatar: null, nip05: null }),
       colorOf: () => '#fff',
       me: () => 'p1',
@@ -39,8 +40,9 @@ describe('the village in Spanish', () => {
     side.toggle('members');
     await flush();
     expect(host.textContent).toContain('Miembros · 2');
-    expect(host.textContent).toContain('En línea — 1');
-    expect(host.textContent).toContain('Desconectado — 1');
+    // One list, no sections: the connected member's row says where they stand.
+    expect(host.querySelectorAll('.side-row.member')).toHaveLength(2);
+    expect(host.querySelector('.side-where')?.textContent).toBe('dando vueltas');
     expect(host.textContent).toContain('p1 (vos)');
   });
 

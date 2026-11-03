@@ -748,6 +748,7 @@ span.chat-person:hover { text-decoration: underline; }
 .chat-back { flex: none; font-size: 20px; }
 .chat-back[hidden] { display: none; }
 .side-afk { font: 700 9.5px var(--mono); color: #ffc83d; border: 1px solid rgba(255, 200, 61, 0.5); border-radius: 999px; padding: 1px 6px; }
+.side-where { flex: none; max-width: 42%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 10px var(--mono); color: var(--green); border: 1px solid rgba(180, 249, 83, 0.45); border-radius: 999px; padding: 1px 7px; margin-left: 6px; }
 .side-empty { color: var(--muted); font-size: 12.5px; padding: 12px 8px; }
 body.side-open .feed { opacity: 0; pointer-events: none; }
 .relays { width: min(760px, calc(100vw - 32px)); }

@@ -1607,6 +1607,14 @@ const side = new SidePanel($('app'), {
   posters: (id) => [...new Set(msgsOf(id).map((m) => m.pubkey))],
   loadRanks: () => members.loadRoles(),
   presenceOf,
+  // Where someone in Sky stands: the channel whose place it is, else "around". Not in Sky (offline, or online from another app): no tag.
+  whereIs: (pk) => {
+    if (!isLivePk(pk)) return null;
+    const pos = world.people.get(pk)?.pos;
+    const at = pos ? placeOfPos(pos) : null;
+    if (!at) return vw.aroundPlace;
+    return groupMap().get(at)?.name?.trim() || vw.aroundPlace;
+  },
   profile: (pk) => { const p = world.profiles.get(pk); return { name: p?.name ?? world.nameOf(pk), avatar: p?.avatar ?? null, nip05: p?.nip05 ?? null }; },
   colorOf: (pk) => pubkeyColor(pk),
   me: () => myPk(),

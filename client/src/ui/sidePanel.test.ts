@@ -29,6 +29,22 @@ function panel(over: Partial<SidePanelDeps> = {}) {
 }
 
 describe('the members panel', () => {
+  it('lists connected and disconnected people together, with where the connected ones stand', async () => {
+    const presence: Record<string, 'online' | 'afk' | 'offline'> = { p2: 'offline', p3: 'online', p4: 'afk' };
+    const { side, host } = panel({
+      defaultChannel: () => 'b',
+      loadMembers: vi.fn(async () => ({ admins: [], members: ['p2', 'p3', 'p4'] })),
+      presenceOf: (pk) => presence[pk] ?? 'offline',
+      whereIs: (pk) => (pk === 'p3' ? 'gym' : pk === 'p4' ? 'around' : 'should not show'),
+    });
+    side.toggle('members');
+    await vi.waitFor(() => expect(host.querySelectorAll('.side-row.member')).toHaveLength(3));
+    expect(host.querySelectorAll('.side-section')).toHaveLength(0);
+    const rows = [...host.querySelectorAll('.side-row.member')];
+    expect(rows.map((r) => r.querySelector('.side-name')?.textContent)).toEqual(['p3', 'p4', 'p2']);
+    expect(rows.map((r) => r.querySelector('.side-where')?.textContent ?? null)).toEqual(['gym', 'around', null]);
+  });
+
   it('keeps the same channel picker across refreshes', async () => {
     const { side, host } = panel();
     side.toggle('members');

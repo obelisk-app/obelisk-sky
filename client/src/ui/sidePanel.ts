@@ -5,7 +5,7 @@
 // grouped by standing and presence (memberGroups.ts), as obelisk-dex lists them.
 
 import type { Presence } from '../nostr/presence';
-import { groupMembers, type Rank } from './memberGroups';
+import { listMembers, type Rank } from './memberGroups';
 import { vw } from '../i18n/village';
 import { channelSections } from './channelTree';
 import type { ChannelLayout } from '@/services/relay/channel-layout';
@@ -42,6 +42,8 @@ export interface SidePanelDeps {
   posters(groupId: string): string[];
   loadRanks(): Promise<Record<string, readonly Rank[]>>;
   presenceOf(pk: string): Presence;
+  /** Where a connected person stands (a channel's place, or around), for the tag on their row; null when not connected. */
+  whereIs?(pk: string): string | null;
   profile(pk: string): { name: string; avatar: string | null; nip05: string | null };
   colorOf(pk: string): string;
   me(): string | null;
@@ -58,7 +60,6 @@ export class SidePanel {
   private list: HTMLElement;
   tab: SideTab | null = null;
   private channel: string | null = null;
-  private offlineOpen = false;
   /** Categories folded shut (by id; '' is the uncategorized list). */
   private folded = new Set<string>();
   /** Forums whose publications are folded away. */
@@ -260,26 +261,15 @@ export class SidePanel {
     if (token !== this.token || this.tab !== 'members') return;
     this.ranks = ranks;
     const pks = [...new Set([...m.members, ...this.deps.posters(id), ...(this.deps.me() ? [this.deps.me()!] : [])])];
-    const sections = groupMembers(pks, new Set(m.admins), (pk) => this.ranks[pk], (pk) => this.deps.presenceOf(pk), (pk) => this.deps.profile(pk).name);
+    const rows = listMembers(pks, new Set(m.admins), (pk) => this.ranks[pk], (pk) => this.deps.presenceOf(pk), (pk) => this.deps.profile(pk).name);
     this.title.textContent = vw.membersN(pks.length);
-    const sig = `m|${id}|${this.offlineOpen}|${JSON.stringify(sections.map((s) => [s.key, s.rows.map((r) => [r.pk, r.admin, r.presence, r.rank?.name ?? '', this.deps.profile(r.pk)])]))}`;
-    this.show(sig, () => {
-      const out: HTMLElement[] = [];
-      for (const s of sections) {
-        const offline = s.key === 'offline';
-        const h = document.createElement('button');
-        h.className = 'side-section';
-        h.textContent = `${offline ? (this.offlineOpen ? '▾ ' : '▸ ') : ''}${s.label} — ${s.rows.length}`;
-        if (offline) h.addEventListener('click', () => { this.offlineOpen = !this.offlineOpen; void this.renderMembers(); });
-        out.push(h);
-        if (offline && !this.offlineOpen) continue;
-        for (const r of s.rows) out.push(this.memberRow(r.pk, r.admin, r.presence, r.rank));
-      }
-      return out;
-    });
+    const where = (pk: string) => (this.deps.presenceOf(pk) === 'offline' ? null : this.deps.whereIs?.(pk) ?? null);
+    const sig = `m|${id}|${JSON.stringify(rows.map((r) => [r.pk, r.admin, r.presence, r.rank?.name ?? '', where(r.pk), this.deps.profile(r.pk)]))}`;
+    // Everyone in one list, connected first; each connected row says where they stand.
+    this.show(sig, () => rows.map((r) => this.memberRow(r.pk, r.admin, r.presence, r.rank, where(r.pk))));
   }
 
-  private memberRow(pk: string, admin: boolean, presence: Presence, rank: Rank | null): HTMLElement {
+  private memberRow(pk: string, admin: boolean, presence: Presence, rank: Rank | null, where: string | null = null): HTMLElement {
     const p = this.deps.profile(pk);
     const b = document.createElement('button');
     b.className = `side-row member ${presence}`;
@@ -303,6 +293,11 @@ export class SidePanel {
     b.append(av, names);
     if (rank) b.append(roleBadge(rank));
     if (presence === 'afk') b.append(span('side-afk', vw.afk));
+    if (where) {
+      const tag = span('side-where', where);
+      tag.title = vw.standsAt(where);
+      b.append(tag);
+    }
     b.addEventListener('click', () => this.deps.onMember(pk));
     return b;
   }
