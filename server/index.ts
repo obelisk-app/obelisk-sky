@@ -31,6 +31,9 @@ const MIME: Record<string, string> = {
   '.json': 'application/json',
   '.webmanifest': 'application/manifest+json',
   '.glb': 'model/gltf-binary',
+  '.gltf': 'model/gltf+json',
+  '.ktx2': 'image/ktx2',
+  '.wasm': 'application/wasm',
   '.png': 'image/png',
   '.webp': 'image/webp',
   '.jpg': 'image/jpeg',
@@ -112,12 +115,31 @@ export function redirectFor(pathname: string, search: string): string | null {
   return q.has('relay') || q.has('time') ? `/app${search}` : null;
 }
 
-/** Hashed bundles, models, the guides' media (hashed names) and the landing
- *  page's media (its URLs carry `?v=`) are kept a year; everything else is
- *  checked every time. */
+/** A content-hashed name, `<name>.<8 hex>.<ext>` (scripts/hash-assets.mjs, scripts/guide-media.mjs). */
+const HASHED = /\.[0-9a-f]{8}\.[a-z0-9]+$/;
+
+/** Hashed bundles, models under their hashed names (the client asks for
+ *  nothing else, client/src/world/assetUrl.ts), the guides' media (hashed
+ *  names) and the landing page's media (its URLs carry `?v=`) are kept a
+ *  year; everything else is checked every time. Cloudflare keeps the same
+ *  (scripts/cf-cache-rules.mjs). */
 export function cacheControl(rel: string): string {
-  const immutable = rel.startsWith('/assets/') || rel.startsWith('/models/') || rel.startsWith('/landing/') || rel.startsWith('/media/');
+  const immutable = rel.startsWith('/assets/') || rel.startsWith('/landing/') || rel.startsWith('/media/')
+    || (rel.startsWith('/models/') && HASHED.test(rel));
   return immutable ? 'public, max-age=31536000, immutable' : 'no-cache';
+}
+
+/** The precompressed copy of `file` to send (`.br`, then `.gz`, written by
+ *  scripts/hash-assets.mjs beside the file) for this `Accept-Encoding`. */
+export function pickEncoding(accept: string | string[] | undefined, file: string, exists: (f: string) => boolean = existsSync): { encoding: 'br' | 'gzip'; file: string } | null {
+  const a = (Array.isArray(accept) ? accept.join(',') : accept ?? '').toLowerCase();
+  const offered = (name: string) => a.split(',').some((p) => {
+    const [token, ...params] = p.trim().split(';');
+    return token.trim() === name && !params.some((x) => /^\s*q\s*=\s*0(\.0*)?\s*$/.test(x));
+  });
+  if (offered('br') && exists(`${file}.br`)) return { encoding: 'br', file: `${file}.br` };
+  if (offered('gzip') && exists(`${file}.gz`)) return { encoding: 'gzip', file: `${file}.gz` };
+  return null;
 }
 
 /** One `Range: bytes=…` span of a `size`-byte file: `null` to send it whole
@@ -151,14 +173,34 @@ function serveStatic(req: IncomingMessage, res: ServerResponse, pathname: string
   const hit = resolveStatic(pathname);
   if (!hit) { res.writeHead(400).end(); return; }
   if (!existsSync(hit.file)) { res.writeHead(503).end('client not built'); return; }
-  const size = statSync(hit.file).size;
+  const st = statSync(hit.file);
+  const compressible = existsSync(`${hit.file}.br`) || existsSync(`${hit.file}.gz`);
+  const enc = pickEncoding(req.headers['accept-encoding'], hit.file);
+  const lastModified = new Date(Math.floor(st.mtimeMs / 1000) * 1000);
   const headers = {
     ...SECURITY_HEADERS,
     'content-type': MIME[extname(hit.file)] || 'application/octet-stream',
     'cache-control': hit.fallback ? 'no-cache' : cacheControl(hit.rel),
-    'accept-ranges': 'bytes',
+    'accept-ranges': enc ? 'none' : 'bytes',
+    'last-modified': lastModified.toUTCString(),
+    ...(compressible ? { vary: 'accept-encoding' } : {}),
+    ...(enc ? { 'content-encoding': enc.encoding } : {}),
     ...(extname(hit.file) === '.html' && countryCookie(req.headers['cf-ipcountry']) ? { 'set-cookie': countryCookie(req.headers['cf-ipcountry'])! } : {}),
   };
+  // Revalidation of a `no-cache` file (sounds, the manifest, pages) that hasn't changed.
+  const since = Date.parse(String(req.headers['if-modified-since'] ?? ''));
+  if (hit.status === 200 && !hit.fallback && !Number.isNaN(since) && lastModified.getTime() <= since) {
+    res.writeHead(304, headers).end();
+    return;
+  }
+  if (enc) {
+    // The compressed copy, whole: ranges are only for media, which isn't compressed.
+    res.writeHead(hit.status, { ...headers, 'content-length': statSync(enc.file).size });
+    if (req.method === 'HEAD') { res.end(); return; }
+    createReadStream(enc.file).pipe(res);
+    return;
+  }
+  const size = st.size;
   const range = hit.status === 200 ? parseRange(req.headers.range, size) : null;
   if (range === 'unsatisfiable') { res.writeHead(416, { ...headers, 'cache-control': 'no-cache', 'content-range': `bytes */${size}` }).end(); return; }
   if (range) res.writeHead(206, { ...headers, 'content-range': `bytes ${range.start}-${range.end}/${size}`, 'content-length': range.end - range.start + 1 });

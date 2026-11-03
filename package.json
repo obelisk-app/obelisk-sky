@@ -7,14 +7,16 @@
     "dev:server": "tsx server/index.ts",
     "dev:client": "vite client",
     "build:server": "esbuild server/index.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist/server.js",
-    "build:client": "node scripts/build-guides.mjs && vite build client --outDir ../dist/client --emptyOutDir",
+    "build:client": "node scripts/build-guides.mjs && node scripts/hash-assets.mjs manifest && vite build client --outDir ../dist/client --emptyOutDir && node scripts/hash-assets.mjs emit",
     "build": "npm run build:client && npm run build:server",
     "assets": "node scripts/copy-assets.mjs",
     "guides": "node scripts/build-guides.mjs",
     "guides:media": "node scripts/guide-media.mjs",
     "start": "node dist/server.js",
     "test": "vitest run",
-    "vendor": "bash scripts/vendor-obelisk.sh && node scripts/copy-brand.mjs && node scripts/make-icons.mjs"
+    "vendor": "bash scripts/vendor-obelisk.sh && node scripts/copy-brand.mjs && node scripts/make-icons.mjs",
+    "models:optimize": "node scripts/optimize-models.mjs",
+    "cf:cache": "node scripts/cf-cache-rules.mjs"
   },
   "dependencies": {
     "@nostr-wot/blossom": "^1.0.2",

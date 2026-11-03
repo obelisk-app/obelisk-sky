@@ -6,7 +6,6 @@ const DL = '_dl';
 const OUT = 'client/public/models';
 const town = join(DL, 'kenney_fantasy-town-kit_2.0/Models/GLB format');
 const nature = join(DL, 'kenney_nature-kit/Models/GLTF format');
-const chars = join(DL, 'kenney_blocky-characters_20/Models/GLB format');
 
 const TOWN = [
   'wall', 'wall-door', 'wall-window-shutters', 'wall-window-glass', 'wall-window-round', 'wall-corner',
@@ -28,7 +27,6 @@ const NATURE = [
 ];
 mkdirSync(join(OUT, 'town', 'Textures'), { recursive: true });
 mkdirSync(join(OUT, 'nature'), { recursive: true });
-mkdirSync(join(OUT, 'chars', 'Textures'), { recursive: true });
 for (const n of TOWN) cpSync(join(town, `${n}.glb`), join(OUT, 'town', `${n}.glb`));
 cpSync(join(town, 'Textures'), join(OUT, 'town', 'Textures'), { recursive: true });
 for (const n of NATURE) {
@@ -36,8 +34,6 @@ for (const n of NATURE) {
   if (existsSync(f)) cpSync(f, join(OUT, 'nature', `${n}.glb`));
   else console.warn('missing', n);
 }
-cpSync(join(chars, 'character-a.glb'), join(OUT, 'chars', 'character.glb'));
-cpSync(join(chars, 'Textures'), join(OUT, 'chars', 'Textures'), { recursive: true });
 // Pets (Kenney Cube Pets, CC0) and the character previews the creator shows.
 const pets = join(DL, 'kenney_cube-pets/Models/GLB format');
 mkdirSync(join(OUT, 'pets', 'Textures'), { recursive: true });
@@ -47,4 +43,4 @@ mkdirSync('client/public/avatars', { recursive: true });
 cpSync(join(DL, 'kenney_blocky-characters_20/Previews'), 'client/public/avatars', { recursive: true });
 mkdirSync('client/public/pets', { recursive: true });
 for (const f of readdirSync(join(DL, 'kenney_cube-pets/Previews'))) cpSync(join(DL, 'kenney_cube-pets/Previews', f), join('client/public/pets', f.replace(/^animal-/, '')));
-console.log('assets copied');
+console.log('assets copied; now run node scripts/optimize-models.mjs (meshopt for the pets)');

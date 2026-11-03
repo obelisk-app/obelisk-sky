@@ -391,10 +391,15 @@ void (async () => {
     requestAnimationFrame(preview);
   };
   requestAnimationFrame(() => { preview(); loading.showWorld(); });
+  // People download alongside the town (their bar fills once the town is in).
+  let modelsIn = false, peopleAt = 0;
+  const people = preloadPeople((d, t) => { peopleAt = d / t; if (modelsIn) loading.setProgress(loadAt('people', peopleAt)); });
   await preload(ALL_MODELS, (d, t) => loading.setProgress(loadAt('models', d / t)));
+  modelsIn = true;
+  loading.setProgress(loadAt('people', peopleAt));
   world.setGroups([], new Map()); // the empty island, before any relay data
   applyPrefs(prefs.get()); // again: grass needs the island built
-  await preloadPeople((d, t) => loading.setProgress(loadAt('people', d / t)));
+  await people;
   // The village's first state (houses, villagers, you): logged in, the
   // feed's snapshot is waited for, a few seconds at most.
   loading.setProgress(loadAt('village', 0));
